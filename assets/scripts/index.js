@@ -89,3 +89,23 @@
             pass.src="assets/images/view-icon.png";
         }
     }
+    
+//scroll style
+      const navbar = document.querySelector('.navbar');
+
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 20) {
+     
+      navbar.classList.remove('glass');
+      navbar.classList.add('bg-[#0d9488]');
+
+    
+    
+    } else {
+     
+      navbar.classList.add('glass');
+      navbar.classList.remove('bg-[#0d9488]');
+
+   
+    }
+  });

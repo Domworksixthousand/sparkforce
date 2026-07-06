@@ -13,7 +13,8 @@
 
 <!--header ini-->
   <header class=" relative ">
-    <nav class="navbar  lg:container  lg:px-[30px]   glass fixed top-0 left-1/2 -translate-x-1/2 z-50 border-b border-base-200 transition-all mt-0  lg:mt-[20px] rounded-0 lg:rounded-lg">
+    <nav
+     class="navbar  lg:container  lg:px-[30px]   glass fixed top-0 left-1/2 -translate-x-1/2 z-50  transition-all mt-0  lg:mt-[20px] rounded-0 lg:rounded-lg">
       <div class="navbar-start">
         <div class="dropdown">
           <div tabindex="0" role="button" class="btn btn-ghost lg:hidden " aria-label="Toggle Navigation">
@@ -24,8 +25,7 @@
           <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-3 shadow-xl bg-base-100 rounded-box w-64 gap-2 border border-base-200">
             <li><a href="#properties">Properties</a></li>
             <li><a href="#aboutus">About Us</a></li>
-            <li><a href="#testimonials">Testimonials</a></li>
-            <li><a href="#faq">FAQ</a></li>
+            <li><a href="#works">How It Works</a></li>
             <div class="divider my-1"></div>
             <li><a href="signin.php" class="btn btn-ghost btn-sm">Sign In</a></li>
             <li><a href="signup.php" class="btn bg-[#14b8a6] btn-sm text-white">Get Started</a></li>
@@ -34,21 +34,20 @@
         <a href="#" class="  flex flex-row">
           <img src="assets/images/logo-icon.png" class="w-[50px] me-2">
           <div class="flex flex-col mt-2">  
-            <p class="cursive-text m-0 p-0 text-sm font-bold text-white">RENTSPACE</p>
-            <p class="m-0 p-0 text-sm text-white">Find Your Places</p>
+            <p class="nav_li cursive-text m-0 p-0 text-sm font-bold text-white">RENTSPACE</p>
+            <p class="nav_li m-0 p-0 text-sm text-white">Find Your Places</p>
           </div>
         </a>
       </div>
       <div class="navbar-center hidden lg:flex">
         <ul class="menu menu-horizontal px-1 gap-1 text-[15px] font-medium text-base-content/80">
-          <li><a href="#accomodations" class="hover:text-success text-white transition-colors">Properties</a></li>
-          <li><a href="#aboutus" class="hover:text-primary transition-colors text-white">About Us</a></li>
-          <li><a href="#testimonials" class="hover:text-primary transition-colors">Testimonials</a></li>
-          <li><a href="#faq" class="hover:text-primary transition-colors">FAQ</a></li>
+          <li><a href="#properties" class="nav_li hover:text-success text-white transition-colors">Properties</a></li>
+          <li><a href="#aboutus" class="nav_li hover:text-success transition-colors text-white">About Us</a></li>
+          <li><a href="#works" class=" nav_li hover:text-success text-white transition-colors">How It Works</a></li>
         </ul>
       </div>
       <div class="navbar-end gap-2 ">
-        <a href="signin.php" class=" btn btn-ghost p-[7px] rounded-sm text-sm bg-transparent text-white hover:bg-[#14b8a6] btn-sm hidden lg:inline-flex font-semibold border-0">
+        <a href="signin.php" class="nav_li btn btn-ghost p-[7px] rounded-sm text-sm bg-transparent text-white hover:bg-[#14b8a6] btn-sm hidden lg:inline-flex font-semibold border-0">
           Sign In
         </a>
         <a href="signup.php" class="btn bg-[#14b8a6] border-0  shadow-md shadow-primary/20 text-white font-bold px-5 btn-sm hidden lg:inline-flex ">
@@ -121,7 +120,7 @@
         <h1>sadsada</h1>
       </div>
     </section>
-    <section class=" py-[50px] px-[10px] lg:px-[0px] bg-gray-100" >
+    <section class=" py-[50px] px-[10px] lg:px-[0px] bg-gray-100" id="aboutus" >
       <div class="my-container">
         <div class="flex flex-col justify-center items-center">
           <h2 class="font-bold text-[1.5rem] border-b-5 border-b-emerald-800 w-fit mb-15">About Us</h2>
@@ -173,11 +172,127 @@
         </div>
       </div>
     </section>
+    <section class="my-container py-[50px] px-[10px] lg:px-[0px] " id="works" >
+      <div class="flex justify-center items-center flex-col   w-[100%] mb-5">
+        <p class="bg-[#f0fdfa] p-[10px] rounded-xl text-emerald-800 font-bold mb-3">How It Works</p>
+        <h2 class="font-bold text-[1.5rem] border-b-5 border-b-emerald-800 w-fit mb-15">Find Your Prefered 2 Easy Steps</h2>
+      </div>
+      <div class="flex gap-[20px] flex-col lg:flex-row">
+        <div class="bg-emerald-100 p-[50px] lg:p-[100px] rounded-[20px] flex flex-col justify-center items-center text-center">
+          <h3 class="text-gray-400 text-[5rem]">01</h3>
+          <img src="assets/images/ai-technology.png" class="bg-white p-[20px] mb-[20px] rounded-[20px]">
+          <h4 class="text-black font-bold text-[2rem] mb-[10px]">Search &amp; Filter</h4>
+          <p>
+            Browse through our extensive catalog of verified rental properties. Filter by type, location, budget, and amenities to find your perfect match.
+          </p>
+        </div>
+         <div class="bg-blue-100 p-[50px] lg:p-[100px] rounded-[20px] flex flex-col justify-center items-center text-center">
+          <h3  class="text-gray-400 text-[5rem]">02</h3>
+          <img src="assets/images/check-mark.png" class="bg-white p-[20px] mb-[20px] rounded-[20px]">
+          <h4 class="text-black font-bold text-[2rem] mb-[10px]">Check Availability</h4>
+          <p>
+            View real-time availability calendars, read detailed descriptions, check amenities, and see high-quality photos before making a decision.
+          </p>
+        </div>
+      </div>
+    </section>
   </main>
 
-    <script src="assets/scripts/tailwind.js"></script>
-    <script src="assets/scripts/daisy_ui.js"></script>
-    <script src="assets/scripts/index.js"></script>
+
+  <footer class=" pt-[50px]">
+    <div class=" py-[50px]  bg-[#0da88a]">
+      <div class="my-container flex flex-col justify-center items-center text-center">
+          <h2 class="text-white font-bold text-[2rem] mb-3">Ready to Find Your Perfect Rental?</h2>
+          <p class="text-white mb-7">
+            Join thousands of satisfied tenants who found their ideal boarding house,<br class="hidden lg:flex"> apartment, or villa through our platform. Start    browsing verified properties today.
+          </p>
+          <div class="flex gap-3 flex-col lg:flex-row">
+            <a href="#properties" class="btn btn-white rounded-[10px] p-[20px] text-[#0da88a]">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+              </svg>
+              Browse Properties
+            </a>
+            <a href="#" class="btn bg-transparent text-white rounded-[10px] p-[20px] bg-[#0da88a]">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.76c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 0 1 1.037-.443 48.282 48.282 0 0 0 5.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+            </svg>
+              Contact Support
+            </a>
+          </div>
+      </div>
+    </div>
+    <div class=" bg-black">
+      <div class="my-container py-[50px] flex justify-between flex-col lg:flex-row">
+        <div class="mb-20 lg:mb-0 flex flex-col text-center lg:text-start justify-center lg:justify-start items-center lg:items-start">
+          <div class="flex items-center mb-3">
+            <img src="assets/images/logo-icon.png" class="w-[30px] me-2 ">
+            <p class="text-white font-bold">RENTSPACE</p>
+          </div>
+          <p class="text-white mb-5">
+            Your trusted platform for discovering  verified rental <br class="hidden lg:flex"> properties around Irosin Sorsogon
+          </p>
+          <ul class="flex gap-3">
+            <li>
+              <a href="#">
+                <img src="assets/images/facebook.png" class="w-[25px]" >
+              </a>
+            </li>
+            <li>
+              <a href="#">
+                <img src="assets/images/instagram.png" class="w-[25px]" >
+              </a>
+            </li>
+            <li>
+              <a href="#">
+                <img src="assets/images/twitter.png" class="w-[25px]" >
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div class="mb-20 lg:mb-0 flex flex-col text-center lg:text-start justify-center lg:justify-start items-center lg:items-start"> 
+          <p class="text-white font-bold mb-3">Quick Links</p>
+          <ul>
+            <li>
+              <a href="#" class="text-white">Home</a>
+            </li>
+            <li>
+              <a href="#properties" class="text-white">Properties</a>
+            </li>
+            <li>
+              <a href="#aboutus" class="text-white">About Us</a>
+            </li>
+            <li>
+              <a href="#works" class="text-white">How It Works</a>
+            </li>
+            <li>
+              <a href="signin.php" class="text-white">Sign In</a>
+            </li>
+            <li>
+              <a href="signup.php" class="text-white">Sign Up</a>
+            </li>
+          </ul>
+        </div>
+        <div class=" lg:mb-0 flex flex-col text-center lg:text-start justify-center lg:justify-start items-center lg:items-start">
+          <p class="text-white font-bold mb-3">Contact</p>
+          <ul>
+            <li class="flex gap-3 mb-3">
+              <img src="assets/images/phone-call.png" class="me-2">
+              <p class="text-white">(639) 09095416200</p>
+            </li>
+            <li class="flex gap-3 mb-3">
+              <img src="assets/images/email.png" class="me-2">
+              <p class="text-white">sample@gmail.com</p>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/scripts/tailwind.js"></script>
+  <script src="assets/scripts/daisy_ui.js"></script>
+  <script src="assets/scripts/index.js"></script>
 </body>
 </html>
 

@@ -262,7 +262,7 @@
                         </button>
                     </div>
                     <div class="divider">OR</div>
-                    <p><a href="#" class="link">Forgot Password?</a> / <a href="signin.php" class="link">Already have Account?</a></p>
+                    <p><a href="forgot_password.php" class="link">Forgot Password?</a> / <a href="signin.php" class="link">Already have Account?</a></p>
                 </div>
            </form>
         </section>
