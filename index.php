@@ -100,7 +100,7 @@
 
 
   <main>
-    <section class="my-container py-[50px] px-[10px] lg:px-[0px]" id="properties">
+    <section class="my-container py-[100px] px-[10px] lg:px-[0px]" id="properties">
       <div class="flex justify-center items-center flex-col   w-[100%]">
         <p class="bg-[#f0fdfa] p-[10px] rounded-xl text-emerald-800 font-bold mb-3">Property Categories</p>
         <h1 class="font-bold text-[1.5rem] border-b-5 border-b-emerald-800 w-fit mb-4">Find the Perfect Property Type</h1>
@@ -110,7 +110,7 @@
         <h1>sadsada</h1>
       </div>
     </section>
-    <section class="my-container py-[50px] px-[10px] lg:px-[0px]" >
+    <section class="my-container py-[100px] px-[10px] lg:px-[0px]" >
       <div class="flex justify-center items-center lg:justify-start lg:items-start flex-col   w-[100%]">
         <p class="bg-[#f0fdfa] p-[10px] rounded-xl text-emerald-800 font-bold mb-3">Featured Properties</p>
         <h1 class="font-bold text-[1.5rem]  w-fit mb-4">Hand-Picked Rental Spaces</h1>
@@ -120,7 +120,7 @@
         <h1>sadsada</h1>
       </div>
     </section>
-    <section class=" py-[50px] px-[10px] lg:px-[0px] bg-gray-100" id="aboutus" >
+    <section class=" py-[100px] px-[10px] lg:px-[0px] bg-gray-100" id="aboutus" >
       <div class="my-container">
         <div class="flex flex-col justify-center items-center">
           <h2 class="font-bold text-[1.5rem] border-b-5 border-b-emerald-800 w-fit mb-15">About Us</h2>
@@ -172,7 +172,7 @@
         </div>
       </div>
     </section>
-    <section class="my-container py-[50px] px-[10px] lg:px-[0px] " id="works" >
+    <section class="my-container py-[100px] px-[10px] lg:px-[0px] " id="works" >
       <div class="flex justify-center items-center flex-col   w-[100%] mb-5">
         <p class="bg-[#f0fdfa] p-[10px] rounded-xl text-emerald-800 font-bold mb-3">How It Works</p>
         <h2 class="font-bold text-[1.5rem] border-b-5 border-b-emerald-800 w-fit mb-15">Find Your Prefered 2 Easy Steps</h2>
@@ -199,8 +199,8 @@
   </main>
 
 
-  <footer class=" pt-[50px]">
-    <div class=" py-[50px]  bg-[#0da88a]">
+  <footer class=" pt-[100px]">
+    <div class=" py-[100px]  bg-[#0da88a]">
       <div class="my-container flex flex-col justify-center items-center text-center">
           <h2 class="text-white font-bold text-[2rem] mb-3">Ready to Find Your Perfect Rental?</h2>
           <p class="text-white mb-7">
@@ -223,7 +223,7 @@
       </div>
     </div>
     <div class=" bg-black">
-      <div class="my-container py-[50px] flex justify-between flex-col lg:flex-row">
+      <div class="my-container py-[100px] flex justify-between flex-col lg:flex-row">
         <div class="mb-20 lg:mb-0 flex flex-col text-center lg:text-start justify-center lg:justify-start items-center lg:items-start">
           <div class="flex items-center mb-3">
             <img src="assets/images/logo-icon.png" class="w-[30px] me-2 ">

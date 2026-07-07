@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
+    <title>Reports</title>
     <link rel="shortcut icon" href="./../assets/images/logo-icon.png" type="image/x-icon"> 
     <link rel="stylesheet" href="./../assets/styles/daisy_ui.css">
     <link rel="stylesheet" href="./../assets/styles/index.css">
@@ -19,7 +19,7 @@
         <label for="my-drawer" aria-label="open sidebar" class="btn btn-square btn-ghost lg:hidden">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor" class="size-5 text-white"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
         </label>
-        <div class="flex-1 font-bold text-white">Dashboard</div>
+        <div class="flex-1 font-bold text-white">Reports</div>
       </nav>
       <div class="p-6">
         <!--main content-->
@@ -35,7 +35,7 @@
       <div class="menu p-4 w-64 min-h-full bg-base-200 text-base-content flex flex-col justify-between bg-[#0d9488] ">
         <ul class="space-y-2">
             <li class="flex justify-center items-center text-center mb-10">
-                <img src="../assets/images/logo-icon.png" class="w-[80px] ">
+                <img src="../assets/images/logo-icon.png" class="w-[80px]  ">
                 <p class="nav_li  m-0 p-0 text-sm font-bold text-white">RP ADMIN</p>
             </li>
             <li>

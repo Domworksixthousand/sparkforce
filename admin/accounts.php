@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
+    <title>Accounts</title>
     <link rel="shortcut icon" href="./../assets/images/logo-icon.png" type="image/x-icon"> 
     <link rel="stylesheet" href="./../assets/styles/daisy_ui.css">
     <link rel="stylesheet" href="./../assets/styles/index.css">
@@ -19,7 +19,7 @@
         <label for="my-drawer" aria-label="open sidebar" class="btn btn-square btn-ghost lg:hidden">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor" class="size-5 text-white"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
         </label>
-        <div class="flex-1 font-bold text-white">Dashboard</div>
+        <div class="flex-1 font-bold text-white">Accounts</div>
       </nav>
       <div class="p-6">
         <!--main content-->
