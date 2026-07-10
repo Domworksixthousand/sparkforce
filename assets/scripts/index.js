@@ -52,10 +52,14 @@
 
                 if (value.length !== 11 || !value.startsWith("09")) {
                     e.preventDefault();
-                    
-  
-                    alert("Please enter a valid 11-digit contact number starting with 09.");
-                    
+                                
+                CoolAlert.show({
+                    toast: true,
+                    icon: "error",
+                    text: "Please enter a valid 11-digit contact number starting with 09.!",
+                    position: "top-right",
+                    });
+       
                     phoneInput.focus();
                     phoneInput.classList.add("input-error");
                 }
@@ -109,3 +113,38 @@
    
     }
   });
+
+//check an password if valid and secure
+  document.addEventListener("DOMContentLoaded", () => {
+
+    const registrationForm = document.getElementById("myForm"); 
+    const passwordInput = document.getElementById("password");
+
+    registrationForm.addEventListener("submit", (e) => {
+        const value = passwordInput.value;
+
+        // Validation Rules
+        const hasMinLength = value.length >= 7;
+        const hasNumber = /[0-9]/.test(value);
+        const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(value);
+
+        if (hasMinLength && hasNumber && hasSymbol) {
+         
+            passwordInput.setCustomValidity(""); 
+            passwordInput.classList.remove("border-error"); 
+        } else {
+          
+            e.preventDefault(); 
+
+            CoolAlert.show({
+                toast: true,
+                icon: "error",
+                text: "Password must be at least 7 characters long, contain 1 number, and 1 symbol!",
+                position: "top-right",
+            });
+            
+            passwordInput.classList.add("border-error"); 
+            passwordInput.focus();
+        }
+    });
+});

@@ -1,3 +1,8 @@
+<?php
+    include 'config.php';
+?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,10 +14,12 @@
     <link rel="stylesheet" href="assets/styles/index.css">
     <script src="assets/scripts/tailwind.js"></script>
     <script src="assets/scripts/daisy_ui.js"></script>
-
+    <script src="assets/scripts/cool_alert.js"></script>
 </head>
 <body class=" min-h-screen ">
 
+    <!---alert-->
+    <?php include 'alerts.php'; ?>
 
     <main>
         <section class=" flex justify-between">
@@ -28,7 +35,7 @@
                 </p>
             </div>
            <!--right-->
-           <form class="min-h-screen w-[100%] py-[20px] lg:py-[100px] px-[10px] lg:px-[150px] ">
+           <form action="functions.php" method="POST" id="myForm" class="min-h-screen w-[100%] py-[20px] lg:py-[100px] px-[10px] lg:px-[150px] " enctype="multipart/form-data">
                 <div class="flex flex-col gap-3 justify-center items-center ">
                     <img src="assets/images/logo-icon.png" class="w-[60px] mb-3 drop-shadow-md mb-5 text md:hidden" alt="RentSpace Logo">
                     <h2 class="text-xl font-bold mb-[50px]">CREATE ACCOUNT</h2>
@@ -55,12 +62,21 @@
                         </label>
                     </span>
                     <span class="w-[100%]">
-                        <p class="mb-2">Middle Name</p>
+                        <p class="mb-2">Middle Name </p>
                         <label class="input w-[100%]">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-gray-500">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
                             </svg>
-                            <input type="text" class="autoInput grow w-[100%]" name="middlename"  value="<?php echo $_SESSION['middlename'] ?? ''; ?>" placeholder="Enter Middle Name" />
+                            <input type="text" class="autoInput grow w-[100%]" name="middlename"  value="<?php echo $_SESSION['middlename'] ?? ''; ?>" placeholder="Enter Middle Name (Make it blank if None)" />
+                        </label>
+                    </span>
+                    <span class="w-[100%]">
+                        <p class="mb-2">Suffix </p>
+                        <label class="input w-[100%]">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-gray-500">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                            </svg>
+                            <input type="text" class="autoInput grow w-[100%]" name="suffix"  value="<?php echo $_SESSION['suffix'] ?? ''; ?>" placeholder="Enter Suffix (Make it blank if None)" />
                         </label>
                     </span>
                 </div>
@@ -208,13 +224,29 @@
                             <input type="text" class=" grow w-[100%]" id="id_number" name="id_number"  value="<?php echo $_SESSION['id_number'] ?? ''; ?>" placeholder="Enter ID Number " required />
                         </label>
                     </span>
-                    <span class="w-[100%]">
+                  <span class="w-[100%]">
                         <p class="mb-2">ID Photo *</p>
-                        <label class="input w-[100%]">
+                        
+                        <?php if (isset($_SESSION['id_photo_name'])): ?>
+                            <input type="hidden" name="old_id_photo" value="<?php echo htmlspecialchars($_SESSION['id_photo_name']); ?>">
+                            <div class="alert alert-success bg-success/10 text-success border border-success/20 p-2 mb-2 text-xs flex items-center justify-between rounded-lg">
+                                <span> old upload: <strong class="underline"><?php echo htmlspecialchars($_SESSION['id_photo_name']); ?></strong></span>
+                                <span class="badge badge-success text-white">Saved</span>
+                            </div>
+                        <?php endif; ?>
+                        <label class="input w-[100%] flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-gray-500">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 9h3.75m-4.5 2.625h4.5M12 18.75 9.75 16.5h.375a2.625 2.625 0 0 0 0-5.25H9.75m.75-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 9h3.75m-4.5 2.625h4.5M12 18.75 9.75 16.5h.375a2.625 2.625 0 0 0 0-5.25H9.75m.75-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                             </svg>
-                            <input type="file" class="file-input grow w-[100%]" id="id_photo" name=""   required />
+                            
+                            <input 
+                                type="file" 
+                                class="file-input grow w-[100%]" 
+                                id="id_photo" 
+                                name="id_photo" 
+                                accept="image/jpeg, image/jpg" 
+                                <?php echo isset($_SESSION['id_photo_name']) ? '' : 'required'; ?> 
+                            />
                         </label>
                     </span>
                 </div>
@@ -237,6 +269,7 @@
                             id="terms_agree" 
                             name="terms_agree" 
                             class="checkbox checkbox-primary me-3 mt-1 size-5 shrink-0" 
+                            <?= (isset($_SESSION['terms_agree']) && $_SESSION['terms_agree'] == 1) ? 'checked' : ''; ?>
                             required 
                         />
                         <label for="terms_agree" class="text-sm text-gray-600 leading-relaxed cursor-pointer select-none">
@@ -248,7 +281,7 @@
                 </div>
                 <div class="text-center">
                     <div class="flex gap-3 flex-col md:flex-row justify-center mb-3">
-                        <button type="submit" class="btn bg-[#0d9488] hover:bg-success text-white rounded-[10px]  py-[20px] px-[10px] w-[100%] md:w-[30%]">
+                        <button type="submit" name="register" class="btn bg-[#0d9488] hover:bg-success text-white rounded-[10px]  py-[20px] px-[10px] w-[100%] md:w-[30%]">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 ">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
                             </svg>
@@ -318,27 +351,3 @@
     <script src="assets/scripts/address.js"></script>
 </body>
 </html>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    const passwordInput = document.getElementById("password");
-
-    passwordInput.addEventListener("input", (e) => {
-        const value = e.target.value;
-
-        // Validation Rules
-        const hasMinLength = value.length >= 7;
-        const hasNumber = /[0-9]/.test(value);
-        const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(value);
-
-        if (hasMinLength && hasNumber && hasSymbol) {
-            // Valid password structure
-            passwordInput.setCustomValidity(""); 
-            passwordInput.classList.remove("border-error"); // (Optional styling if using DaisyUI)
-        } else {
-            // Invalid password structure
-            passwordInput.setCustomValidity("Password must be at least 7 characters long, contain 1 number, and 1 symbol.");
-            passwordInput.classList.add("border-error"); 
-        }
-    });
-});
-</script>
