@@ -21,8 +21,8 @@ if(isset($_SESSION['error'])){
     echo '<script>
         CoolAlert.show({
             toast: true,
-            icon: "ERROR",
-            title: "",
+            icon: "error",
+            title: "SOMETHING WRONG",
             text: ' . json_encode($_SESSION['error']) . ',
             position: "top-right"
         });

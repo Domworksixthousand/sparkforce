@@ -147,4 +147,30 @@
             passwordInput.focus();
         }
     });
-});
+  });
+
+
+
+    /*email animation */
+    document.addEventListener("DOMContentLoaded", () => {
+        const myForm = document.getElementById('myForm');
+        const animation = document.getElementById('animation_id');
+
+    
+        function showLoading() {
+            document.body.classList.add('overflow-hidden');
+            animation.classList.remove("hidden");
+        }
+
+    
+        function hideLoading() {
+            document.body.classList.remove('overflow-hidden');
+            animation.classList.add("hidden");
+        }
+
+
+        myForm.addEventListener('submit', (event) => {
+            showLoading();
+        
+        });
+    });
