@@ -40,10 +40,10 @@
         const repeat_pass = document.getElementById("repeat_pass");
         if (passwordField.type === "password") {
             passwordField.type = "text";
-            repeat_pass.src="assets/images/hide-icon.png";
+            repeat_pass.src="assets/images/view-icon.png";
         } else {
             passwordField.type = "password";
-            repeat_pass.src="assets/images/view-icon.png";
+            repeat_pass.src="assets/images/hide-icon.png";
         }
     }
     
@@ -53,10 +53,10 @@
         const pass = document.getElementById("pass");
         if (password.type === "password") {
             password.type = "text";
-            pass.src="assets/images/hide-icon.png";
+            pass.src="assets/images/view-icon.png";
         } else {
             password.type = "password";
-            pass.src="assets/images/view-icon.png";
+            pass.src="assets/images/hide-icon.png";
         }
     }
     
@@ -68,10 +68,10 @@
         const pass = document.getElementById("pass");
         if (password.type === "password") {
             password.type = "text";
-            pass.src="assets/images/hide-icon.png";
+            pass.src="assets/images/view-icon.png";
         } else {
             password.type = "password";
-            pass.src="assets/images/view-icon.png";
+            pass.src="assets/images/hide-icon.png";
         }
 }
     
@@ -117,8 +117,9 @@
         }
 
 
-        myForm.addEventListener('submit', (event) => {
-            showLoading();
-        
-        });
+       if (myForm) {
+            myForm.addEventListener('submit', (event) => {
+                showLoading();
+            });
+        }
     });

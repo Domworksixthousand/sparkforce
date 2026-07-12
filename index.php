@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="assets/styles/daisy_ui.css">
     <link rel="stylesheet" href="assets/styles/index.css">
     <script src="assets/scripts/cool_alert.js"></script>
+    <script src="assets/scripts/tailwind.js"></script>
+    <script src="assets/scripts/daisy_ui.js"></script>
 </head>
 <body >
 
@@ -297,8 +299,7 @@
     </div>
   </footer>
 
-  <script src="assets/scripts/tailwind.js"></script>
-  <script src="assets/scripts/daisy_ui.js"></script>
+
   <script src="assets/scripts/index.js"></script>
 </body>
 </html>

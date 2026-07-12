@@ -199,7 +199,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
                             </svg>
                             <input type="password" class=" grow w-[100%]" id="password" name="password"  value="<?php echo $_SESSION['password'] ?? ''; ?>" placeholder="Enter Password " required />
-                            <img src="assets/images/view-icon.png" class="cursor-pointer" id="pass" onclick="toggletPassword()">
+                            <img src="assets/images/hide-icon.png" class="cursor-pointer" id="pass" onclick="toggletPassword()">
                         </label>
                     </span>
                     <span class="w-[100%]">
@@ -209,7 +209,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
                             </svg>
                             <input type="password" class=" grow w-[100%]" id="repeat_password" name="repeat_password"  value="<?php echo $_SESSION['repeat_password'] ?? ''; ?>" placeholder="Enter Repeat Password" />
-                            <img src="assets/images/view-icon.png" id="repeat_pass" class="cursor-pointer" onclick="toggleRepeatPassword()">
+                            <img src="assets/images/hide-icon.png" id="repeat_pass" class="cursor-pointer" onclick="toggleRepeatPassword()">
                         </label>
                     </span>
                 </div>

@@ -164,6 +164,13 @@ if (isset($_POST['register'])) {
         exit;
     }
 
+    //dapat 7 pataas an username
+    if (strlen($username) < 7) {
+        $_SESSION['error'] = "Username must be at least 7 characters long";
+        header("location:signup.php");
+        exit;
+    }
+
     //check kun same an username and password
     if($username === $password){
         $_SESSION['error'] = "Username and password cannot be the same!";
@@ -371,3 +378,42 @@ if (isset($_POST['signin'])) {
         exit;
     }
 }
+
+
+
+if(isset($_POST['sigout_admin'])){
+    
+    // Invalidate token in DB if session is active
+    if (isset($_SESSION['admin_login'])) {
+        $stmt = $conn->prepare("UPDATE accounts SET remember_token = NULL WHERE user_id = ?");
+        $stmt->bind_param("s", $admin_id);
+        $stmt->execute();
+    }
+
+    // Clear session
+    $_SESSION = array();
+
+    // Clear session cookie
+    if (ini_get("session.use_cookies")) {
+        $params = session_get_cookie_params();
+        setcookie(session_name(), '', time() - 42000,
+            $params["path"], $params["domain"],
+            $params["secure"], $params["httponly"]
+        );
+    }
+
+    // Clear remember_token cookie
+    setcookie("remember_token", "", time() - 3600, "/", "", false, true); // HttpOnly
+
+
+    unset($_SESSION['admin_login']);
+
+    // Destroy session
+    session_destroy();
+
+
+    // Redirect
+    header("location:index.php");
+    exit();
+}
+
