@@ -34,6 +34,9 @@
         <label for="my-drawer" aria-label="open sidebar" class="btn btn-square btn-ghost lg:hidden">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor" class="size-5 text-white"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
         </label>
+        <div class="request_data indicator  ms-5">
+            <!--count-->
+        </div>
         <div class="flex-1 font-bold text-white">Dashboard</div>
       </nav>
       <div class="p-6">

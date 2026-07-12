@@ -16,7 +16,12 @@
                 <button id="dropdownBtn" class="w-full flex items-center justify-between gap-3 text-white active focus:outline-none">
                     <div class="flex items-center gap-3">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" class="text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M16.051 12.616a1 1 0 0 1 1.909.024l.737 1.452a1 1 0 0 0 .737.535l1.634.256a1 1 0 0 1 .588 1.806l-1.172 1.168a1 1 0 0 0-.282.866l.259 1.613a1 1 0 0 1-1.541 1.134l-1.465-.75a1 1 0 0 0-.912 0l-1.465.75a1 1 0 0 1-1.539-1.133l.258-1.613a1 1 0 0 0-.282-.866l-1.156-1.153a1 1 0 0 1 .572-1.822l1.633-.256a1 1 0 0 0 .737-.535z"/><path d="M8 15H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/></svg>
-                        <span>Accounts</span>
+                        <span>
+                            Accounts
+                            <div class="request_data indicator  ms-5">
+                                <!--count-->
+                            </div>
+                        </span>
                     </div>
                     <svg id="arrowIcon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" class="transition-transform duration-200">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
@@ -25,8 +30,19 @@
 
                 <!-- Dropdown Menu -->
                 <ul id="dropdownMenu" class="hidden mt-2 ml-6 space-y-1 rounded-md p-2">
-                    <li><a href="accounts.php" class="block text-sm text-white hover:text-white py-1 px-2">View All Accounts</a></li>
-                    <li><a href="request_accounts.php" class="block text-sm text-white hover:text-white py-1 px-2">Request Accounts</a></li>
+                    <li>
+                        <a href="accounts.php" class="block text-sm text-white hover:text-white py-1 px-2">
+                             All Accounts
+                        </a>
+                    </li>
+                    <li>
+                        <a href="request_accounts.php" class="block text-sm text-white hover:text-white py-1 px-2">
+                            Request Accounts
+                            <div class="request_data indicator  ms-5">
+                                <!--count-->
+                            </div>
+                        </a>
+                    </li>
                 </ul>
             </li>
             <li>

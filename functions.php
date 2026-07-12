@@ -48,6 +48,7 @@ if (isset($_POST['register'])) {
     $status    = "Pending";
     $datetoday = date("Y-m-d"); 
     $user_id   = $id_number . rand();
+    $user_type_acceptable = "3";
 
     // create sessions
     $fields = [
@@ -179,8 +180,8 @@ if (isset($_POST['register'])) {
     }
 
     // Check kung gamit na ang Email
-    $get_email = $conn->prepare("SELECT email FROM accounts WHERE `email` = ? ");
-    $get_email->bind_param("s", $email);
+    $get_email = $conn->prepare("SELECT email,user_type FROM accounts WHERE `email` = ? AND `user_type` <= ? ");
+    $get_email->bind_param("ss", $email,$user_type_acceptable);
     $get_email->execute();
     if ($get_email->get_result()->num_rows > 0) {
         $_SESSION['error'] = "Email already Taken!";
@@ -189,8 +190,8 @@ if (isset($_POST['register'])) {
     }
 
     // Check kung gamit na ang Contact Number
-    $get_contact = $conn->prepare("SELECT contact_number FROM accounts WHERE `contact_number` = ? ");
-    $get_contact->bind_param("s", $contact_number);
+    $get_contact = $conn->prepare("SELECT contact_number,user_type FROM accounts WHERE `contact_number` = ? AND `user_type` <= ? ");
+    $get_contact->bind_param("ss", $contact_number,$user_type_acceptable);
     $get_contact->execute();
     if ($get_contact->get_result()->num_rows > 0) {
         $_SESSION['error'] = "Contact Number already Taken!";
@@ -199,8 +200,8 @@ if (isset($_POST['register'])) {
     }
 
     // Check kung gamit na ang Username
-    $get_user = $conn->prepare("SELECT username FROM accounts WHERE `username` = ? ");
-    $get_user->bind_param("s", $username); 
+    $get_user = $conn->prepare("SELECT username,user_type FROM accounts WHERE `username` = ?  AND `user_type` <= ? ");
+    $get_user->bind_param("ss", $username,$user_type_acceptable); 
     $get_user->execute();
     if ($get_user->get_result()->num_rows > 0) {
         $_SESSION['error'] = "Username already Taken!";
@@ -366,7 +367,7 @@ if (isset($_POST['signin'])) {
                 exit;
             } else {
              
-                $_SESSION['invalid'] = "Invalid Username or Password";
+                $_SESSION['error'] = "Invalid Username or Password";
                 header('Location: signin.php'); 
                 exit;
             }
