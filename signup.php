@@ -15,7 +15,7 @@
     <script src="assets/scripts/tailwind.js"></script>
     <script src="assets/scripts/daisy_ui.js"></script>
     <script src="assets/scripts/cool_alert.js"></script>
-    <script src="assets/scripts/icon_animation.js"></script>
+
 </head>
 <body class=" min-h-screen ">
 

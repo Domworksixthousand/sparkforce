@@ -13,7 +13,7 @@ require 'PHPMailer-master/src/SMTP.php';
 
 if (isset($_POST['register'])) {
     
-    // 1. KUHANIN AT I-SANITIZE ANG MGA STANDARD INPUTS
+    // kuwaon an input san user
     $lastname       = mysqli_real_escape_string($conn, $_POST['lastname'] ?? '');
     $firstname      = mysqli_real_escape_string($conn, $_POST['firstname'] ?? '');
     $middlename     = mysqli_real_escape_string($conn, $_POST['middlename'] ?? '');
@@ -28,31 +28,34 @@ if (isset($_POST['register'])) {
     $id_type        = mysqli_real_escape_string($conn, $_POST['id_type'] ?? '');
     $id_number      = mysqli_real_escape_string($conn, $_POST['id_number'] ?? '');
     $occupation     = mysqli_real_escape_string($conn, $_POST['occupation'] ?? '');
+    $password        = $_POST['password'] ?? '';
+    $repeat_password = $_POST['repeat_password'] ?? '';
+
     
-    // Kunin ang nakatagong pangalan ng lumang file galing sa HTML hidden input kung mayroon man
+
+    
+    // old image
     $old_id_photo   = mysqli_real_escape_string($conn, $_POST['old_id_photo'] ?? '');
 
-    // [CRITICAL FIX]: I-lock agad ang nakaraang photo sa session kung mayroon na
+    // kapag not empty ma create siya session
     if (!empty($old_id_photo)) {
         $_SESSION['id_photo_name'] = $old_id_photo;
     }
 
-    // Kunin ang hilaw na password para sa validation at hashing
-    $password        = $_POST['password'] ?? '';
-    $repeat_password = $_POST['repeat_password'] ?? '';
-
-    // Iba pang default values
+ 
+    // dafault values
     $usertype  = "4";
     $status    = "Pending";
     $datetoday = date("Y-m-d"); 
     $user_id   = $id_number . rand();
 
-    // 2. I-SAVE ANG MGA INPUT SA SESSIONS (Para hindi mabura ang mga sinagutan kapag nag-error)
+    // create sessions
     $fields = [
         'lastname', 'firstname', 'middlename', 'suffix', 'email', 'contact_number', 
         'province', 'municipality', 'barangay', 'zipcode', 'username', 'id_type', 
-        'id_number', 'occupation'
+        'id_number', 'occupation','password','repeat_password'
     ];
+
     foreach ($fields as $field) {
         if (isset($_POST[$field])) {
             $_SESSION[$field] = $_POST[$field]; 
@@ -63,10 +66,7 @@ if (isset($_POST['register'])) {
         $_SESSION['terms_agree'] = 1;
     }
 
-
-    // =========================================================================
-    // [STEP A]: FILE UPLOAD & TRANSFER HANDLING (DINALA SA TAAS)
-    // =========================================================================
+    //kuwaon ang image files
     $img_name = $_FILES['id_photo']['name'] ?? '';
     $tmp_name = $_FILES['id_photo']['tmp_name'] ?? ''; 
     $error    = $_FILES['id_photo']['error'] ?? UPLOAD_ERR_NO_FILE;
@@ -74,38 +74,37 @@ if (isset($_POST['register'])) {
     $final_photo_name = ""; 
     $tomorrow         = date("Y-m-d", strtotime("+1 day"));
 
-    // Siguraduhin nating gawa na ang mga folders bago mag-manipula ng files
+   // kung ang exists ang file sa folder para iwas duplicate
     if (!file_exists('assets/trash_uploads')) mkdir('assets/trash_uploads', 0777, true);
     if (!file_exists('assets/uploads')) mkdir('assets/uploads', 0777, true);
 
-    // KASO A: Walang bagong in-upload AT walang lumang photo sa session cache
+   // check kung nag upload image
     if ($error === UPLOAD_ERR_NO_FILE && empty($old_id_photo)) {
         $_SESSION['error'] = "Please upload ID photo!";
         header("location:signup.php");
         exit;
     }
 
-    // KASO B: May tunay na error sa mismong upload mechanism ng PHP
+    //kung error ang pag ka upload
     if ($error !== UPLOAD_ERR_OK && $error !== UPLOAD_ERR_NO_FILE) {
         $_SESSION['error'] = "An error occurred during file upload. Error Code: " . $error;
         header("location:signup.php");
         exit;
     }
 
-    // KASO C: May BAGONG larawan na in-upload ngayon
+   //kung empty ang image an old photo makato sa upload
     if ($error === UPLOAD_ERR_OK && !empty($img_name)) {
         
         $image_trash   = $tomorrow . "_" . $img_name;
         $trash_folder  = 'assets/trash_uploads/' . $image_trash; 
         $location      = 'assets/uploads/' . $img_name;
 
-        // I-upload muna sa iyong trash folder
         if (move_uploaded_file($tmp_name, $trash_folder)) {
             
-            // I-move agad ito mula trash folder papunta sa permanent uploads directory
+         
             if (rename($trash_folder, $location)) {
                 $final_photo_name = $img_name;          
-                $_SESSION['id_photo_name'] = $img_name; // I-update ang session para sa preview
+                $_SESSION['id_photo_name'] = $img_name; 
             } else {
                 $_SESSION['error'] = "Failed moving file to permanent directory.";
                 header("location:signup.php");
@@ -117,7 +116,7 @@ if (isset($_POST['register'])) {
             exit;
         }
     } 
-    // KASO D: Gagamitin ang 'old_id_photo' galing sa trash cache
+    // kung empty an old photo naman ma upload an main image
     else if (!empty($old_id_photo)) {
         
         $source_trash        = 'assets/trash_uploads/' . $tomorrow . "_" . $old_id_photo;
@@ -141,14 +140,33 @@ if (isset($_POST['register'])) {
         }
     }
 
-
-    // =========================================================================
-    // [STEP B]: MGA VALIDATION CHECKS (DINALA SA BABA NG UPLOAD)
-    // =========================================================================
-    
-    // Check kung magkatugma ang password
+    //check kung same an repeat password and password
     if ($repeat_password !== $password) {
         $_SESSION['error'] = "Password and Repeat Password do not Match!";
+        header("location:signup.php");
+        exit;
+    }
+
+    //check kun diri tugma sa fromat an number
+    if (strlen($contact_number) !== 11 || !str_starts_with($contact_number, '09')) {
+        $_SESSION['error'] = "Contact Number Must start in 09 and 11 digits";
+        header("location:signup.php");
+        exit;
+    }
+
+    // kun diri match ang passsword sa format
+    $hasNumber = preg_match('/[0-9]/', $password);
+    $hasSymbol = preg_match('/[!@#$%^&*(),.?":{}|<>]/', $password);
+    if (strlen($password) < 7 || !$hasNumber || !$hasSymbol) {
+
+        $_SESSION['error'] = "Password must be at least 7 characters long, contain 1 number, and 1 symbol!";
+        header("location:signup.php");
+        exit;
+    }
+
+    //check kun same an username and password
+    if($username === $password){
+        $_SESSION['error'] = "Username and password cannot be the same!";
         header("location:signup.php");
         exit;
     }
@@ -184,12 +202,10 @@ if (isset($_POST['register'])) {
     }
 
 
-    // =========================================================================
-    // [STEP C]: EMAIL VERIFICATION & TRANSACTION COMMIT
-    // =========================================================================
     
     // Generate 6 digit random number
     $verification_code = rand(100000, 999999);
+    //my expire siya 5 min
     $expiry_time       = time() + (5 * 60); 
 
     $_SESSION['email_verification'] = [
@@ -198,6 +214,7 @@ if (isset($_POST['register'])) {
         'expires_at' => $expiry_time
     ];
 
+    //message na email
     $subject = "RENTSPACE VERIFICATION";
     $message = "
         <p>Dear <strong>$firstname</strong>,</p>
@@ -216,12 +233,12 @@ if (isset($_POST['register'])) {
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
-        $mail->Username   = 'les.ballers2025@gmail.com';
-        $mail->Password   = 'hzyi mwys xdsk npjv'; 
+        $mail->Username   = 'rentspace4707@gmail.com';
+        $mail->Password   = 'hmmv thkm hoqs gzhi'; 
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
         $mail->Port       = 465;
 
-        $mail->setFrom('les.ballers2025@gmail.com', 'RENTSPACE');
+        $mail->setFrom('rentspace4707@gmail.com', 'RENTSPACE');
         $mail->addAddress($email, $firstname);
 
         $mail->isHTML(true);
@@ -230,10 +247,10 @@ if (isset($_POST['register'])) {
 
         $mail->send();
 
-        // 5. SECURELY HASH THE PASSWORD
+        //  HASH THE PASSWORD
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-        // 6. DATA ENTRY
+        // save data
         $insert = $conn->prepare("INSERT INTO `accounts` (`user_id`,`middlename`,`lastname`,`firstname`,`suffix`,`email`,`contact_number`,`province`,`municipality`,`barangay`,`zipcode`,`username`,`password`,`id_type`,`id_number`,`id_photo`,`occupation`,`status`,`user_type`,`date_request`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
         
         $insert->bind_param(
@@ -245,12 +262,19 @@ if (isset($_POST['register'])) {
         );
         
         if ($insert->execute()) {
-            // Linisin ang mga regular fields kapag success
+           //clear session
             foreach ($fields as $field) {
                 unset($_SESSION[$field]);
             }
+
+            unset($_SESSION['id_photo_name']);
             unset($_SESSION['terms_agree']);
             unset($_SESSION['error']);
+
+            //create session
+            $_SESSION['user_id'] = $user_id;
+            $_SESSION['verification_code'] = $verification_code;
+            $_SESSION['success'] = "Verification Code Successfully Sent to your Email, Please Check your Email";
             
             header("location:signup_confirmation.php");
             exit;
@@ -261,8 +285,89 @@ if (isset($_POST['register'])) {
         }
       
     } catch (Exception $e) {
+        //check kun my internet
         $_SESSION['error'] = "Failed to send email. Please check your internet connection or try again.";
         header("Location: signup.php");
+        exit;
+    }
+}
+
+
+if(isset($_POST['confirm_code'])){
+    $code =  mysqli_real_escape_string($conn, $_POST['code'] ?? '');
+    $user_type = "3";
+
+    if($code == $_SESSION['verification_code']){
+        $update = $conn->prepare("UPDATE accounts SET `user_type` = ? WHERE `user_id` = ?");
+        $update->bind_param("ss",$user_type,$_SESSION['user_id']);
+        $update->execute();
+
+        $_SESSION['success'] = "Your details have been sent to the administrator for approval. We will email you as soon as your account is finalized.";
+        unset($_SESSION['user_id']);
+        unset($_SESSION['verification_code']);
+        header("location:index.php");
+        exit;
+    }else{
+        $_SESSION['error'] = "Entered Code Doesn't Match!";
+        header("location:signup_confirmation.php");
+        exit;
+    }
+}
+
+if (isset($_POST['signin'])) {
+    $password = $_POST['password'] ?? '';
+    $username = $_POST['username'] ?? '';
+    $user_type_limit = 3; 
+    $status = 'Approved';
+
+
+    $get_user = $conn->prepare("SELECT `user_id`, `username`, `password`, `user_type` FROM `accounts` WHERE `username` = ? AND `user_type` <= ? AND `status` = ?");
+    $get_user->bind_param("sss", $username, $user_type_limit,$status);
+    $get_user->execute();
+    $result_user = $get_user->get_result();
+
+    if ($result_user->num_rows > 0) {
+        while ($row_get = $result_user->fetch_assoc()) {
+            $hashed_password = $row_get['password']; 
+
+            if (password_verify($password, $hashed_password)) {
+                // login success
+                $user_id = $row_get['user_id'];
+                $user_type = $row_get['user_type'];
+
+                // Generate secure token
+                $token = bin2hex(random_bytes(32)); 
+
+                // Save token in DB
+                $update_token = $conn->prepare("UPDATE accounts SET remember_token = ? WHERE user_id = ?");
+                $update_token->bind_param("ss", $token, $user_id);
+                $update_token->execute();
+
+                // Set Cookie
+                setcookie("remember_token", $token, time() + (7 * 24 * 60 * 60), "/", "", false, true); 
+
+                // Redirect logic
+                if ($user_type == "1") {
+                    $_SESSION['admin_login'] = $user_id;
+                    header('Location: admin');
+                } elseif ($user_type == "2" || $user_type == "3") {
+                    $_SESSION['user_login'] = $user_id;
+                    header('Location: users');
+                } else {
+                    header('Location: signin.php');
+                }
+                exit;
+            } else {
+             
+                $_SESSION['invalid'] = "Invalid Username or Password";
+                header('Location: signin.php'); 
+                exit;
+            }
+        }
+    } else {
+      
+        $_SESSION['error'] = "Username or Password Invalid";
+        header("Location: signin.php");
         exit;
     }
 }

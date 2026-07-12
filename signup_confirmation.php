@@ -13,8 +13,14 @@ include 'config.php';
     <link rel="stylesheet" href="assets/styles/index.css">
     <script src="assets/scripts/tailwind.js"></script>
     <script src="assets/scripts/daisy_ui.js"></script>
+    <script src="assets/scripts/cool_alert.js"></script>
 </head>
 <body class="bg-[linear-gradient(to_right,#2A7B9B_0%,#57C785_100%,#EDDD53_100%)] min-h-screen  ">
+
+    <!---alert-->
+    <?php 
+        include 'alerts.php'; 
+    ?>
     
     <main>
         <section class="my-container flex justify-center items-center flex-col min-h-screen">
@@ -27,10 +33,10 @@ include 'config.php';
                 <h2 class="text-white font-bold">EMAIL CONFIRMATION</h2>
             </div>
             
-            <form class="w-full md:w-[500px] block box-border px-4 md:px-0">
+            <form action="functions.php" method="POST" class="w-full md:w-[500px] block box-border px-4 md:px-0">
                 <!-- Username Field -->
                 <div class="w-full block mb-4">
-                    <p class="mb-2 text-white">Received Code</p>
+                    <p class="mb-2 text-white">Received Code <?php echo $_SESSION['verification_code']; ?></p>
                     <div class="input w-full flex items-center gap-2 box-border p-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-code-icon lucide-code"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg>
                         <input type="text" class="grow w-full bg-transparent focus:outline-none text-black" name="code"  placeholder="Enter Code" required />
@@ -51,7 +57,7 @@ include 'config.php';
     </main> 
 
 
-
+    
     <script src="assets/scripts/index.js"></script>
     <script src="assets/scripts/address.js"></script>
 </body>

@@ -1,3 +1,4 @@
+<?php include 'config.php'; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,8 +8,14 @@
     <link rel="shortcut icon" href="assets/images/logo-icon.png" type="image/x-icon"> 
     <link rel="stylesheet" href="assets/styles/daisy_ui.css">
     <link rel="stylesheet" href="assets/styles/index.css">
+    <script src="assets/scripts/cool_alert.js"></script>
 </head>
 <body >
+
+  <!---alert-->
+  <?php 
+      include 'alerts.php'; 
+  ?>
 
 
 <!--header ini-->
