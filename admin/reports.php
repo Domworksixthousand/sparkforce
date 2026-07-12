@@ -20,6 +20,7 @@
     <script src="./../assets/scripts/tailwind.js"></script>
     <script src="./../assets/scripts/daisy_ui.js"></script>
     <script src="../assets/scripts/cool_alert.js"></script>
+      <script src="./../assets/scripts/jquery.js"></script>
 </head>
 <body class="bg-base-100">
 
@@ -53,7 +54,7 @@
   </div>
 
   <script src="./../assets/scripts/index.js"></script>
-  <script src="./../assets/scripts/jquery.js"></script>
+  <script src="./../assets/scripts/query_filter.js"></script>
 </body>
 </html>
 

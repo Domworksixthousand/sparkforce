@@ -32,7 +32,7 @@
                 <ul id="dropdownMenu" class="hidden mt-2 ml-6 space-y-1 rounded-md p-2">
                     <li>
                         <a href="accounts.php" class="block text-sm text-white hover:text-white py-1 px-2">
-                             All Accounts
+                            Verified Accounts
                         </a>
                     </li>
                     <li>
@@ -41,6 +41,16 @@
                             <div class="request_data indicator  ms-5">
                                 <!--count-->
                             </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="disapproved_accounts.php" class="block text-sm text-white hover:text-white py-1 px-2">
+                            Disapproved Accounts                     
+                        </a>
+                    </li>
+                    <li>
+                        <a href="blocked_accounts.php" class="block text-sm text-white hover:text-white py-1 px-2">
+                            Blocked Accounts                   
                         </a>
                     </li>
                 </ul>

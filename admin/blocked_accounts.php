@@ -12,7 +12,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Account Request</title>
+    <title>Blocked Accounts</title>
     <link rel="shortcut icon" href="./../assets/images/logo-icon.png" type="image/x-icon"> 
     <link rel="stylesheet" href="./../assets/styles/daisy_ui.css">
     <link rel="stylesheet" href="./../assets/styles/index.css">
@@ -36,7 +36,7 @@
             <label for="my-drawer" aria-label="open sidebar" class="btn btn-square btn-ghost lg:hidden">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor" class="size-5 text-white"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
             </label>
-            <div class="flex-1 font-bold text-white">Request Accounts</div>
+            <div class="flex-1 font-bold text-white">Blocked Accounts</div>
         </nav>
         <div class="p-6">
             <!--main content-->
@@ -66,7 +66,7 @@
                         <table class="table table-zebra">
                             <thead>
                                 <tr  class="bg-[#0d9488] text-white">
-                                    <th>Full Name</th>
+                                    <th >Full Name</th>
                                     <th>Email</th>
                                     <th>Contact Number</th>
                                     <th>Actions</th>
@@ -74,10 +74,10 @@
                             </thead>
                                 <tbody class="myTable">
                                     <?php
-                                        $user_type = "3";
-                                        $user_status = "Pending";
-                                        $request = $conn->prepare("SELECT * FROM `accounts` WHERE `user_type` = ? AND `status` = ? ORDER BY date_request ASC");
-                                        $request->bind_param("ss", $user_type, $user_status);
+
+                                        $user_status = "Blocked";
+                                        $request = $conn->prepare("SELECT * FROM `accounts` WHERE `status` = ?");
+                                        $request->bind_param("s",$user_status);
                                         $request->execute();
                                         $result_request = $request->get_result();
                                         if($result_request->num_rows > 0){
@@ -114,7 +114,7 @@
                                                     <td>' . $email  . '</td>
                                                     <td>' . $contact_number . '</td>
                                                     <td>
-                                                        <a href="request_account_info.php?id=' . $user_id . '&location_back=request_accounts.php" class="btn btn-success text-white">More Info</a>
+                                                        <a href="request_account_info.php?id=' . $user_id . '&location_back=blocked_accounts.php" class="btn btn-success text-white">More Info</a>
                                                     </td>
                                                 </tr>';
                                             }

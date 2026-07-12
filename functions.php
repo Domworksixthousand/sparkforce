@@ -418,3 +418,30 @@ if(isset($_POST['sigout_admin'])){
     exit();
 }
 
+if(isset($_POST['approved_request_account'])){
+    $id = $_POST['id'];
+    $status = "Approved";
+
+    $update = $conn->prepare("UPDATE accounts SET status = ? WHERE `user_id` = ?");
+    $update->bind_param("ss", $status, $id);
+    $update->execute();
+
+    $_SESSION['success'] = "Successfully Approved";
+    header("location:admin/request_accounts.php");
+    exit;
+
+}
+
+
+if(isset($_POST['disapproved_request_account'])){
+    $id = $_POST['id'];
+    $status = "Disapproved";
+
+    $update = $conn->prepare("UPDATE accounts SET status = ? WHERE `user_id` = ?");
+    $update->bind_param("ss", $status, $id);
+    $update->execute();
+
+    $_SESSION['success'] = "Successfully Disapproved";
+    header("location:admin/request_accounts.php");
+    exit;
+}

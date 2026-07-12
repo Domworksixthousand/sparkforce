@@ -30,7 +30,7 @@ $(document).ready(function(){
 
       
         if (totalMatched === 0) {
-            $(".myTable").append('<tr id="no-data-row"><td colspan="4" class="text-center py-4 font-semibold text-error">No Data Found!</td></tr>');
+            $(".myTable").append('<tr id="no-data-row"><td colspan="4" class="text-center py-4 font-semibold ">No Data Found!</td></tr>');
         }
     }
 

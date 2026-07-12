@@ -36,7 +36,7 @@
             <label for="my-drawer" aria-label="open sidebar" class="btn btn-square btn-ghost lg:hidden">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor" class="size-5 text-white"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
             </label>
-            <div class="flex-1 font-bold text-white">Request Accounts</div>
+            <div class="flex-1 font-bold text-white">Disapproved Accounts</div>
         </nav>
         <div class="p-6">
             <!--main content-->
@@ -65,7 +65,7 @@
                     <div class="overflow-x-auto">
                         <table class="table table-zebra">
                             <thead>
-                                <tr  class="bg-[#0d9488] text-white">
+                                <tr class="bg-[#0d9488] text-white">
                                     <th>Full Name</th>
                                     <th>Email</th>
                                     <th>Contact Number</th>
@@ -75,7 +75,7 @@
                                 <tbody class="myTable">
                                     <?php
                                         $user_type = "3";
-                                        $user_status = "Pending";
+                                        $user_status = "Disapproved";
                                         $request = $conn->prepare("SELECT * FROM `accounts` WHERE `user_type` = ? AND `status` = ? ORDER BY date_request ASC");
                                         $request->bind_param("ss", $user_type, $user_status);
                                         $request->execute();
@@ -114,7 +114,7 @@
                                                     <td>' . $email  . '</td>
                                                     <td>' . $contact_number . '</td>
                                                     <td>
-                                                        <a href="request_account_info.php?id=' . $user_id . '&location_back=request_accounts.php" class="btn btn-success text-white">More Info</a>
+                                                        <a href="request_account_info.php?id=' . $user_id . '&location_back=disapproved_accounts.php" class="btn btn-success text-white">More Info</a>
                                                     </td>
                                                 </tr>';
                                             }
