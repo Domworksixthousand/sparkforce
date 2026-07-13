@@ -13,6 +13,13 @@
     <script src="assets/scripts/cool_alert.js"></script>
 </head>
 <body class="bg-[linear-gradient(to_right,#2A7B9B_0%,#57C785_100%,#EDDD53_100%)] min-h-screen  ">
+
+  <!---alert-->
+  <?php 
+      include 'alerts.php'; 
+  ?>
+
+
     
     <main>
         <section class="my-container flex justify-center items-center flex-col min-h-screen">
