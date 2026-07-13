@@ -418,17 +418,85 @@ if(isset($_POST['sigout_admin'])){
     exit();
 }
 
+
+
+
+
+
+
+
+
+
+
 if(isset($_POST['approved_request_account'])){
     $id = $_POST['id'];
     $status = "Approved";
 
-    $update = $conn->prepare("UPDATE accounts SET status = ? WHERE `user_id` = ?");
-    $update->bind_param("ss", $status, $id);
-    $update->execute();
 
-    $_SESSION['success'] = "Successfully Approved";
-    header("location:admin/request_accounts.php");
-    exit;
+    $get_info = $conn->prepare("SELECT * FROM `accounts` WHERE `user_id` = ?");
+    $get_info->bind_param("s",$id);
+    $get_info->execute();
+    $result_info = $get_info->get_result();
+    if($result_info->num_rows>0){
+        while($row = mysqli_fetch_assoc($result_info)){
+            $email = $row['email'];
+            $firstname = $row['firstname'];
+        }
+    }
+
+       //message na email
+   $subject = "RENTSPACE: Account Approved!";
+    $message = "
+        <p>Dear <strong>$firstname</strong>,</p>
+        <p>Congratulations! We are excited to inform you that your <strong>Rentspace</strong> account has been successfully approved.</p>
+        <div style='background-color: #f8f9fa; border-left: 4px solid #2c7be5; padding: 15px; margin: 20px 0;'>
+            <p style='margin: 0;'><strong>What's next?</strong></p>
+            <p style='margin: 5px 0 0 0;'>You can now log in to your account, list your space, or start exploring available rentals.</p>
+        </div>
+        <p>If you have any questions or need assistance getting started, feel free to contact our support team.</p>
+        <p>Welcome to the community!</p>
+        <br>
+        <p>Best regards,</p>
+        <p><strong>The Rentspace Team</strong></p>
+    ";
+    $mail = new PHPMailer(true);
+
+    try {
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'rentspace4707@gmail.com';
+        $mail->Password   = 'hmmv thkm hoqs gzhi'; 
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        $mail->Port       = 465;
+
+        $mail->setFrom('rentspace4707@gmail.com', 'RENTSPACE');
+        $mail->addAddress($email, $firstname);
+
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $message;
+
+        $mail->send();
+
+            
+        $update = $conn->prepare("UPDATE accounts SET status = ? WHERE `user_id` = ?");
+        $update->bind_param("ss", $status, $id);
+        $update->execute();
+
+        $_SESSION['success'] = "Successfully Approved";
+        header("location:admin/request_accounts.php");
+        exit;
+
+       
+      
+    } catch (Exception $e) {
+        //check kun my internet
+        $_SESSION['error'] = "Failed to send email. Please check your internet connection or try again.";
+        header("Location: admin/request_account_info.php?id=$id&location_back=request_accounts.php");
+        exit;
+    }
+
 
 }
 
@@ -437,11 +505,253 @@ if(isset($_POST['disapproved_request_account'])){
     $id = $_POST['id'];
     $status = "Disapproved";
 
-    $update = $conn->prepare("UPDATE accounts SET status = ? WHERE `user_id` = ?");
-    $update->bind_param("ss", $status, $id);
-    $update->execute();
+    $get_info = $conn->prepare("SELECT * FROM `accounts` WHERE `user_id` = ?");
+    $get_info->bind_param("s",$id);
+    $get_info->execute();
+    $result_info = $get_info->get_result();
+    if($result_info->num_rows>0){
+        while($row = mysqli_fetch_assoc($result_info)){
+            $email = $row['email'];
+            $firstname = $row['firstname'];
+        }
+    }
 
-    $_SESSION['success'] = "Successfully Disapproved";
-    header("location:admin/request_accounts.php");
-    exit;
+
+        //message na email
+   $subject = "RENTSPACE: Account Update Required";
+   $reason = "The submitted information or property documents could not be verified by our compliance team. Please provide secondary proof.";
+    $message = "
+        <p>Dear <strong>$firstname</strong>,</p>
+        <p>Thank you for your interest in joining <strong>Rentspace</strong>. After carefully reviewing your account application, we regret to inform you that we are unable to approve your request at this time.</p>
+        
+        <div style='background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; color: #856404;'>
+            <p style='margin: 0;'><strong>Reason for Disapproval:</strong></p>
+            <p style='margin: 5px 0 0 0;'>$reason</p>
+        </div>
+        
+        <p><strong>What can you do?</strong><br>
+        Please log back into your dashboard to update your profile or re-upload the correct and clear verification requirements.</p>
+        
+        <p>If you believe this was a mistake or you need help complying with our guidelines, please don't hesitate to reach out to our support team.</p>
+        <p>Thank you for your understanding.</p>
+        <br>
+        <p>Best regards,</p>
+        <p><strong>The Rentspace Verification Team</strong></p>
+    ";
+    $mail = new PHPMailer(true);
+
+    try {
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'rentspace4707@gmail.com';
+        $mail->Password   = 'hmmv thkm hoqs gzhi'; 
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        $mail->Port       = 465;
+
+        $mail->setFrom('rentspace4707@gmail.com', 'RENTSPACE');
+        $mail->addAddress($email, $firstname);
+
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $message;
+
+        $mail->send();
+
+            
+        $update = $conn->prepare("UPDATE accounts SET status = ? WHERE `user_id` = ?");
+        $update->bind_param("ss", $status, $id);
+        $update->execute();
+
+        $_SESSION['success'] = "Successfully Disapproved";
+        header("location:admin/request_accounts.php");
+        exit;
+       
+      
+    } catch (Exception $e) {
+        //check kun my internet
+        $_SESSION['error'] = "Failed to send email. Please check your internet connection or try again.";
+        header("Location: admin/request_account_info.php?id=$id&location_back=request_accounts.php");
+        exit;
+    }
+
+  
+}
+
+
+
+if(isset($_POST['forgot_password'])){
+    $email = $_POST['email'];
+    $user_type = "3";
+    $status = 'Approved';
+    
+    $check_email = $conn->prepare("SELECT * FROM `accounts` WHERE `email` = ? AND `user_type` <= ? AND `status` = ?");
+    $check_email->bind_param("sss", $email, $user_type, $status);
+    $check_email->execute();
+    $result_email = $check_email->get_result();
+    if($result_email->num_rows>0){
+        while($row = mysqli_fetch_assoc($result_email)){
+            $user_id = $row['user_id'];
+            $firstname = $row['firstname'];
+
+
+            
+        // Generate 6 digit random number
+        $verification_code = rand(100000, 999999);
+        //my expire siya 5 min
+        $expiry_time       = time() + (5 * 60); 
+
+        $_SESSION['email_verification'] = [
+            'code'       => $verification_code,
+            'email'      => $email, 
+            'expires_at' => $expiry_time
+        ];
+
+
+            
+            //message na email
+        $subject = "RENTSPACE: Reset Your Password";
+        $message = "
+            <p>Dear <strong>$firstname</strong>,</p>
+            <p>We received a request to reset the password associated with your <strong>Rentspace</strong> account.</p>
+            <p>To proceed with your password reset, please use the verification code below:</p>
+            
+            <h2 style='color:#2c7be5; letter-spacing:4px; text-align:center; background-color:#f8f9fa; padding:15px; border-radius:5px; margin:20px 0;'>$verification_code</h2>
+            
+            <p>This code will expire in <strong>5 minutes</strong> for security purposes.<br>
+            Please do not share this code with anyone.</p>
+            
+            <hr style='border:0; border-top:1px solid #eef2f6; margin:20px 0;'>
+            <p style='color:#7c8ba1; font-size:13px;'>If you did not request a password reset, you can safely ignore this email. Your account remains secure.</p>
+            
+            <p>Best regards,</p>
+            <p><strong>The Rentspace Security Team</strong></p>
+        ";
+
+        $mail = new PHPMailer(true);
+
+        try {
+            $mail->isSMTP();
+            $mail->Host       = 'smtp.gmail.com';
+            $mail->SMTPAuth   = true;
+            $mail->Username   = 'rentspace4707@gmail.com';
+            $mail->Password   = 'hmmv thkm hoqs gzhi'; 
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+            $mail->Port       = 465;
+
+            $mail->setFrom('rentspace4707@gmail.com', 'RENTSPACE');
+            $mail->addAddress($email, $firstname);
+
+            $mail->isHTML(true);
+            $mail->Subject = $subject;
+            $mail->Body    = $message;
+
+            $mail->send();
+
+
+            $_SESSION['verification_code'] = $verification_code;
+            $_SESSION['user_id'] = $user_id;
+            header("location:forgot_password_confirm.php");
+            exit;
+        
+        
+        } catch (Exception $e) {
+            //check kun my internet
+            $_SESSION['error'] = "Failed to send email. Please check your internet connection or try again.";
+            header("Location: forgot_password.php");
+            exit;
+        }
+
+
+
+
+        }
+    }else{
+        $_SESSION['error'] = "User Doesn't Exist";
+        header("location:forgot_password.php");
+        exit;
+    }
+}
+
+if(isset($_POST['confirm_forgot_pass'])){
+    $code = $_POST['code'];
+    $repeat_password = $_POST['repeat_password'];
+    $password = $_POST['password']; 
+
+     //  HASH THE PASSWORD
+    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+       //check kung same an repeat password and password
+    if ($repeat_password !== $password) {
+        $_SESSION['error'] = "Password and Repeat Password do not Match!";
+        header("location:forgot_password_confirm.php");
+        exit;
+    }
+
+
+       // kun diri match ang passsword sa format
+    $hasNumber = preg_match('/[0-9]/', $password);
+    $hasSymbol = preg_match('/[!@#$%^&*(),.?":{}|<>]/', $password);
+    if (strlen($password) < 7 || !$hasNumber || !$hasSymbol) {
+
+        $_SESSION['error'] = "Password must be at least 7 characters long, contain 1 number, and 1 symbol!";
+        header("location:forgot_password_confirm.php");
+        exit;
+    }
+
+
+    if($code == $_SESSION['verification_code']){
+        $update = $conn->prepare("UPDATE accounts SET `password` = ? WHERE `user_id` = ?");
+        $update->bind_param("ss",$hashed_password,$_SESSION['user_id']);
+        $update->execute();
+
+        unset($_SESSION['verification_code']);
+        unset($_SESSION['user_id']);
+        
+        $_SESSION['success'] = "Successfully Changed Password";
+        header("location:signin.php");
+        exit;
+    }else{
+          $_SESSION['error'] = "Code Doesn't Match!";
+        header("location:forgot_password_confirm.php");
+        exit;
+    }
+
+}
+
+
+
+if(isset($_POST['sigout_user'])){
+ // Invalidate token in DB if session is active
+    if (isset($_SESSION['user_login'])) {
+        $stmt = $conn->prepare("UPDATE accounts SET remember_token = NULL WHERE user_id = ?");
+        $stmt->bind_param("s", $user_id_login);
+        $stmt->execute();
+    }
+
+    // Clear session
+    $_SESSION = array();
+
+    // Clear session cookie
+    if (ini_get("session.use_cookies")) {
+        $params = session_get_cookie_params();
+        setcookie(session_name(), '', time() - 42000,
+            $params["path"], $params["domain"],
+            $params["secure"], $params["httponly"]
+        );
+    }
+
+    // Clear remember_token cookie
+    setcookie("remember_token", "", time() - 3600, "/", "", false, true); // HttpOnly
+
+
+    unset($_SESSION['user_login']);
+
+    // Destroy session
+    session_destroy();
+
+
+    // Redirect
+    header("location:index.php");
+    exit();
 }

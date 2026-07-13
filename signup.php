@@ -22,10 +22,8 @@
     <!---alert-->
     <?php 
         include 'alerts.php'; 
-        include 'loading_animation.php';
+   
     ?>
-
-
 
 
 
@@ -117,7 +115,7 @@
                            <input 
                                 type="text" 
                                 id="contactNumber"
-                                class="grow w-[100%]" 
+                                class="number_only grow w-[100%]" 
                                 name="contact_number"  
                                 value="<?php echo $_SESSION['contact_number'] ?? ''; ?>" 
                                 placeholder="Contact Number (e.g., 09123456789)" 
@@ -311,7 +309,6 @@
     </main>
 
 
-
     <!--modal-->
     <dialog id="policy_modal" class="modal modal-bottom sm:modal-middle">
     <div class="modal-box max-w-2xl bg-base-100">
@@ -356,7 +353,7 @@
     </div>
     </dialog>
 
-    <script type="module" src="https://cdn.jsdelivr.net/npm/ldrs/dist/auto/chaoticOrbit.js"></script>
+    <script src="assets/scripts/email_animation.js"></script>
     <script src="assets/scripts/index.js"></script>
     <script src="assets/scripts/address.js"></script>
 </body>

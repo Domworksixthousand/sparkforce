@@ -19,13 +19,13 @@
     <script src="./../assets/scripts/tailwind.js"></script>
     <script src="./../assets/scripts/daisy_ui.js"></script>
     <script src="../assets/scripts/cool_alert.js"></script>
-      <script src="./../assets/scripts/jquery.js"></script>
+    <script src="./../assets/scripts/jquery.js"></script>
 </head>
 <body class="bg-base-100">
 
   <!---alert-->
   <?php 
-      include '../alerts.php'; 
+    include '../alerts.php'; 
 
   ?>
 

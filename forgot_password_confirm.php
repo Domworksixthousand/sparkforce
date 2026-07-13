@@ -1,5 +1,5 @@
 <?php
-include 'config.php';
+    include 'config.php';
 ?>
 
 <!DOCTYPE html>
@@ -7,7 +7,7 @@ include 'config.php';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RENTSPACE - Email Confirmation</title>
+    <title>RENTSPACE - Forgot Password</title>
     <link rel="shortcut icon" href="assets/images/logo-icon.png" type="image/x-icon"> 
     <link rel="stylesheet" href="assets/styles/daisy_ui.css">
     <link rel="stylesheet" href="assets/styles/index.css">
@@ -30,7 +30,7 @@ include 'config.php';
                     RENTSPACE
                 </h1>
                 <div class="w-16 h-[3px] bg-white/50 rounded-full mb-6"></div>
-                <h2 class="text-white font-bold">EMAIL CONFIRMATION</h2>
+                <h2 class="text-white font-bold">CODE CONFIRMATION</h2>
             </div>
             
             <form action="functions.php" method="POST" class="w-full md:w-[500px] block box-border px-4 md:px-0">
@@ -42,10 +42,30 @@ include 'config.php';
                         <input type="text" class="grow w-full bg-transparent focus:outline-none text-black" name="code"  placeholder="Enter Code" required />
                     </div>
                 </div>
+                <div class="w-[100%]  mb-4">
+                    <p class="mb-2 text-white">New Password</p>
+                    <label class="input w-[100%]">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"  class="size-5 text-gray-500">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                        </svg>
+                        <input type="password" class=" grow w-[100%]" id="password" name="password"   placeholder="Enter Password " required />
+                        <img src="assets/images/hide-icon.png" class="cursor-pointer" id="pass" onclick="toggletPassword()">
+                    </label>
+                </div>
+                 <div class="w-[100%] mb-4">
+                        <p class="mb-2 text-white">Repeat Password </p>
+                        <label class="input w-[100%]">
+                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"  class="size-5 text-gray-500">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                            </svg>
+                            <input type="password" class=" grow w-[100%]" id="repeat_password" name="repeat_password"   placeholder="Enter Repeat Password" />
+                            <img src="assets/images/hide-icon.png" id="repeat_pass" class="cursor-pointer" onclick="toggleRepeatPassword()">
+                        </label>
+                    </div>
 
               
                 <div class="flex w-full gap-4 justify-between items-center box-border">
-                    <button type="submit" name="confirm_code" class="flex-1 min-w-0 bg-white hover:bg-gray-200 hover:text-black  transition-colors cursor-pointer p-2 rounded-[10px] font-semibold text-center border-0 block">
+                    <button type="submit" name="confirm_forgot_pass" class="flex-1 min-w-0 bg-white hover:bg-gray-200 hover:text-black  transition-colors cursor-pointer p-2 rounded-[10px] font-semibold text-center border-0 block">
                         Confirm
                     </button>
                     <button type="button" onclick="location.href='index.php'" class="flex-1 min-w-0 bg-gray-500 hover:bg-gray-400 text-white transition-colors cursor-pointer p-2 rounded-[10px] font-semibold text-center border-0 block">

@@ -37,11 +37,11 @@
 
     //get info
     #get data kun available
-    if(isset($_SESSION['admin_login'])){
-        $admin_id = $_SESSION['admin_login'];
+    if(isset($_SESSION['user_login'])){
+        $user_id_login = $_SESSION['user_login'];
 
         $get_data = $conn->prepare("SELECT * FROM `accounts` WHERE `user_id` = ?");
-        $get_data->bind_param("s",$admin_id);
+        $get_data->bind_param("s",$user_login);
         $get_data->execute();
         $result_get = $get_data->get_result();
         if($result_get->num_rows>0){
@@ -51,6 +51,25 @@
         }
 
     }
+
+
+
+      #get data kun available
+    if(isset($_SESSION['admin_login'])){
+        $admin_id = $_SESSION['admin_login'];
+
+        $get_data = $conn->prepare("SELECT * FROM `accounts` WHERE `user_id` = ?");
+        $get_data->bind_param("s",$user_login);
+        $get_data->execute();
+        $result_get = $get_data->get_result();
+        if($result_get->num_rows>0){
+            while($row_admin = mysqli_fetch_assoc($result_get)){
+            
+            }
+        }
+
+    }
+
 
 
 

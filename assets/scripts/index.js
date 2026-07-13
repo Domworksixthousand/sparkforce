@@ -99,7 +99,7 @@
 
 
 
-    /*email animation */
+    /*email animation
     document.addEventListener("DOMContentLoaded", () => {
         const myForm = document.getElementById('myForm');
         const animation = document.getElementById('animation_id');
@@ -122,7 +122,7 @@
                 showLoading();
             });
         }
-    });
+    }); */
 
 
 //show modal
@@ -132,3 +132,26 @@
       modal.showModal();
     }
   });
+  
+
+//number only allowed
+      window.addEventListener('DOMContentLoaded', function() {
+    const contactInput = document.querySelector('.number_only');
+
+    if (contactInput) {
+      
+        contactInput.addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+
+     
+        contactInput.addEventListener('paste', function(e) {
+            const pasteData = (e.clipboardData || window.clipboardData).getData('text');
+            if (/[^0-9]/.test(pasteData)) {
+                e.preventDefault();
+           
+                this.value = pasteData.replace(/[^0-9]/g, '').substring(0, 11);
+            }
+        });
+    }
+});
