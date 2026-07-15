@@ -23,3 +23,31 @@
         });
     }
 });
+
+
+
+   window.addEventListener('DOMContentLoaded', function() {
+    const myForm = document.getElementById('signin_form');
+    
+    if (myForm) {
+        myForm.addEventListener('submit', function() {
+            
+           
+            CoolAlert.show({
+                title: 'Please Wait...',
+                text: 'Signing In',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false, 
+                showCancelButton: false,
+                didOpen: () => {
+                
+                    if (typeof CoolAlert.showLoading === 'function') {
+                        CoolAlert.showLoading();
+                    }
+                }
+            });
+            
+        });
+    }
+});

@@ -72,3 +72,28 @@ document.addEventListener("DOMContentLoaded", ()=> {
     fetchData();
 
 });
+
+//get
+    //get
+document.addEventListener("DOMContentLoaded", ()=> {
+
+        function fetchData() {
+        $.ajax({
+            url: "get_notifications.php",
+            method: "GET",
+            success: function(data) {
+                $(".noti_data").html(data);
+            },
+            error: function() {
+                $(".noti_data").html("Error loading data");
+            }
+        });
+    }
+
+
+    setInterval(fetchData, 2000);
+
+
+    fetchData();
+
+});

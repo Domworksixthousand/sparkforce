@@ -31,7 +31,7 @@
                 <div class="w-16 h-[3px] bg-white/50 rounded-full mb-6"></div>
             </div>
             
-            <form action="functions.php" method="POST" class="w-full md:w-[500px] block box-border px-4 md:px-0">
+            <form action="functions.php" method="POST" id="signin_form" class="w-full md:w-[500px] block box-border px-4 md:px-0">
                 <!-- Username Field -->
                 <div class="w-full block mb-4">
                     <p class="mb-2 text-white">Username</p>
@@ -72,7 +72,7 @@
     </main> 
 
 
-
+    <script src="assets/scripts/email_animation.js"></script>
     <script src="assets/scripts/index.js"></script>
     <script src="assets/scripts/address.js"></script>
 </body>

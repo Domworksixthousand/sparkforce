@@ -10,6 +10,18 @@ require 'PHPMailer-master/src/Exception.php';
 require 'PHPMailer-master/src/PHPMailer.php';
 require 'PHPMailer-master/src/SMTP.php';
 
+if(isset($_GET['noti_id'])){
+    $noti_id = $_GET['noti_id'];
+    $link = $_GET['link'];
+    $status = "seen";
+    $update = $conn->prepare("UPDATE notifications SET `status` = ? WHERE `noti_id` = ?");
+    $update->bind_param("ss", $status, $noti_id);
+    $update->execute();
+
+    header("location:users/$link");
+    exit;
+}
+
 
 if (isset($_POST['register'])) {
     
@@ -421,13 +433,6 @@ if(isset($_POST['sigout_admin'])){
 
 
 
-
-
-
-
-
-
-
 if(isset($_POST['approved_request_account'])){
     $id = $_POST['id'];
     $status = "Approved";
@@ -483,6 +488,15 @@ if(isset($_POST['approved_request_account'])){
         $update = $conn->prepare("UPDATE accounts SET status = ? WHERE `user_id` = ?");
         $update->bind_param("ss", $status, $id);
         $update->execute();
+
+        $text_noti = "Welcome to RENTSPACE! Let's find your next home away from home. Start by completing your profile so landlords can get to know you better!";
+        $status = "unseen";
+        $sender = "RENTSPACE TEAM";
+        $link = "my_account.php";
+        $notifications = $conn->prepare("INSERT INTO `notifications` (`text_noti`,`status`,`date_sent`,`time_sent`,`sender`,`receiver`,`link`) VALUES
+        (?,?,?,?,?,?,?)");
+        $notifications->bind_param("sssssss", $text_noti, $status, $datetoday, $timetoday_24_hourformat, $sender,$id,$link);
+        $notifications->execute();
 
         $_SESSION['success'] = "Successfully Approved";
         header("location:admin/request_accounts.php");
@@ -663,8 +677,6 @@ if(isset($_POST['forgot_password'])){
         }
 
 
-
-
         }
     }else{
         $_SESSION['error'] = "User Doesn't Exist";
@@ -672,6 +684,7 @@ if(isset($_POST['forgot_password'])){
         exit;
     }
 }
+
 
 if(isset($_POST['confirm_forgot_pass'])){
     $code = $_POST['code'];
@@ -754,4 +767,49 @@ if(isset($_POST['sigout_user'])){
     // Redirect
     header("location:index.php");
     exit();
+}
+
+if(isset($_POST['delete_notifictaions'])){
+    $id = $_POST['id'];
+
+    $delete=$conn->prepare("DELETE FROM `notifications` WHERE `noti_id` = ?");
+    $delete->bind_param("i", $id);
+    $delete->execute();
+
+    $_SESSION['success'] = "Successfully Deleted";
+    header("location:users/notifications");
+    exit;
+}
+
+
+if(isset($_POST['change_profile'])){
+    $profile_image = $_POST['profile_image'];
+
+
+    $profile_image = $_FILES['profile_image']['name'];
+    $profile_image_tmp = $_FILES['profile_image']['tmp_name'];
+    $profile_image_size = $_FILES['profile_image']['size'];
+    $location = "assets/uploads/" . $profile_image;
+    $max_size = 2 * 1024 * 1024;
+
+    if(empty($profile_image)){
+        $_SESSION['error'] = "No Selected Image";
+        header("location:users/my_account.php");
+        exit;
+    }elseif($profile_image_size > $max_size){
+        $_SESSION['error'] = "Selected image exceeds 2MB.";
+        header("location:users/my_account.php");
+        exit;
+    }else{
+        if(move_uploaded_file($profile_image_tmp,$location)){
+            $update = $conn->prepare("UPDATE accounts SET profile = ? WHERE `user_id` = ?");
+            $update->bind_param("ss", $profile_image, $user_id_login);
+            $update->execute();
+            $_SESSION['success'] = "Successfully Updated";
+            header("location:users/my_account.php");
+            exit;
+        }
+    }
+
+   
 }

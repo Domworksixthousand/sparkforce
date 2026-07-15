@@ -25,7 +25,7 @@
 </head>
 <body class="bg-base-100">
 
-<?php include 'setup_account.php'; ?>
+
 
   <div class="drawer lg:drawer-open ">
     <input id="my-drawer" type="checkbox" class="drawer-toggle" />
