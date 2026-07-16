@@ -1,10 +1,24 @@
-   window.addEventListener('DOMContentLoaded', function() {
+window.addEventListener('DOMContentLoaded', function () {
+       
+
+
+
     const myForm = document.getElementById('myForm');
     
     if (myForm) {
         myForm.addEventListener('submit', function() {
             
-           
+                (function() {
+                    const akingElement = document.getElementById('my_modal_3');
+                    if (akingElement) {
+                
+                        akingElement.classList.remove('modal-open');
+                        
+                    
+                        akingElement.classList.add('!hidden', 'hidden');
+                    }
+                })();
+            
             CoolAlert.show({
                 title: 'Please Wait...',
                 text: 'Sending email, please do not close the page.',
@@ -12,6 +26,7 @@
                 allowEscapeKey: false,
                 showConfirmButton: false, 
                 showCancelButton: false,
+             
                 didOpen: () => {
                 
                     if (typeof CoolAlert.showLoading === 'function') {

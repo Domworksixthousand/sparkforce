@@ -40,7 +40,7 @@
         <!--main content-->
         <main>
             <section>
-              <h1 class="text-[2rem] font-bold">Welcome back, <span class="text-[#0fab9e] font-2xbold">DOM</span></h1>
+              <h1 class="text-[2rem] font-bold">Welcome back, <span class="text-[#0fab9e] font-2xbold uppercase"><?php echo $firstnameko; ?></span></h1>
               <p>Find Your RentSpace that Fit to your needs and Preferences.</p>
 
               

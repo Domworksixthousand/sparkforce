@@ -74,8 +74,34 @@
             pass.src="assets/images/hide-icon.png";
         }
 }
-    
 
+
+      //hide show password
+    function toggleRepeatPassword_user() {
+        const passwordField = document.getElementById("repeat_password");
+        const repeat_pass = document.getElementById("repeat_pass");
+        if (passwordField.type === "password") {
+            passwordField.type = "text";
+            repeat_pass.src="../assets/images/view-icon.png";
+        } else {
+            passwordField.type = "password";
+            repeat_pass.src="../assets/images/hide-icon.png";
+        }
+}
+    
+     //hide show password
+    function toggletPassword_user() {
+        const password = document.getElementById("password");
+        const pass = document.getElementById("pass");
+        if (password.type === "password") {
+            password.type = "text";
+            pass.src="../assets/images/view-icon.png";
+        } else {
+            password.type = "password";
+            pass.src="../assets/images/hide-icon.png";
+        }
+    }
+    
     
 //scroll style
     const navbar = document.querySelector('.navbar');
@@ -153,5 +179,26 @@
                 this.value = pasteData.replace(/[^0-9]/g, '').substring(0, 11);
             }
         });
+    }
+});
+
+
+//get image and show 
+const fileInput = document.getElementById('profile-upload');
+const preview = document.getElementById('profile-preview');
+
+fileInput.addEventListener('change', function() {
+    const file = this.files[0];
+    
+    if (file) {
+        
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+        
+            preview.src = e.target.result;
+        }
+        
+        reader.readAsDataURL(file);
     }
 });

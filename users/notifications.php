@@ -80,7 +80,7 @@
                      
                          <div class="group flex flex-col lg:flex-row items-center shadow-sm p-[20px] mb-4 border border-gray-100 rounded-xl hover:shadow-xl hover:border hover:border-gray-300  cursor-pointer transition-all ">
                             <div class="me-3 mb-4 lf:mb-0 ">
-                                <img src="<?php echo $pic; ?>" class=" w-[3rem]  rounded-[10px]  ">
+                                <img src="<?php echo $pic; ?>" class=" w-[3rem] h-[3rem]  rounded-full  ">
                             </div>
                            <div class="flex flex-col w-[100%]">
                                 <div class="flex items-center justify-between  gap-2 mb-2 lg:mb-0">
@@ -141,15 +141,15 @@
                             $lastname   = $row_noti['lastname'];
                             $suffix     = $row_noti['suffix'];
                             $profile    = $row_noti['profile'];
-                            $pic = ($profile === NULL) ? "../assets/images/logo-icon.png" : "../assets/uplaods/$profile";
-
+                           $pic = ($profile === NULL) ? "../assets/images/logo-icon.png" : "../assets/uploads/$profile";
+  
                             $status_color = ($status === "seen") ? "status-success" : "status-error";
                     ?>
                         
                       
                             <div class="group flex flex-col lg:flex-row items-center shadow-sm p-[20px] mb-4 border border-gray-100 rounded-xl hover:shadow-xl hover:border hover:border-gray-300  cursor-pointer transition-all ">
                                 <div class="me-3 mb-4 lf:mb-0 ">
-                                    <img src="<?php echo $pic; ?>" class=" w-[3rem]  rounded-[10px]  ">
+                                    <img src="<?php echo $pic; ?>" class=" w-[3rem] h-[3rem]  rounded-full  ">
                                 </div>
                                 <div class="flex flex-col w-[100%]">
                                     <div class="flex items-center justify-between  gap-2 mb-2 lg:mb-0">
