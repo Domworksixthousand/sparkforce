@@ -24,7 +24,7 @@ include 'my_account.php';
                     </div>
                 </div>
                 <div class="flex gap-2 justify-end items-end">
-                    <button type="submit" name="confirm_code" class="btn btn-success btn-sm">
+                    <button type="submit" name="confirm_code_credentials" class="btn btn-success btn-sm">
                         Confirm
                     </button>
 

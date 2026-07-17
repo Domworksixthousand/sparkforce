@@ -63,7 +63,7 @@ if(isset($_SESSION['user_login'])){
         $barangayko = htmlspecialchars($row_admin['barangay'] ?? '');
         $zipcodeko = htmlspecialchars($row_admin['zipcode'] ?? '');
         $addressko = $barangayko . ',' . $municipalityko . ',' . $provinceko . ',' . $zipcodeko;
-        
+        $user_type = $row_admin['user_type'];
         $id_typeko = htmlspecialchars($row_admin['id_type'] ?? '');
         $id_numberko = htmlspecialchars($row_admin['id_number'] ?? '');
         $id_photoko = htmlspecialchars($row_admin['id_photo'] ?? '');

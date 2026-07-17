@@ -6,6 +6,24 @@
         });
     });
 
+    //dropdown
+document.addEventListener("DOMContentLoaded", function () {
+    const btn = document.getElementById('dropdownBtn');
+    const menu = document.getElementById('dropdownMenu');
+    const arrow = document.getElementById('arrowIcon');
+
+    btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    menu.classList.toggle('hidden');
+    arrow.classList.toggle('rotate-180');
+    });
+
+    document.addEventListener('click', () => {
+    menu.classList.add('hidden');
+    arrow.classList.remove('rotate-180'); 
+    });
+});
+
 
     //auto uppercase
      document.addEventListener("DOMContentLoaded", () => {
@@ -202,3 +220,4 @@ fileInput.addEventListener('change', function() {
         reader.readAsDataURL(file);
     }
 });
+

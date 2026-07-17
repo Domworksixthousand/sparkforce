@@ -1,5 +1,7 @@
 
-      <?php  $current_page = basename($_SERVER['SCRIPT_NAME']); ?>
+      <?php  
+        $current_page = basename($_SERVER['SCRIPT_NAME']);
+    ?>
       <div class="menu p-4 w-64 min-h-full bg-base-200 text-base-content flex flex-col justify-between bg-[#0d9488] ">
         <ul class="space-y-2 mt-5">
             <li>
@@ -43,11 +45,28 @@
                 </span>
                 </a>
             </li>
-            <li>
-                <a href="#" class="flex items-center gap-3 active">                                                        
-                  <svg xmlns="http://www.w3.org/2000/svg" width="25" class="text-white" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin-house-icon lucide-map-pin-house"><path d="M15 22a1 1 0 0 1-1-1v-4a1 1 0 0 1 .445-.832l3-2a1 1 0 0 1 1.11 0l3 2A1 1 0 0 1 22 17v4a1 1 0 0 1-1 1z"/><path d="M18 10a8 8 0 0 0-16 0c0 4.993 5.539 10.193 7.399 11.799a1 1 0 0 0 .601.2"/><path d="M18 22v-3"/><circle cx="10" cy="10" r="3"/></svg>
-                <span class="text-white">Landlord Centre</span>
-                </a>
+             <li class="relative">
+                <button id="dropdownBtn" class="w-full flex items-center justify-between gap-3 text-white active focus:outline-none">
+                    <div class="flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="25" class="text-white" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin-house-icon lucide-map-pin-house"><path d="M15 22a1 1 0 0 1-1-1v-4a1 1 0 0 1 .445-.832l3-2a1 1 0 0 1 1.11 0l3 2A1 1 0 0 1 22 17v4a1 1 0 0 1-1 1z"/><path d="M18 10a8 8 0 0 0-16 0c0 4.993 5.539 10.193 7.399 11.799a1 1 0 0 0 .601.2"/><path d="M18 22v-3"/><circle cx="10" cy="10" r="3"/></svg>
+                        <span>
+                            Landlord Centre
+                        </span>
+                    </div>
+                    <svg id="arrowIcon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" class="transition-transform duration-200">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
+                </button>
+
+                <!-- Dropdown Menu -->
+                <ul id="dropdownMenu" class="hidden mt-2 ml-6 space-y-1 rounded-md p-2">
+                    <li>
+                        <a href="register.phps" class="block text-sm text-white hover:text-white py-1 px-2">
+                            Register
+                        </a>
+                    </li>
+
+                </ul>
             </li>
             <div class="divider text-white"></div>
             <li>
@@ -58,3 +77,5 @@
             </li>
         </ul>
       </div>
+
+   

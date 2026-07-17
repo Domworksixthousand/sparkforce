@@ -814,38 +814,38 @@ if(isset($_POST['change_profile'])){
    
 }
 
-if(isset($_POST['change_credentials'])){
+if (isset($_POST['change_credentials'])) {
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
     $repeat_password = $_POST['repeat_password'] ?? '';
 
-    if(empty($username) && empty($password)){
+    if (empty($username) && empty($password)) {
         header("location:change_credentials.php");
         exit;
-    }elseif(!empty($username) && empty($password)){
-            //dapat 7 pataas an username
+    } elseif (!empty($username) && empty($password)) {
+        //dapat 7 pataas an username
         if (strlen($username) < 7) {
             $_SESSION['error'] = "Username must be at least 7 characters long";
             header("location:change_credentials.php");
             exit;
-        }else{
- 
-           // Generate 6 digit random number
-        $verification_code = rand(100000, 999999);
-        //my expire siya 5 min
-        $expiry_time       = time() + (5 * 60); 
+        } else {
 
-        $_SESSION['email_verification'] = [
-            'code'       => $verification_code,
-            'email'      => $email, 
-            'expires_at' => $expiry_time
-        ];
+            // Generate 6 digit random number
+            $verification_code = rand(100000, 999999);
+            //my expire siya 5 min
+            $expiry_time = time() + (5 * 60);
+
+            $_SESSION['email_verification'] = [
+                'code' => $verification_code,
+                'email' => $email,
+                'expires_at' => $expiry_time
+            ];
 
 
-            
+
             //message na email
-        $subject = "RENTSPACE: Change Username Credentials";
-        $message = "
+            $subject = "RENTSPACE: Change Username Credentials";
+            $message = "
             <p>Dear <strong>$firstnameko</strong>,</p>
             <p>We received a request to Change the Username Credentials associated with your <strong>Rentspace</strong> account.</p>
             <p>To proceed with your Change the Username Credentials, please use the verification code below:</p>
@@ -862,47 +862,218 @@ if(isset($_POST['change_credentials'])){
             <p><strong>The Rentspace Security Team</strong></p>
         ";
 
-        $mail = new PHPMailer(true);
+            $mail = new PHPMailer(true);
 
-        try {
-            $mail->isSMTP();
-            $mail->Host       = 'smtp.gmail.com';
-            $mail->SMTPAuth   = true;
-            $mail->Username   = 'rentspace4707@gmail.com';
-            $mail->Password   = 'hmmv thkm hoqs gzhi'; 
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-            $mail->Port       = 465;
+            try {
+                $mail->isSMTP();
+                $mail->Host = 'smtp.gmail.com';
+                $mail->SMTPAuth = true;
+                $mail->Username = 'rentspace4707@gmail.com';
+                $mail->Password = 'hmmv thkm hoqs gzhi';
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+                $mail->Port = 465;
 
-            $mail->setFrom('rentspace4707@gmail.com', 'RENTSPACE');
-            $mail->addAddress($emailko, $firstnameko);
+                $mail->setFrom('rentspace4707@gmail.com', 'RENTSPACE');
+                $mail->addAddress($emailko, $firstnameko);
 
-            $mail->isHTML(true);
-            $mail->Subject = $subject;
-            $mail->Body    = $message;
+                $mail->isHTML(true);
+                $mail->Subject = $subject;
+                $mail->Body = $message;
 
-            $mail->send();
+                $mail->send();
 
-            $_SESSION['type'] = "username";
-            $_SESSION['username_verification'] = $verification_code;
-            $_SESSION['username_entered'] = $username;
-            header("location:users/enter_code_credentials.php");
-            exit;
-        
-        
-        } catch (Exception $e) {
-            //check kun my internet
-            $_SESSION['error'] = "Failed to send email. Please check your internet connection or try again.";
-            header("Location: users/change_credentials.php");
-            exit;   
+                $_SESSION['type'] = "username";
+                $_SESSION['username_verification'] = $verification_code;
+                $_SESSION['username_entered'] = $username;
+                header("location:users/enter_code_credentials.php");
+                exit;
+
+
+            } catch (Exception $e) {
+                //check kun my internet
+                $_SESSION['error'] = "Failed to send email. Please check your internet connection or try again.";
+                header("Location: users/change_credentials.php");
+                exit;
+            }
+
+
         }
+    } elseif (empty($username) && !empty($password)) {
+
+        // kun diri match ang passsword sa format
+        $hasNumber = preg_match('/[0-9]/', $password);
+        $hasSymbol = preg_match('/[!@#$%^&*(),.?":{}|<>]/', $password);
+        if (strlen($password) < 7 || !$hasNumber || !$hasSymbol) {
+
+            $_SESSION['error'] = "Password must be at least 7 characters long, contain 1 number, and 1 symbol!";
+            header("location:signup.php");
+            exit;
+        } elseif ($password !== $repeat_password) {
+            $_SESSION['error'] = "Password and Repeat Password do not Match";
+            header("location:signup.php");
+            exit;
+        }else{
+            
+            // Generate 6 digit random number
+            $verification_code = rand(100000, 999999);
+            //my expire siya 5 min
+            $expiry_time = time() + (5 * 60);
+
+            $_SESSION['email_verification'] = [
+                'code' => $verification_code,
+                'email' => $email,
+                'expires_at' => $expiry_time
+            ];
 
 
+
+            //message na email
+            $subject = "RENTSPACE: Change Password Credentials";
+            $message = "
+            <p>Dear <strong>$firstnameko</strong>,</p>
+            <p>We received a request to Change the Password Credentials associated with your <strong>Rentspace</strong> account.</p>
+            <p>To proceed with your Change the Password Credentials, please use the verification code below:</p>
+            
+            <h2 style='color:#2c7be5; letter-spacing:4px; text-align:center; background-color:#f8f9fa; padding:15px; border-radius:5px; margin:20px 0;'>$verification_code</h2>
+            
+            <p>This code will expire in <strong>5 minutes</strong> for security purposes.<br>
+            Please do not share this code with anyone.</p>
+            
+            <hr style='border:0; border-top:1px solid #eef2f6; margin:20px 0;'>
+            <p style='color:#7c8ba1; font-size:13px;'>If you did not request a password reset, you can safely ignore this email. Your account remains secure.</p>
+            
+            <p>Best regards,</p>
+            <p><strong>The Rentspace Security Team</strong></p>
+        ";
+
+            $mail = new PHPMailer(true);
+
+            try {
+                $mail->isSMTP();
+                $mail->Host = 'smtp.gmail.com';
+                $mail->SMTPAuth = true;
+                $mail->Username = 'rentspace4707@gmail.com';
+                $mail->Password = 'hmmv thkm hoqs gzhi';
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+                $mail->Port = 465;
+
+                $mail->setFrom('rentspace4707@gmail.com', 'RENTSPACE');
+                $mail->addAddress($emailko, $firstnameko);
+
+                $mail->isHTML(true);
+                $mail->Subject = $subject;
+                $mail->Body = $message;
+
+                $mail->send();
+
+                $_SESSION['type'] = "password";
+                $_SESSION['password_verification'] = $verification_code;
+                $_SESSION['password_entered'] = $password;
+                header("location:users/enter_code_credentials.php");
+                exit;
+
+
+            } catch (Exception $e) {
+                //check kun my internet
+                $_SESSION['error'] = "Failed to send email. Please check your internet connection or try again.";
+                header("Location: users/change_credentials.php");
+                exit;
+            }
+
+        }
+    }else{
+        $hasNumber = preg_match('/[0-9]/', $password);
+        $hasSymbol = preg_match('/[!@#$%^&*(),.?":{}|<>]/', $password);
+        if (strlen($password) < 7 || !$hasNumber || !$hasSymbol) {
+
+            $_SESSION['error'] = "Password must be at least 7 characters long, contain 1 number, and 1 symbol!";
+            header("location:signup.php");
+            exit;
+        } elseif ($password !== $repeat_password) {
+            $_SESSION['error'] = "Password and Repeat Password do not Match";
+            header("location:signup.php");
+            exit;
+        }elseif (strlen($username) < 7) {
+            $_SESSION['error'] = "Username must be at least 7 characters long";
+            header("location:change_credentials.php");
+            exit;
+        }elseif($username === $password){
+            $_SESSION['error'] = "Username & Password must not be same!";
+            header("location:change_credentials.php");
+            exit;
+        }else{
+              // Generate 6 digit random number
+            $verification_code = rand(100000, 999999);
+            //my expire siya 5 min
+            $expiry_time = time() + (5 * 60);
+
+            $_SESSION['email_verification'] = [
+                'code' => $verification_code,
+                'email' => $email,
+                'expires_at' => $expiry_time
+            ];
+
+
+
+            //message na email
+            $subject = "RENTSPACE: Change Password & Username Credentials";
+            $message = "
+            <p>Dear <strong>$firstnameko</strong>,</p>
+            <p>We received a request to Change the Password & Username Credentials associated with your <strong>Rentspace</strong> account.</p>
+            <p>To proceed with your Change the Password Credentials, please use the verification code below:</p>
+            
+            <h2 style='color:#2c7be5; letter-spacing:4px; text-align:center; background-color:#f8f9fa; padding:15px; border-radius:5px; margin:20px 0;'>$verification_code</h2>
+            
+            <p>This code will expire in <strong>5 minutes</strong> for security purposes.<br>
+            Please do not share this code with anyone.</p>
+            
+            <hr style='border:0; border-top:1px solid #eef2f6; margin:20px 0;'>
+            <p style='color:#7c8ba1; font-size:13px;'>If you did not request a password & Username reset, you can safely ignore this email. Your account remains secure.</p>
+            
+            <p>Best regards,</p>
+            <p><strong>The Rentspace Security Team</strong></p>
+        ";
+
+            $mail = new PHPMailer(true);
+
+            try {
+                $mail->isSMTP();
+                $mail->Host = 'smtp.gmail.com';
+                $mail->SMTPAuth = true;
+                $mail->Username = 'rentspace4707@gmail.com';
+                $mail->Password = 'hmmv thkm hoqs gzhi';
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+                $mail->Port = 465;
+
+                $mail->setFrom('rentspace4707@gmail.com', 'RENTSPACE');
+                $mail->addAddress($emailko, $firstnameko);
+
+                $mail->isHTML(true);
+                $mail->Subject = $subject;
+                $mail->Body = $message;
+
+                $mail->send();
+
+                $_SESSION['type'] = "password&username";
+                $_SESSION['password&username'] = $verification_code;
+                $_SESSION['password_entered'] = $password;
+                $_SESSION['username_entered'] = $username;
+                header("location:users/enter_code_credentials.php");
+                exit;
+
+
+            } catch (Exception $e) {
+                //check kun my internet
+                $_SESSION['error'] = "Failed to send email. Please check your internet connection or try again.";
+                header("Location: users/change_credentials.php");
+                exit;
+            }
         }
     }
 }
 
 
-if(isset($_POST['confirm_code'])){
+if(isset($_POST['confirm_code_credentials'])){
     $code = $_POST['code'];
     
 
@@ -917,7 +1088,27 @@ if(isset($_POST['confirm_code'])){
             unset($_SESSION['username_entered']);
 
             $_SESSION['success'] = "Successfully Updated";
-            header("location:users/my_account.php.php");
+            header("location:users/my_account.php");
+            exit;
+
+        }else{
+            $_SESSION['error'] = "Code Does not Match!";
+            header("location:users/enter_code_credentials.php");
+            exit;
+        }
+    }elseif($_SESSION['type'] === "password"){
+        $hashed_password = password_hash($_SESSION['password_entered'], PASSWORD_DEFAULT);
+        if($code == $_SESSION['password_verification']){
+            $update = $conn->prepare("UPDATE `accounts` SET `password` = ? WHERE user_id = ?");
+            $update->bind_param("ss", $hashed_password, $user_id_login);
+            $update->execute();
+
+            unset($_SESSION['type']);
+            unset($_SESSION['password_verification']);
+            unset($_SESSION['password_entered']);
+
+            $_SESSION['success'] = "Successfully Updated";
+            header("location:users/my_account.php");
             exit;
 
         }else{
@@ -927,17 +1118,18 @@ if(isset($_POST['confirm_code'])){
         }
     }else{
         $hashed_password = password_hash($_SESSION['password_entered'], PASSWORD_DEFAULT);
-        if($code == $_SESSION['username_verification']){
-            $update = $conn->prepare("UPDATE `accounts` SET `password` = ? WHERE user_id = ?");
-            $update->bind_param("ss", $hashed_password, $user_id_login);
+        if($code == $_SESSION['password&username']){
+            $update = $conn->prepare("UPDATE `accounts` SET `password` = ?, `username` = ? WHERE user_id = ?");
+            $update->bind_param("sss", $hashed_password,$_SESSION['username_entered'],$user_id_login);
             $update->execute();
 
             unset($_SESSION['type']);
-            unset($_SESSION['username_verification']);
+            unset($_SESSION['password_verification']);
+            unset($_SESSION['password_entered']);
             unset($_SESSION['username_entered']);
 
             $_SESSION['success'] = "Successfully Updated";
-            header("location:users/my_account.php.php");
+            header("location:users/my_account.php");
             exit;
 
         }else{
@@ -950,3 +1142,6 @@ if(isset($_POST['confirm_code'])){
     
 
 }
+
+
+
