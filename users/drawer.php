@@ -61,8 +61,8 @@
                 <!-- Dropdown Menu -->
                 <ul id="dropdownMenu" class="hidden mt-2 ml-6 space-y-1 rounded-md p-2">
                     <li>
-                        <a href="register.phps" class="block text-sm text-white hover:text-white py-1 px-2">
-                            Register
+                        <a href="register.php" class="block text-sm text-white hover:text-white py-1 px-2">
+                            Property Registration
                         </a>
                     </li>
 

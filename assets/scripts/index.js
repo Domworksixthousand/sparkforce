@@ -6,23 +6,39 @@
         });
     });
 
-    //dropdown
-document.addEventListener("DOMContentLoaded", function () {
-    const btn = document.getElementById('dropdownBtn');
-    const menu = document.getElementById('dropdownMenu');
-    const arrow = document.getElementById('arrowIcon');
+        //dropdown
+    document.addEventListener("DOMContentLoaded", function () {
+        const btn = document.getElementById('dropdownBtn');
+        const menu = document.getElementById('dropdownMenu');
+        const arrow = document.getElementById('arrowIcon');
 
-    btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        menu.classList.toggle('hidden');
+        arrow.classList.toggle('rotate-180');
+        });
+
+        document.addEventListener('click', () => {
+        menu.classList.add('hidden');
+        arrow.classList.remove('rotate-180'); 
+        });
+    });
+
+    //admin dorp down
+    const btn1 = document.getElementById('dropdownBtn1');
+  const menu1 = document.getElementById('dropdownMenu1');
+  const arrow1 = document.getElementById('arrowIcon1');
+
+  btn1.addEventListener('click', (e) => {
     e.stopPropagation();
-    menu.classList.toggle('hidden');
-    arrow.classList.toggle('rotate-180');
-    });
+    menu1.classList.toggle('hidden');
+    arrow1.classList.toggle('rotate-180');
+  });
 
-    document.addEventListener('click', () => {
-    menu.classList.add('hidden');
-    arrow.classList.remove('rotate-180'); 
-    });
-});
+  document.addEventListener('click', () => {
+    menu1.classList.add('hidden');
+    arrow1.classList.remove('rotate-180'); 
+  });
 
 
     //auto uppercase

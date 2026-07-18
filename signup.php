@@ -15,6 +15,7 @@
     <script src="assets/scripts/tailwind.js"></script>
     <script src="assets/scripts/daisy_ui.js"></script>
     <script src="assets/scripts/cool_alert.js"></script>
+    <script src="assets/scripts/face_api.js"></script>
 
 </head>
 <body class=" min-h-screen ">
@@ -24,7 +25,6 @@
         include 'alerts.php'; 
    
     ?>
-
 
 
 
@@ -50,7 +50,7 @@
                 <p class="mb-3">Personal Information</p>
                 <div class="w-[100%] flex flex-col lg:flex-row gap-3 mb-5">
                     <span class="w-[100%]">
-                        <p class="mb-2">Last Name *</p>
+                        <p class="mb-2 text-sm">Last Name *</p>
                         <label class="input w-[100%]">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-gray-500">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
@@ -59,7 +59,7 @@
                         </label>
                     </span>
                     <span class="w-[100%]">
-                        <p class="mb-2">First Name *</p>
+                        <p class="mb-2 text-sm">First Name *</p>
                         <label class="input w-[100%]">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-gray-500">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
@@ -69,7 +69,7 @@
                         </label>
                     </span>
                     <span class="w-[100%]">
-                        <p class="mb-2">Middle Name </p>
+                        <p class="mb-2 text-sm">Middle Name </p>
                         <label class="input w-[100%]">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-gray-500">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
@@ -78,7 +78,7 @@
                         </label>
                     </span>
                     <span class="w-[100%]">
-                        <p class="mb-2">Suffix </p>
+                        <p class="mb-2 text-sm">Suffix </p>
                         <label class="input w-[100%]">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-gray-500">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
@@ -89,7 +89,7 @@
                 </div>
                 <div class="w-[100%] flex flex-col lg:flex-row gap-3 mb-5">
                     <span class="w-[100%]">
-                        <p class="mb-2">Email Address *</p>
+                        <p class="mb-2 text-sm">Email Address *</p>
                         <label class="input w-[100%]">
                             <svg class="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                             <g
@@ -107,7 +107,7 @@
                         </label>
                     </span>
                     <span class="w-[100%]">
-                        <p class="mb-2">Contact Number *</p>
+                        <p class="mb-2 text-sm">Contact Number *</p>
                         <label class="input w-[100%]">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-gray-500">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
@@ -127,7 +127,7 @@
                 </div>
                 <div class="w-[100%] flex flex-col lg:flex-row gap-3 mb-5">
                     <span class="w-[100%]">
-                        <p class="mb-2">Province *</p>
+                        <p class="mb-2 text-sm">Province *</p>
                         <label class="input w-[100%]  ">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-gray-500">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
@@ -145,7 +145,7 @@
                         </label>
                     </span>
                     <span class="w-[100%]">
-                        <p class="mb-2">Municipality  *</p>
+                        <p class="mb-2 text-sm">Municipality  *</p>
                         <label class="input w-[100%]">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-gray-500">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
@@ -157,7 +157,7 @@
                         </label>
                     </span>
                     <span class="w-[100%]">
-                        <p class="mb-2">Barangay *</p>
+                        <p class="mb-2 text-sm">Barangay *</p>
                         <label class="input w-[100%]">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-gray-500">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
@@ -169,7 +169,7 @@
                         </label>
                     </span>
                      <span class="w-[100%]">
-                        <p class="mb-2">ZIP Code *</p>
+                        <p class="mb-2 text-sm">ZIP Code *</p>
                         <label class="input w-[100%]">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-gray-500">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
@@ -182,7 +182,7 @@
                 <p class="mb-3">Account Information</p>
                 <div class="w-[100%] flex flex-col lg:flex-row gap-3 mb-5">
                     <span class="w-[100%]">
-                        <p class="mb-2">Username *</p>
+                        <p class="mb-2 text-sm">Username *</p>
                         <label class="input w-[100%]">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-gray-500">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
@@ -191,7 +191,7 @@
                         </label>
                     </span>
                     <span class="w-[100%]">
-                        <p class="mb-2">Paassword *</p>
+                        <p class="mb-2 text-sm">Password *</p>
                         <label class="input w-[100%]">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"  class="size-5 text-gray-500">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
@@ -201,7 +201,7 @@
                         </label>
                     </span>
                     <span class="w-[100%]">
-                        <p class="mb-2">Repeat Password *</p>
+                        <p class="mb-2 text-sm">Repeat Password *</p>
                         <label class="input w-[100%]">
                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"  class="size-5 text-gray-500">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
@@ -214,7 +214,7 @@
                 <p class="mb-3">Verification Information</p>
                 <div class="w-[100%] flex flex-col lg:flex-row gap-3 mb-5">
                     <span class="w-[100%]">
-                        <p class="mb-2">ID Type *</p>
+                        <p class="mb-2 text-sm">ID Type *</p>
                         <label class="input w-[100%]">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"  class="size-5 text-gray-500">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Zm6-10.125a1.875 1.875 0 1 1-3.75 0 1.875 1.875 0 0 1 3.75 0Zm1.294 6.336a6.721 6.721 0 0 1-3.17.789 6.721 6.721 0 0 1-3.168-.789 3.376 3.376 0 0 1 6.338 0Z" />
@@ -223,7 +223,7 @@
                         </label>
                     </span>
                     <span class="w-[100%]">
-                        <p class="mb-2">ID Number *</p>
+                        <p class="mb-2 text-sm">ID Number *</p>
                         <label class="input w-[100%]">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"  class="size-5 text-gray-500">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Zm6-10.125a1.875 1.875 0 1 1-3.75 0 1.875 1.875 0 0 1 3.75 0Zm1.294 6.336a6.721 6.721 0 0 1-3.17.789 6.721 6.721 0 0 1-3.168-.789 3.376 3.376 0 0 1 6.338 0Z" />
@@ -232,8 +232,7 @@
                         </label>
                     </span>
                     <span class="w-[100%]">
-                        <p class="mb-2">ID Photo *</p>
-                        
+                        <p class="mb-2 text-sm">ID Photo *</p>                       
                         <?php if (isset($_SESSION['id_photo_name'])): ?>
                             <input type="hidden" name="old_id_photo" value="<?php echo htmlspecialchars($_SESSION['id_photo_name']); ?>">
                             <div class="alert alert-success bg-success/10 text-success border border-success/20 p-2 mb-2 text-xs flex items-center justify-between rounded-lg">
@@ -256,11 +255,29 @@
                             />
                         </label>
                     </span>
+                    <span class="w-[100%]">
+                    <p class="mb-2 text-sm">Selfie*</p>
+                    <?php if (isset($_SESSION['selfie_photo_name'])): ?>
+                        <input type="hidden" name="old_selfie_photo" value="<?php echo htmlspecialchars($_SESSION['selfie_photo_name']); ?>">
+                        <div class="alert alert-success bg-success/10 text-success border border-success/20 p-2 mb-2 text-xs flex items-center justify-between rounded-lg">
+                            <span>old upload: <strong class="underline"><?php echo htmlspecialchars($_SESSION['selfie_photo_name']); ?></strong></span>
+                            <span class="badge badge-success text-white">Saved</span>
+                        </div>
+                    <?php endif; ?>
+                    <input type="file" id="selfieInput" name="selfie_photo" class="cursor-not-allowed file-input grow w-[100%] mb-2 select-none opacity-[0.5]">
+                    <div class="text-end">
+                        <button class="btn btn-success text-white btn-sm " onclick="selfie_modal.showModal()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-camera-icon lucide-camera"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></svg>
+                            Take Selfie
+                        </button>
+                    </div>
+                    <canvas id="snapshot" width="640" height="480" class="hidden"></canvas>
+                </span>
                 </div>
-                <p class="mb-3">Other Informations</p>
+                <p class="mb-3 text-sm">Other Informations</p>
                 <div class="w-[100%] flex flex-col lg:flex-row gap-3 mb-5">
                     <span class="w-[100%]">
-                        <p class="mb-2">Occupation *</p>
+                        <p class="mb-2 text-sm">Occupation *</p>
                         <label class="input w-[100%]">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"  class="size-5 text-gray-500">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Zm6-10.125a1.875 1.875 0 1 1-3.75 0 1.875 1.875 0 0 1 3.75 0Zm1.294 6.336a6.721 6.721 0 0 1-3.17.789 6.721 6.721 0 0 1-3.168-.789 3.376 3.376 0 0 1 6.338 0Z" />
@@ -309,7 +326,38 @@
     </main>
 
 
-    <!--modal-->
+        <!--modal selfie-->
+    <dialog id="selfie_modal" class="modal">
+        <div class="modal-box bg-[linear-gradient(to_right,#2A7B9B_0%,#57C785_100%,#EDDD53_100%)]">
+            <form method="dialog">
+                <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+            </form>
+            <div class="form-group">
+                <label class="block font-bold mb-2 text-white">Take a Selfie (Requirement):</label>
+                <div class="relative w-full max-w-[640px] mx-auto overflow-hidden rounded-lg bg-black" id="camArea">
+                    <video id="webcam" autoplay muted playsinline class="w-full h-auto block -scale-x-100"></video>
+                    <div id="guide" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1/2 h-[75%] border-2 border-dashed border-rose-500 rounded-[50%] pointer-events-none shadow-[0_0_0_9999px_rgba(0,0,0,0.5)] transition-all duration-200">
+                        <div id="eyeLine" class="absolute top-[35%] left-0 w-full border-t border-dashed border-rose-500/60 transition-all duration-200"></div>
+                        <div id="crossHairV" class="absolute top-0 left-1/2 h-full border-l border-dashed border-rose-500/40 -translate-x-1/2 transition-all duration-200"></div>
+                    </div>
+                </div>
+                
+                <!-- Selfie Preview -->
+                <img id="preview" alt="Selfie Preview" class="w-full max-w-[640px] h-auto mx-auto rounded-lg -scale-x-100" style="display:none;">
+                
+                <!-- Status and Button -->
+                <div id="status" class="my-3 text-center font-semibold text-white">Loading....</div>
+               <div class="text-center">
+                <button type="button" id="captureBtn" class="btn bg-white  text-black " disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-aperture-icon lucide-aperture"><circle cx="12" cy="12" r="10"/><path d="m14.31 8 5.74 9.94"/><path d="M9.69 8h11.48"/><path d="m7.38 12 5.74-9.94"/><path d="M9.69 16 3.95 6.06"/><path d="M14.31 16H2.83"/><path d="m16.62 12-5.74 9.94"/></svg>
+                    CAPTURE
+                </button>
+               </div>
+            </div>
+        </div>
+    </dialog>
+
+    <!--modal terms and regulations-->
     <dialog id="policy_modal" class="modal modal-bottom sm:modal-middle">
     <div class="modal-box max-w-2xl bg-base-100">
         <h3 class="text-lg font-bold text-error flex items-center gap-2 mb-4">
@@ -356,7 +404,8 @@
     <script src="assets/scripts/email_animation.js"></script>
     <script src="assets/scripts/index.js"></script>
     <script src="assets/scripts/address.js"></script>
+    <script src="assets/scripts/selfie_script.js"></script>
 </body>
 </html>
-
-
+  
+   

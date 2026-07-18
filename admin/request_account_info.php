@@ -34,6 +34,7 @@
             $id_photo = htmlspecialchars($row['id_photo'] ?? '');
             $date_request = htmlspecialchars($row['date_request'] ?? '');
             $occupation = htmlspecialchars($row['occupation'] ?? '');
+            $selfie_photo = $row['selfie_photo'] ?? '';
             $timestamp = strtotime($date_request);
         }
     }
@@ -125,9 +126,17 @@
                 <p class="font-bold text-sm"><?php echo $id_number; ?></p>
             </div>          
         </div>
-        <p class="text-sm text-gray-500  mb-4">ID PHOTO</p>
-        <img src="./../assets/uploads/<?php echo $id_photo; ?>" class="w-[100%] rounded-[20px] border-2 p-3 mb-4" >
-        <div class="flex justify-end gap-3 w-[100%] flex-col md:flex-row <?php echo $hidden; ?>">
+        <div class="mb-4 ">
+            <div class="w-[100%] flex flex-col justify-center items-center mb-5">
+                <p class="text-sm text-gray-500  mb-4">ID PHOTO</p>
+                <img src="./../assets/uploads/<?php echo $id_photo; ?>" class="w-[100%] lg:w-[50%] rounded-[20px] border-2 p-3 " >
+            </div>
+            <div class="w-[100%] flex flex-col justify-center items-center mb-5">
+                 <p class="text-sm text-gray-500  mb-4">SELFIE PHOTO</p>
+                <img src="./../assets/uploads/<?php echo $selfie_photo; ?>" class="w-[100%] lg:w-[50%] rounded-[20px] border-2 p-3 " >
+            </div>
+        </div>
+        <div class="flex justify-center gap-3 w-[100%] flex-col md:flex-row <?php echo $hidden; ?>">
             <a href="request_account_info_approved.php?id=<?php echo $user_id; ?>&location_back=<?php echo $location_back; ?>"  class="btn btn-success text-white ">Approved</a>
             <a href="request_account_info_disapproved.php?id=<?php echo $user_id; ?>&location_back=<?php echo $location_back; ?>"   class="btn bg-gray-400 text-white">Disapproved</a>
         </div>

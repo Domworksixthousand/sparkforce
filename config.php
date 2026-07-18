@@ -68,7 +68,7 @@ if(isset($_SESSION['user_login'])){
         $id_numberko = htmlspecialchars($row_admin['id_number'] ?? '');
         $id_photoko = htmlspecialchars($row_admin['id_photo'] ?? '');
         $occupationko = htmlspecialchars($row_admin['occupation'] ?? '');
-        
+       
         $profileko = $row_admin['profile'] ?? '';
 
     

@@ -48,6 +48,7 @@ if (isset($_POST['register'])) {
     
     // old image
     $old_id_photo   = mysqli_real_escape_string($conn, $_POST['old_id_photo'] ?? '');
+    $old_selfie_photo = mysqli_real_escape_string($conn, $_POST['old_selfie_photo'] ?? '');
 
     // kapag not empty ma create siya session
     if (!empty($old_id_photo)) {
@@ -79,6 +80,15 @@ if (isset($_POST['register'])) {
         $_SESSION['terms_agree'] = 1;
     }
 
+    if (!empty($old_selfie_photo)) {
+        $_SESSION['selfie_photo_name'] = $old_selfie_photo;
+    }
+
+    $selfie_img_name = $_FILES['selfie_photo']['name'] ?? '';
+    $selfie_tmp_name = $_FILES['selfie_photo']['tmp_name'] ?? '';
+    $selfie_error    = $_FILES['selfie_photo']['error'] ?? UPLOAD_ERR_NO_FILE;
+    $final_selfie_name = "";
+
     //kuwaon ang image files
     $img_name = $_FILES['id_photo']['name'] ?? '';
     $tmp_name = $_FILES['id_photo']['tmp_name'] ?? ''; 
@@ -104,6 +114,65 @@ if (isset($_POST['register'])) {
         header("location:signup.php");
         exit;
     }
+
+
+    if ($selfie_error === UPLOAD_ERR_NO_FILE && empty($old_selfie_photo)) {
+    $_SESSION['error'] = "Please take a selfie!";
+    header("location:signup.php");
+    exit;
+}
+
+if ($selfie_error !== UPLOAD_ERR_OK && $selfie_error !== UPLOAD_ERR_NO_FILE) {
+    $_SESSION['error'] = "An error occurred during selfie upload. Error Code: " . $selfie_error;
+    header("location:signup.php");
+    exit;
+}
+
+if ($selfie_error === UPLOAD_ERR_OK && !empty($selfie_img_name)) {
+
+    $selfie_trash_name = $tomorrow . "_" . $selfie_img_name;
+    $selfie_trash_path = 'assets/trash_uploads/' . $selfie_trash_name;
+    $selfie_location   = 'assets/uploads/' . $selfie_img_name;
+
+    if (move_uploaded_file($selfie_tmp_name, $selfie_trash_path)) {
+
+        if (rename($selfie_trash_path, $selfie_location)) {
+            $final_selfie_name = $selfie_img_name;
+            $_SESSION['selfie_photo_name'] = $selfie_img_name;
+        } else {
+            $_SESSION['error'] = "Failed moving selfie to permanent directory.";
+            header("location:signup.php");
+            exit;
+        }
+    } else {
+        $_SESSION['error'] = "Error uploading selfie to temporary folder.";
+        header("location:signup.php");
+        exit;
+    }
+
+}else if (!empty($old_selfie_photo)) {
+
+    $selfie_source_trash = 'assets/trash_uploads/' . $tomorrow . "_" . $old_selfie_photo;
+    $selfie_destination  = 'assets/uploads/' . $old_selfie_photo;
+
+    if (file_exists($selfie_source_trash)) {
+        if (rename($selfie_source_trash, $selfie_destination)) {
+            $final_selfie_name = $old_selfie_photo;
+        } else {
+            $_SESSION['error'] = "Failed to transfer the cached selfie to permanent directory.";
+            header("location:signup.php");
+            exit;
+        }
+    } else if (file_exists($selfie_destination)) {
+        $final_selfie_name = $old_selfie_photo;
+    } else {
+        $_SESSION['error'] = "Your previously captured selfie session has expired. Please retake your selfie.";
+        unset($_SESSION['selfie_photo_name']);
+        header("location:signup.php");
+        exit;
+    }
+}
+
 
    //kung empty ang image an old photo makato sa upload
     if ($error === UPLOAD_ERR_OK && !empty($img_name)) {
@@ -271,16 +340,16 @@ if (isset($_POST['register'])) {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
         // save data
-        $insert = $conn->prepare("INSERT INTO `accounts` (`user_id`,`middlename`,`lastname`,`firstname`,`suffix`,`email`,`contact_number`,`province`,`municipality`,`barangay`,`zipcode`,`username`,`password`,`id_type`,`id_number`,`id_photo`,`occupation`,`status`,`user_type`,`date_request`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-        
+      $insert = $conn->prepare("INSERT INTO `accounts` (`user_id`,`middlename`,`lastname`,`firstname`,`suffix`,`email`,`contact_number`,`province`,`municipality`,`barangay`,`zipcode`,`username`,`password`,`id_type`,`id_number`,`id_photo`,`selfie_photo`,`occupation`,`status`,`user_type`,`date_request`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+
         $insert->bind_param(
-            "ssssssssssssssssssss", 
-            $user_id, $middlename, $lastname, $firstname, $suffix, 
-            $email, $contact_number, $province, $municipality, $barangay, 
-            $zipcode, $username, $hashed_password, $id_type, $id_number, 
-            $final_photo_name, $occupation, $status, $usertype, $datetoday
+            "sssssssssssssssssssss",
+            $user_id, $middlename, $lastname, $firstname, $suffix,
+            $email, $contact_number, $province, $municipality, $barangay,
+            $zipcode, $username, $hashed_password, $id_type, $id_number,
+            $final_photo_name, $final_selfie_name, $occupation, $status, $usertype, $datetoday
         );
-        
+                
         if ($insert->execute()) {
            //clear session
             foreach ($fields as $field) {
@@ -288,6 +357,7 @@ if (isset($_POST['register'])) {
             }
 
             unset($_SESSION['id_photo_name']);
+            unset($_SESSION['selfie_photo_name']);  
             unset($_SESSION['terms_agree']);
             unset($_SESSION['error']);
 
