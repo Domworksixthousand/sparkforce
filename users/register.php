@@ -28,16 +28,12 @@
 </head>
 <body class="bg-base-100">
 
+  <?php 
+      include '../alerts.php'; 
+  ?>
 
 
-<style>
-   
-   
-      
-   
-        
 
-</style>
 
   <div class="drawer lg:drawer-open ">
     <input id="my-drawer" type="checkbox" class="drawer-toggle" />
@@ -53,56 +49,55 @@
         <main>
             <section class="my-container">
               <form method="POST" action="../functions.php" class="py-[50px] shadow-xl p-[30px] lg:p-[50px] rounded-[20px] border border-gray-100" enctype="multipart/form-data">
-              <input type="hidden" id="lat" name="latitude" readonly required placeholder="Loading...">
-              <input type="hidden" id="lng" name="longitude" readonly required placeholder="Loading...">
+              <input type="hidden" id="lat" name="latitude" value="<?php echo $_SESSION['latitud'] ?? ';' ?>" readonly required placeholder="Loading...">
+              <input type="hidden" id="lng" value="<?php echo $_SESSION['longitude'] ?? ';' ?>" name="longitude" readonly required placeholder="Loading...">
                 <h2 class="font-bold text-lg text-[#0fab9e] mb-5">REGISTRATION FORM</h2>
                   <p class="mb-3  ">Property Ownership & Media</p>
                   <div class="flex flex-col lg:flex-row gap-3 mb-5">
+                    <!-- Proof of Ownership -->
                     <span class="w-[100%]">
-                        <p class="mb-2 text-sm">Proof of Ownership Document *</p>
+                        <div class="flex justify-between items-center mb-2">
+                            <p class="text-sm font-semibold">Proof of Ownership Document *</p>
+                            <?php if (isset($_SESSION['owner_docs']) && is_array($_SESSION['owner_docs']) && !empty($_SESSION['owner_docs'])): ?>
+                                <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-medium border border-green-200">
+                                    ✓ Already Uploaded (<?php echo count($_SESSION['owner_docs']); ?> file/s)
+                                </span>
+                            <?php endif; ?>
+                        </div>
                         <label class="input w-[100%]">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-gray-500">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 9h3.75m-4.5 2.625h4.5M12 18.75 9.75 16.5h.375a2.625 2.625 0 0 0 0-5.25H9.75m.75-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                             </svg>
-                            
-                            <input 
-                                type="file" 
-                                class="file-input grow w-[100%]" 
-                                id="owner_docs" 
-                                name="owner_docs[]" 
-                                multiple
-                                accept="image/jpeg, image/jpg" 
-                                <?php echo isset($_SESSION['owner_docs']) ? '' : 'required'; ?> 
-                            />
+                            <input type="file" class="file-input grow w-[100%]" id="owner_docs" name="owner_docs[]" multiple accept="image/jpeg, image/jpg" <?php echo isset($_SESSION['owner_docs']) ? '' : 'required'; ?> />
                         </label>
                         <p class="text-sm text-red-500">(Upload your Land Title, Deed of Absolute Sale, or notarized Management Authorization.)</p>
                     </span>
+
+                    <!-- Photo Gallery -->
                     <span class="w-[100%]">
-                        <p class="mb-2 text-sm">Property Photo Gallery *</p>
+                        <div class="flex justify-between items-center mb-2">
+                            <p class="text-sm font-semibold">Property Photo Gallery *</p>
+                            <?php if (isset($_SESSION['photo_gallery']) && is_array($_SESSION['photo_gallery']) && !empty($_SESSION['photo_gallery'])): ?>
+                                <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-medium border border-green-200">
+                                    ✓ Already Uploaded (<?php echo count($_SESSION['photo_gallery']); ?> photo/s)
+                                </span>
+                            <?php endif; ?>
+                        </div>
                         <label class="input w-[100%]">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-gray-500">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 9h3.75m-4.5 2.625h4.5M12 18.75 9.75 16.5h.375a2.625 2.625 0 0 0 0-5.25H9.75m.75-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                             </svg>
-                            
-                            <input 
-                                type="file" 
-                                class="file-input grow w-[100%]" 
-                                id="photo_gallery" 
-                                name="photo_gallery[]" 
-                                multiple
-                                accept="image/jpeg, image/jpg" 
-                                <?php echo isset($_SESSION['photo_gallery']) ? '' : 'required'; ?> 
-                            />
+                            <input type="file" class="file-input grow w-[100%]" id="photo_gallery" name="photo_gallery[]" multiple accept="image/jpeg, image/jpg" <?php echo isset($_SESSION['photo_gallery']) ? '' : 'required'; ?> />
                         </label>
                         <p class="text-sm text-red-500">(Upload 3 to 10 high-quality photos showing the exterior and interior spaces.)</p>
                     </span>
-                  </div>
+                </div>
                   <p class="mb-3  ">Property Location</p>  
                   <div class="flex flex-col lg:flex-row gap-3 mb-5">
                     <span class="w-[100%]">
                         <p class="mb-2 text-sm">Province *</p>
                         <label class="input w-[100%]">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin-house-icon lucide-map-pin-house"><path d="M15 22a1 1 0 0 1-1-1v-4a1 1 0 0 1 .445-.832l3-2a1 1 0 0 1 1.11 0l3 2A1 1 0 0 1 22 17v4a1 1 0 0 1-1 1z"/><path d="M18 10a8 8 0 0 0-16 0c0 4.993 5.539 10.193 7.399 11.799a1 1 0 0 0 .601.2"/><path d="M18 22v-3"/><circle cx="10" cy="10" r="3"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class=" text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin-house-icon lucide-map-pin-house"><path d="M15 22a1 1 0 0 1-1-1v-4a1 1 0 0 1 .445-.832l3-2a1 1 0 0 1 1.11 0l3 2A1 1 0 0 1 22 17v4a1 1 0 0 1-1 1z"/><path d="M18 10a8 8 0 0 0-16 0c0 4.993 5.539 10.193 7.399 11.799a1 1 0 0 0 .601.2"/><path d="M18 22v-3"/><circle cx="10" cy="10" r="3"/></svg>
                             
                             <input 
                                 type="text" 
@@ -110,29 +105,29 @@
                                 id="province" 
                                 name="province"  
                                 readonly   
-                                                  
+                                value="<?php echo $_SESSION['province'] ?? '' ?>"                
                             />
                         </label>
                     </span>
                     <span class="w-[100%]">
                         <p class="mb-2 text-sm">Municipality *</p>
                         <label class="input w-[100%]">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin-house-icon lucide-map-pin-house"><path d="M15 22a1 1 0 0 1-1-1v-4a1 1 0 0 1 .445-.832l3-2a1 1 0 0 1 1.11 0l3 2A1 1 0 0 1 22 17v4a1 1 0 0 1-1 1z"/><path d="M18 10a8 8 0 0 0-16 0c0 4.993 5.539 10.193 7.399 11.799a1 1 0 0 0 .601.2"/><path d="M18 22v-3"/><circle cx="10" cy="10" r="3"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class=" text-gray-500"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin-house-icon lucide-map-pin-house"><path d="M15 22a1 1 0 0 1-1-1v-4a1 1 0 0 1 .445-.832l3-2a1 1 0 0 1 1.11 0l3 2A1 1 0 0 1 22 17v4a1 1 0 0 1-1 1z"/><path d="M18 10a8 8 0 0 0-16 0c0 4.993 5.539 10.193 7.399 11.799a1 1 0 0 0 .601.2"/><path d="M18 22v-3"/><circle cx="10" cy="10" r="3"/></svg>
                             
                             <input 
                                 type="text" 
                                 class="file-input grow w-[100%]" 
                                 id="municipality" 
-                                name="municiplaity"  
+                                name="municipality"  
                                 readonly   
-                                                  
+                              value="<?php echo $_SESSION['municipality'] ?? '' ?>"
                             />
                         </label>
                     </span>
                      <span class="w-[100%]">
                         <p class="mb-2 text-sm">Barangay *</p>
                         <label class="input w-[100%]">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin-house-icon lucide-map-pin-house"><path d="M15 22a1 1 0 0 1-1-1v-4a1 1 0 0 1 .445-.832l3-2a1 1 0 0 1 1.11 0l3 2A1 1 0 0 1 22 17v4a1 1 0 0 1-1 1z"/><path d="M18 10a8 8 0 0 0-16 0c0 4.993 5.539 10.193 7.399 11.799a1 1 0 0 0 .601.2"/><path d="M18 22v-3"/><circle cx="10" cy="10" r="3"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" class=" text-gray-500"  height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin-house-icon lucide-map-pin-house"><path d="M15 22a1 1 0 0 1-1-1v-4a1 1 0 0 1 .445-.832l3-2a1 1 0 0 1 1.11 0l3 2A1 1 0 0 1 22 17v4a1 1 0 0 1-1 1z"/><path d="M18 10a8 8 0 0 0-16 0c0 4.993 5.539 10.193 7.399 11.799a1 1 0 0 0 .601.2"/><path d="M18 22v-3"/><circle cx="10" cy="10" r="3"/></svg>
                             
                             <input 
                                 type="text" 
@@ -140,7 +135,7 @@
                                 id="barangay" 
                                 name="barangay"  
                                 readonly   
-                                                  
+                                  value="<?php echo $_SESSION['barangay'] ?? '  ' ?>"                 
                             />
                         </label>
                     </span>
@@ -156,7 +151,7 @@
                     <span class="w-[100%]">
                         <p class="mb-2 text-sm">Type of Property *</p>
                         <label class="input w-[100%]">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-land-plot-icon lucide-land-plot"><path d="m12 8 6-3-6-3v10"/><path d="m8 11.99-5.5 3.14a1 1 0 0 0 0 1.74l8.5 4.86a2 2 0 0 0 2 0l8.5-4.86a1 1 0 0 0 0-1.74L16 12"/><path d="m6.49 12.85 11.02 6.3"/><path d="M17.51 12.85 6.5 19.15"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" class=" text-gray-500"  height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-land-plot-icon lucide-land-plot"><path d="m12 8 6-3-6-3v10"/><path d="m8 11.99-5.5 3.14a1 1 0 0 0 0 1.74l8.5 4.86a2 2 0 0 0 2 0l8.5-4.86a1 1 0 0 0 0-1.74L16 12"/><path d="m6.49 12.85 11.02 6.3"/><path d="M17.51 12.85 6.5 19.15"/></svg>
                             <select class="select cursor-pointer w-[100%]" name="property_type">
                               <option value="<?php echo $_SESSION['property_type'] ?? 'Select Property type' ?>"><?php echo $_SESSION['property_type'] ?? 'Select Property type' ?></option>
                               <option value="Boarding House / Bedspace">Boarding House / Bedspace</option>
@@ -180,7 +175,7 @@
                     <span class="w-[100%]">
                         <p class="mb-2 text-sm">Property Name *</p>
                         <label class="input w-[100%]">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-land-plot-icon lucide-land-plot"><path d="m12 8 6-3-6-3v10"/><path d="m8 11.99-5.5 3.14a1 1 0 0 0 0 1.74l8.5 4.86a2 2 0 0 0 2 0l8.5-4.86a1 1 0 0 0 0-1.74L16 12"/><path d="m6.49 12.85 11.02 6.3"/><path d="M17.51 12.85 6.5 19.15"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" class=" text-gray-500"  height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-land-plot-icon lucide-land-plot"><path d="m12 8 6-3-6-3v10"/><path d="m8 11.99-5.5 3.14a1 1 0 0 0 0 1.74l8.5 4.86a2 2 0 0 0 2 0l8.5-4.86a1 1 0 0 0 0-1.74L16 12"/><path d="m6.49 12.85 11.02 6.3"/><path d="M17.51 12.85 6.5 19.15"/></svg>
                             <input 
                                 type="text" 
                                 class="input grow w-[100%]" 
@@ -193,7 +188,7 @@
                     </span>
                   </div>
                   <div class="text-center md:text-end">
-                    <button class="btn btn-success text-white w-[100%] lg:w-fit">Submit</button>
+                    <button type="submit" name="landlord_registration" class="btn btn-success text-white w-[100%] lg:w-fit">Submit</button>
                   </div>
               </form>
             </section>

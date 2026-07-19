@@ -1212,6 +1212,169 @@ if(isset($_POST['confirm_code_credentials'])){
     
 
 }
+if (isset($_POST['landlord_registration'])) {
+    
+  
+    if (isset($_FILES['owner_docs']['name']) && !empty(array_filter($_FILES['owner_docs']['name']))) {
+     
+        $owner_docs_validation = $_FILES['owner_docs']['name'];
+    } else {
+        $owner_docs_validation = $_SESSION['owner_docs'] ?? [];
+    }
+
+    if (isset($_FILES['photo_gallery']['name']) && !empty(array_filter($_FILES['photo_gallery']['name']))) {
+        $photo_gallery_validation = $_FILES['photo_gallery']['name'];
+    } else {
+        $photo_gallery_validation = $_SESSION['photo_gallery'] ?? [];
+    }
 
 
+    $latitud = $_POST['latitude'] ?? '';
+    $longitude = $_POST['longitude'] ?? '';
+    $province = $_POST['province'] ?? '';
+    $municipality = $_POST['municipality'] ?? ''; 
+    $barangay = $_POST['barangay'] ?? '';
+    $property_type = $_POST['property_type'] ?? '';
+    $property_name = $_POST['property_name'] ?? '';
 
+    $_SESSION['property_name'] = $property_name;
+    $_SESSION['latitud'] = $latitud;
+    $_SESSION['longitude'] = $longitude;
+    $_SESSION['province'] = $province;
+    $_SESSION['municipality'] = $municipality;
+    $_SESSION['barangay'] = $barangay;
+    $_SESSION['property_type'] = $property_type;
+
+    $count_owner_docs = count($owner_docs_validation);
+    $count_photo_gallery = count($photo_gallery_validation);
+    $location_folder = "assets/uploads/";
+
+
+    if($count_owner_docs < 1){ 
+        $_SESSION['error'] = "Please upload at least 1 Proof of Ownership document.";
+        header("Location:users/register.php");
+        exit;
+    }
+
+
+    if($count_photo_gallery < 3 || $count_photo_gallery > 10){
+        $_SESSION['error'] = "Gallery photos uploaded must be 3 to 10 images.";
+        header("Location:users/register.php");
+        exit;
+    }
+
+    if(empty($latitud) || empty($longitude) || empty($province) || empty($municipality) || empty($barangay)){
+        $_SESSION['error'] = "Please select property location using the map control.";
+        header("Location:users/register.php");
+        exit;
+    }
+
+    if(empty($property_type) || $property_type == "Select Property type"){
+        $_SESSION['error'] = "Please Select Property Type";
+        header("Location:users/register.php");
+        exit;
+    }
+
+    if(empty($property_name)){
+        $_SESSION['error'] = "Please enter your property name";
+        header("Location:users/register.php");
+        exit;
+    }
+
+    $data_status = "Approved";
+    $check = $conn->prepare("SELECT * FROM `landlord` WHERE `property_name` = ? AND `status` = ?");
+    $check->bind_param("ss", $property_name,$data_status);
+    $check->execute();
+    $result_check = $check->get_result();
+    
+    if($result_check->num_rows > 0){
+        $_SESSION['error'] = "Property name already exists. Please choose another one.";
+        header("Location:users/register.php");
+        exit;
+    }
+
+
+    if (!isset($_SESSION['owner_docs']) || !is_array($_SESSION['owner_docs'])) {
+        $_SESSION['owner_docs'] = [];
+    }
+    if (!isset($_SESSION['photo_gallery']) || !is_array($_SESSION['photo_gallery'])) {
+        $_SESSION['photo_gallery'] = [];
+    }
+
+    // Upload Owner Documents
+    if (isset($_FILES['owner_docs']['name']) && !empty(array_filter($_FILES['owner_docs']['name']))) {
+        $_SESSION['owner_docs'] = [];
+        foreach ($_FILES['owner_docs']['name'] as $key => $filename) {
+            if (!empty($filename)) {
+                $unique_name = time() . '_' . uniqid() . '_' . $filename;
+                $target_file = $location_folder . $unique_name;
+                $tmp_name = $_FILES['owner_docs']['tmp_name'][$key];
+
+                if (move_uploaded_file($tmp_name, $target_file)) {
+                    $_SESSION['owner_docs'][] = $unique_name; 
+                } else {
+                    $_SESSION['error'] = "Failed to upload ownership document: $filename";
+                    header("Location:users/register.php");
+                    exit;
+                }
+            }
+        }
+    }
+
+    // Upload Photo Gallery
+    if (isset($_FILES['photo_gallery']['name']) && !empty(array_filter($_FILES['photo_gallery']['name']))) {
+        $_SESSION['photo_gallery'] = [];
+        foreach ($_FILES['photo_gallery']['name'] as $key => $filename) {
+            if (!empty($filename)) {
+                $unique_image_name = time() . '_' . uniqid() . '_' . $filename;
+                $target_image_file = $location_folder . $unique_image_name;
+                $tmp_image_name = $_FILES['photo_gallery']['tmp_name'][$key];
+
+                if (move_uploaded_file($tmp_image_name, $target_image_file)) {
+                    $_SESSION['photo_gallery'][] = $unique_image_name; // Dito natin sinisave ang final filename
+                } else {
+                    $_SESSION['error'] = "Failed to upload gallery image: $filename";
+                    header("Location:users/register.php");
+                    exit;
+                }
+            }
+        }
+    }
+
+
+    $landlord_id = $property_name . '_' . rand(1000, 9999);
+    
+
+    foreach($_SESSION['owner_docs'] as $docs){
+        $insert_docs = $conn->prepare("INSERT INTO `documents` (`doc_name`,`user_id`,`landlord_id`) VALUES (?,?,?)");
+        $insert_docs->bind_param("sss", $docs, $user_id_login, $landlord_id);
+        $insert_docs->execute();
+    }
+
+    foreach($_SESSION['photo_gallery'] as $images){
+        $insert_gallery = $conn->prepare("INSERT INTO `gallery` (`image_name`,`user_id`,`landlord_id`) VALUES (?,?,?)");
+        $insert_gallery->bind_param("sss", $images, $user_id_login, $landlord_id);
+        $insert_gallery->execute();
+    }
+
+ 
+    $status = "Pending";
+    $insert_details = $conn->prepare("INSERT INTO `landlord` (`landlord_id`,`user_id`,`province`,`municipality`,`barangay`,`type`,`property_name`,`date_request`,`status`) VALUES (?,?,?,?,?,?,?,?,?)");
+    $insert_details->bind_param("sssssssss", $landlord_id, $user_id_login, $province, $municipality, $barangay, $property_type, $property_name, $datetoday, $status);
+    $insert_details->execute();
+
+
+    unset($_SESSION['property_name']);
+    unset($_SESSION['latitud']);
+    unset($_SESSION['longitude']);
+    unset($_SESSION['province']);
+    unset($_SESSION['municipality']);
+    unset($_SESSION['barangay']);
+    unset($_SESSION['property_type']);
+    unset($_SESSION['owner_docs']);
+    unset($_SESSION['photo_gallery']);
+
+    $_SESSION['success'] = "Submitted successfully. Please wait for approval in your notifications.";
+    header("Location:users/register.php");
+    exit;
+}

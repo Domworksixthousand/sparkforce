@@ -26,19 +26,35 @@
 
     //admin dorp down
     const btn1 = document.getElementById('dropdownBtn1');
-  const menu1 = document.getElementById('dropdownMenu1');
-  const arrow1 = document.getElementById('arrowIcon1');
+    const menu1 = document.getElementById('dropdownMenu1');
+    const arrow1 = document.getElementById('arrowIcon1');
 
-  btn1.addEventListener('click', (e) => {
-    e.stopPropagation();
-    menu1.classList.toggle('hidden');
-    arrow1.classList.toggle('rotate-180');
-  });
+    btn1.addEventListener('click', (e) => {
+        e.stopPropagation();
+        menu1.classList.toggle('hidden');
+        arrow1.classList.toggle('rotate-180');
+    });
 
-  document.addEventListener('click', () => {
-    menu1.classList.add('hidden');
-    arrow1.classList.remove('rotate-180'); 
-  });
+    document.addEventListener('click', () => {
+        menu1.classList.add('hidden');
+        arrow1.classList.remove('rotate-180'); 
+    });
+
+      //admin dorp down2
+    const btn2 = document.getElementById('dropdownBtn2');
+    const menu2 = document.getElementById('dropdownMenu2');
+    const arrow2 = document.getElementById('arrowIcon2');
+
+    btn2.addEventListener('click', (e) => {
+        e.stopPropagation();
+        menu2.classList.toggle('hidden');
+        arrow2.classList.toggle('rotate-180');
+    });
+
+    document.addEventListener('click', () => {
+        menu2.classList.add('hidden');
+        arrow2.classList.remove('rotate-180'); 
+    });
 
 
     //auto uppercase
