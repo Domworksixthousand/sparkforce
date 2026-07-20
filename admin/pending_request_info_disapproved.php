@@ -23,9 +23,7 @@ window.addEventListener('DOMContentLoaded', function() {
         cancelButtonText: "Cancel",
         allowOutsideClick: FileSystemWritableFileStream
     }).then((result) => {
-        if (result.isConfirmed) {
-         /*   
-
+ 
             CoolAlert.show({
                 title: 'Please Wait...',
                 text: 'Sending  email to user.',
@@ -43,7 +41,7 @@ window.addEventListener('DOMContentLoaded', function() {
 
           
             document.getElementById('assignForm').submit();
-            */
+     
         } else {
        
             location.href = 'request_account_info.php?id=<?php echo $user_id ?>&location_back=<?php echo $location_back; ?>';

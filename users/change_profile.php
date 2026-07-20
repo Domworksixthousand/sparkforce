@@ -32,3 +32,4 @@ include 'my_account.php';
         </form>
       </div>
   </dialog>
+ 
