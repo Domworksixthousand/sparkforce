@@ -97,3 +97,29 @@ document.addEventListener("DOMContentLoaded", ()=> {
     fetchData();
 
 });
+
+
+
+    //get
+document.addEventListener("DOMContentLoaded", ()=> {
+
+        function fetchData() {
+        $.ajax({
+            url: "fetch_property_request.php",
+            method: "GET",
+            success: function(data) {
+                $(".request_properties").html(data);
+            },
+            error: function() {
+                $(".request_properties").html("Error loading data");
+            }
+        });
+    }
+
+
+    setInterval(fetchData, 2000);
+
+
+    fetchData();
+
+});

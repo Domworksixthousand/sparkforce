@@ -117,7 +117,7 @@
                                                     <td>' . $email  . '</td>
                                                     <td>' . $contact_number . '</td>
                                                     <td>
-                                                      <a href="" class="btn btn-success text-white">More Info</a>
+                                                      <a href="request_account_info.php?id=' . $user_id . '&location_back=accounts.php" class="btn btn-success text-white">More Info</a>
                                                     </td>
                                                 </tr>';
                                             }

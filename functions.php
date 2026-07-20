@@ -1378,3 +1378,73 @@ if (isset($_POST['landlord_registration'])) {
     header("Location:users/register.php");
     exit;
 }
+
+
+
+if(isset($_POST['disapproved_pending_property'])){
+    $id = $_POST['id'];
+
+    $get_info = $conn->prepare("SELECT * FROM `landlord` WHERE `landlord_id` = ?");
+    $get_info->bind_param("s",$id);
+    $get_info->execute();
+    $result_info = $get_info->get_result();
+    if($result_info->num_rows>0){
+        while($row_info = mysqli_fetch_assoc($result_info)){
+            $user_id = $row_info['user_id'];
+            $property_name = $row_info['property_name'];
+        }
+    }
+    $Disapproved = "Disapproved";
+    $update = $conn->prepare("UPDATE `landlord` SET `status` = ? WHERE `landlord_id` = ?");
+    $update->bind_param("ss",$Disapproved,$id);
+    $update->execute();
+
+    $text = "Thank you for submitting your application to rent out your property, $property_name, on our platform.After reviewing the details and requirements, we regret to inform you that your application has been disapproved" .
+    $status = "unseen";
+    $sender = "RENTSPACE TEAM";
+    $link = "property_requests.php";
+
+    $insert_notifications = $conn->prepare("INSERT INTO `notifications` (`text_noti`,`status`,`date_sent`,`time_sent`,`sender`,`receiver`,`link`) VALUES (?,?,?,?,?,?,?)");
+    $insert_notifications->bind_param("sssssss", $text, $status, $datetoday, $timetoday_24_hourformat, $sender, $user_id, $link);
+    $insert_notifications->execute();
+
+    $_SESSION['success'] = "Successfully Disapproved";
+    header("location:admin/pending_properties.php");
+    exit;
+}
+
+
+
+
+if(isset($_POST['approved_pending_property'])){
+    $id = $_POST['id'];
+
+    $get_info = $conn->prepare("SELECT * FROM `landlord` WHERE `landlord_id` = ?");
+    $get_info->bind_param("s",$id);
+    $get_info->execute();
+    $result_info = $get_info->get_result();
+    if($result_info->num_rows>0){
+        while($row_info = mysqli_fetch_assoc($result_info)){
+            $user_id = $row_info['user_id'];
+            $property_name = $row_info['property_name'];
+        }
+    }
+
+    $Approved = "Approved";
+    $update = $conn->prepare("UPDATE `landlord` SET `status` = ? WHERE `landlord_id` = ?");
+    $update->bind_param("ss",$Approved,$id);
+    $update->execute();
+
+    $text = "Congratulations! We are pleased to inform you that your application to rent out your property, $property_name, has been approved and is now officially live on our platform. Tenants can now view your listing and send inquiries. Thank you for partnering with us!" .
+    $status = "unseen";
+    $sender = "RENTSPACE TEAM";
+    $link = "property_requests.php";
+
+    $insert_notifications = $conn->prepare("INSERT INTO `notifications` (`text_noti`,`status`,`date_sent`,`time_sent`,`sender`,`receiver`,`link`) VALUES (?,?,?,?,?,?,?)");
+    $insert_notifications->bind_param("sssssss",$text, $status, $datetoday, $timetoday_24_hourformat, $sender, $user_id, $link);
+    $insert_notifications->execute();
+
+    $_SESSION['success'] = "Successfully Approved";
+    header("location:admin/pending_properties.php");
+    exit;
+}

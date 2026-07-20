@@ -55,5 +55,6 @@
   </div>
 
   <script src="./../assets/scripts/index.js"></script>
+  <script src="./../assets/scripts/query_filter.js"></script>
 </body>
 </html>

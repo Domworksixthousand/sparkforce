@@ -100,16 +100,16 @@
                                                 $property_name = $row['property_name'];  
                                                 $date_request = $row['date_request']; 
                                                 $status = $row['status'];
-
+                                                $new_date_request =  date("F j, Y", strtotime($row['date_request']));
 
                                              echo '
                                                 <tr class="data-row">
                                                     <td>  ' . $property_name . '</td>
                                                     <td>  ' . $location . '</td>
                                                     <td>  ' . $fullname . '</td>
-                                                    <td>  ' . $date_request . '</td>
+                                                    <td>  ' . $new_date_request . '</td>
                                                     <td>
-                                                        
+                                                        <a href="pending_request_info.php?id=' . $user_id . '&location_back=pending_properties.php" class="btn btn-success text-white">More Info</a>
                                                     </td>
                                                 </tr>';
 

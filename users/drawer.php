@@ -65,7 +65,19 @@
                             Property Registration
                         </a>
                     </li>
-
+                    <li>
+                        <a href="property_requests.php" class="block text-sm text-white hover:text-white py-1 px-2">
+                            Property Requests
+                        </a>
+                    </li>
+                    <?php if($button_disbabled === "abled"): ?>
+                    <li>
+                        <a href="amenities.php" class="block text-sm text-white hover:text-white py-1 px-2 "  >
+                            Amenities
+                        </a>
+                    </li>
+                    <?php endif; ?>
+                    
                 </ul>
             </li>
             <div class="divider text-white"></div>
@@ -78,4 +90,3 @@
         </ul>
       </div>
 
-   

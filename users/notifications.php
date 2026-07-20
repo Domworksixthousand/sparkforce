@@ -93,9 +93,14 @@
                                     <?php echo date("h:i A", strtotime($time_sent)); ?>
                                 </small>
                                 <div class="flex gap-2 justify-end">
-                                    <a href="../functions.php?noti_id=<?php echo $noti_id; ?>&link=<?php echo $link; ?>" class="bg-success w-fit p-2 rounded-lg text-white">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-move-right-icon lucide-move-right"><path d="M18 8L22 12L18 16"/><path d="M2 12H22"/></svg>
+                                 <?php if (!empty($link)): ?>
+                                    <a href="../functions.php?noti_id=<?php echo $noti_id; ?>&link=<?php echo urlencode($link); ?>" class="bg-success w-fit p-2 rounded-lg text-white inline-block">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-move-right-icon lucide-move-right">
+                                            <path d="M18 8L22 12L18 16"/>
+                                            <path d="M2 12H22"/>
+                                        </svg>
                                     </a>
+                                <?php endif; ?>
                                     <a href="notifications_delete.php?id=<?php echo $noti_id;  ?>" class="bg-error w-fit p-2 rounded-lg text-white">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash2-icon lucide-trash-2"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                                     </a>
@@ -162,9 +167,14 @@
                                         <?php echo date("h:i A", strtotime($time_sent)); ?>
                                     </small>
                                    <div class="flex gap-2 justify-end">
-                                        <a href="../functions.php?noti_id=<?php echo $noti_id; ?>&link=<?php echo $link; ?>" class="bg-success w-fit p-2 rounded-lg text-white">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-move-right-icon lucide-move-right"><path d="M18 8L22 12L18 16"/><path d="M2 12H22"/></svg>
-                                        </a>
+                                        <?php if (!empty($link)): ?>
+                                            <a href="../functions.php?noti_id=<?php echo $noti_id; ?>&link=<?php echo urlencode($link); ?>" class="bg-success w-fit p-2 rounded-lg text-white inline-block">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-move-right-icon lucide-move-right">
+                                                    <path d="M18 8L22 12L18 16"/>
+                                                    <path d="M2 12H22"/>
+                                                </svg>
+                                            </a>
+                                        <?php endif; ?>
                                         <a href="notifications_delete.php?id=<?php echo $noti_id;  ?>" class="bg-error w-fit p-2 rounded-lg text-white">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash2-icon lucide-trash-2"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                                         </a>

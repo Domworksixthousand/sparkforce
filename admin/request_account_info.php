@@ -1,9 +1,15 @@
 <?php
     $location_back = $_GET['location_back'];
+     if(!$location_back){
+        header("location:request_accounts.php");
+        exit;
+    }
     include "$location_back";
     if(isset($_GET['id'])){
         $user_id = $_GET['id'] ?? '';
     }
+    
+   
 
     if($location_back === "request_accounts.php"){
         $hidden = "";  
@@ -129,11 +135,15 @@
         <div class="mb-4 ">
             <div class="w-[100%] flex flex-col justify-center items-center mb-5">
                 <p class="text-sm text-gray-500  mb-4">ID PHOTO</p>
-                <img src="./../assets/uploads/<?php echo $id_photo; ?>" class="w-[100%] lg:w-[50%] rounded-[20px] border-2 p-3 " >
+                <a href="./../assets/uploads/<?php echo $id_photo; ?>" class="flex justify-center items-center" target="_blank">
+                    <img src="./../assets/uploads/<?php echo $id_photo; ?>" class="w-[100%] lg:w-[50%] rounded-[20px] border-2 p-3 " >
+                </a>
             </div>
             <div class="w-[100%] flex flex-col justify-center items-center mb-5">
-                 <p class="text-sm text-gray-500  mb-4">SELFIE PHOTO</p>
-                <img src="./../assets/uploads/<?php echo $selfie_photo; ?>" class="w-[100%] lg:w-[50%] rounded-[20px] border-2 p-3 " >
+                <p class="text-sm text-gray-500  mb-4">SELFIE PHOTO</p>
+                <a href="./../assets/uploads/<?php echo $selfie_photo; ?>" class="flex justify-center items-center" target="_blank">
+                    <img src="./../assets/uploads/<?php echo $selfie_photo; ?>" class="w-[100%] lg:w-[50%] rounded-[20px] border-2 p-3 " >
+                </a>
             </div>
         </div>
         <div class="flex justify-center gap-3 w-[100%] flex-col md:flex-row <?php echo $hidden; ?>">
