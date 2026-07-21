@@ -145,7 +145,7 @@ function toggleRepeatPassword() {
     }
 }
 
-function toggletPassword() {
+function togglePasswords() {
     const password = document.getElementById("password");
     const pass = document.getElementById("pass");
     if (password && pass) {

@@ -46,7 +46,7 @@
                 $get_notifications = $conn->prepare("
                     SELECT *, noti.status FROM `notifications` AS noti 
                     LEFT JOIN `accounts` AS ac ON noti.receiver = ac.user_id
-                    WHERE noti.receiver = ? AND noti.date_sent = ?
+                    WHERE noti.receiver = ? AND noti.date_sent = ? ORDER BY date_sent DESC
                 ");
 
                 $get_notifications->bind_param("ss", $user_id_login, $datetoday);
@@ -120,7 +120,7 @@
                     $get_notifications = $conn->prepare("
                         SELECT *, noti.status FROM `notifications` AS noti 
                         LEFT JOIN `accounts` AS ac ON noti.receiver = ac.user_id
-                        WHERE noti.receiver = ? AND noti.date_sent != ?
+                        WHERE noti.receiver = ? AND noti.date_sent != ? ORDER BY date_sent DESC
                     ");
 
                     $get_notifications->bind_param("ss", $user_id_login, $datetoday);

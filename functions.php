@@ -1212,6 +1212,7 @@ if(isset($_POST['confirm_code_credentials'])){
     
 
 }
+
 if (isset($_POST['landlord_registration'])) {
     
   
@@ -1359,8 +1360,8 @@ if (isset($_POST['landlord_registration'])) {
 
  
     $status = "Pending";
-    $insert_details = $conn->prepare("INSERT INTO `landlord` (`landlord_id`,`user_id`,`province`,`municipality`,`barangay`,`type`,`property_name`,`date_request`,`status`) VALUES (?,?,?,?,?,?,?,?,?)");
-    $insert_details->bind_param("sssssssss", $landlord_id, $user_id_login, $province, $municipality, $barangay, $property_type, $property_name, $datetoday, $status);
+    $insert_details = $conn->prepare("INSERT INTO `landlord` (`landlord_id`,`user_id`,`province`,`municipality`,`barangay`,`type`,`property_name`,`date_request`,`status`,`longitude`,`latitude`) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+    $insert_details->bind_param("sssssssssss", $landlord_id, $user_id_login, $province, $municipality, $barangay, $property_type, $property_name, $datetoday, $status,$longitude,$latitud);
     $insert_details->execute();
 
 

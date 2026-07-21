@@ -1,11 +1,5 @@
 <?php
- 
-    $location_back = $_GET['location_back'];
-     if(!$location_back){
-        header("location:request_accounts.php");
-        exit;
-    }
-    include "$location_back";
+ include "property_requests.php";
     if(isset($_GET['id'])){
         $landlord_id = $_GET['id'] ?? '';
     }
@@ -84,7 +78,7 @@
 <dialog id="my_modal_3" class="modal">
   <div class="modal-box w-11/12 max-w-3xl">
     <form method="dialog">
-      <button type="button" onclick="location.href='pending_properties.php'" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+      <button type="button" onclick="location.href='property_requests.php'" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
     </form>
     <div>
        <p class="text-sm text-gray-500 mb-4">Date Request : <?php echo date('F j, Y', strtotime($date_request)); ?></p>
@@ -164,10 +158,6 @@
             <?php else: ?>
                 <p class="text-sm text-gray-400 italic col-span-1 lg:col-span-3">No gallery images uploaded.</p>
             <?php endif; ?>
-        </div>
-        <div class="flex justify-center gap-3 w-[100%] flex-col md:flex-row <?php echo $hidden; ?>">
-            <a href="pending_request_info_approved.php?id=<?php echo $landlord_id; ?>&location_back=<?php echo $location_back; ?>"  class="btn btn-success text-white ">Approved</a>
-            <a href="pending_request_info_disapproved.php?id=<?php echo $landlord_id; ?>&location_back=<?php echo $location_back; ?>"   class="btn bg-gray-400 text-white">Disapproved</a>
         </div>
     </div>
   </div>

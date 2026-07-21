@@ -20,6 +20,8 @@
     <script src="./../assets/scripts/daisy_ui.js"></script>
     <script src="../assets/scripts/cool_alert.js"></script>
     <script src="./../assets/scripts/jquery.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body class="bg-base-100">
 
