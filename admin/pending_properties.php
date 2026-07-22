@@ -88,6 +88,7 @@
                                         if($result_request->num_rows > 0){
                                             while($row = mysqli_fetch_assoc($result_request)){
                                                 $firstname = $row['firstname']; 
+                                                $landlord_id = $row['landlord_id']; 
                                                 $lastname = $row['lastname']; 
                                                 $middlename = $row['middlename']; 
                                                 $suffix = $row['suffix'];
@@ -111,7 +112,7 @@
                                                     <td>  ' . $fullname . '</td>
                                                     <td>  ' . $new_date_request . '</td>
                                                     <td>
-                                                        <a href="pending_request_info.php?id=' . $user_id . '&location_back=pending_properties.php" class="btn btn-success text-white">More Info</a>
+                                                        <a href="pending_request_info.php?id=' . $landlord_id . '&location_back=pending_properties.php" class="btn btn-success text-white">More Info</a>
                                                     </td>
                                                 </tr>';
 

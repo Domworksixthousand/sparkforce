@@ -1237,6 +1237,11 @@ if (isset($_POST['landlord_registration'])) {
     $barangay = $_POST['barangay'] ?? '';
     $property_type = $_POST['property_type'] ?? '';
     $property_name = $_POST['property_name'] ?? '';
+    $terms_agree = $_POST['terms_agree'] ?? '';
+
+    if (isset($_POST['terms_agree'])) {
+        $_SESSION['terms_agree1'] = 1;
+    } 
 
     $_SESSION['property_name'] = $property_name;
     $_SESSION['latitud'] = $latitud;
@@ -1245,6 +1250,7 @@ if (isset($_POST['landlord_registration'])) {
     $_SESSION['municipality'] = $municipality;
     $_SESSION['barangay'] = $barangay;
     $_SESSION['property_type'] = $property_type;
+    
 
     $count_owner_docs = count($owner_docs_validation);
     $count_photo_gallery = count($photo_gallery_validation);
@@ -1374,6 +1380,7 @@ if (isset($_POST['landlord_registration'])) {
     unset($_SESSION['property_type']);
     unset($_SESSION['owner_docs']);
     unset($_SESSION['photo_gallery']);
+    unset($_SESSION['terms_agree1']);
 
     $_SESSION['success'] = "Submitted successfully. Please wait for approval in your notifications.";
     header("Location:users/register.php");
@@ -1448,4 +1455,88 @@ if(isset($_POST['approved_pending_property'])){
     $_SESSION['success'] = "Successfully Approved";
     header("location:admin/pending_properties.php");
     exit;
+}
+
+if(isset($_POST['save_amenity'])){
+    $desc = $_POST['desc'] ?? NULL;
+    $amenity = $_POST['amenity'];
+    $active = "yes";
+
+    $_SESSION['amenity'] = $amenity;
+    $_SESSION['desc'] = $desc;
+
+
+    $check_same = $conn->prepare("SELECT * FROM `amenities` WHERE `active` = ? AND `amenity` = ? AND `user_id` = ?");
+    
+  
+    $check_same->bind_param("sss", $active, $amenity, $user_id_login);
+    $check_same->execute();
+    $result_same = $check_same->get_result();
+
+    if($result_same->num_rows > 0){
+        $_SESSION['error'] = "$amenity Already Exist";
+        header("location: users/amenities_add.php");
+        exit;
+    } else {
+     
+        $insert = $conn->prepare("INSERT INTO `amenities` (`amenity`, `user_id`, `description`, `active`) VALUES (?, ?, ?, ?)");
+        
+      
+        $insert->bind_param("ssss", $amenity, $user_id_login, $desc, $active);
+        $insert->execute();
+
+     
+        unset($_SESSION['amenity']);
+        unset($_SESSION['desc']);
+
+        $_SESSION['success'] = "Successfully Saved";
+        header("location: users/amenities.php");
+        exit;
+    }
+}
+
+if (isset($_POST['delete_amenities'])) {
+    $id = $_POST['id'];
+    $active = "no";
+
+ 
+    $update = $conn->prepare("UPDATE `amenities` SET `active` = ? WHERE `amen_id` = ?");
+    
+
+    $update->bind_param("si", $active, $id);
+    
+    if ($update->execute()) {
+        $_SESSION['success'] = "Successfully Deleted";
+    } else {
+        $_SESSION['error'] = "Failed to delete amenity: " . $conn->error;
+    }
+
+  
+    header("location: users/amenities.php"); 
+
+    exit;
+}
+
+if(isset($_POST['edit_amenity'])){
+    $id = $_POST['id'];
+    $desc = $_POST['desc'] ?? NULL;;
+    $amenity = $_POST['amenity'];
+
+    $check = $conn->prepare("SELECT * FROM `amenities` WHERE `amenity` = ? AND `amen_id` != ?");
+    $check->bind_param("si",$amenity,$id);
+    $check->execute();
+    $result_check = $check->get_result();
+    if($result_check->num_rows>0){
+        $_SESSION['error'] = "$amenity already exist";
+        header("location:users/amenities_edit.php?id=$id");
+        exit;
+    }else{
+        $update = $conn->prepare("UPDATE  `amenities` SET `amenity` = ?,`description` = ? WHERE `amen_id` = ?");
+        $update->bind_param("ssi", $amenity, $desc, $id);
+        $update->execute();
+        $_SESSION['success'] = "Successfully Edited";
+        header("location:users/amenities.php");
+        exit;
+
+    }
 }
