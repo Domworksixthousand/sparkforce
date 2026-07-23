@@ -77,7 +77,27 @@
                         </a>
                     </li>
                     <?php endif; ?>
-                    
+                    <li>
+                        <?php
+                        $approved = "Approved";
+                        $my_properties = $conn->prepare("SELECT * FROM `landlord` WHERE `status` = ? AND `user_id` = ?");
+                        $my_properties->bind_param("ss",$approved,$user_id_login);
+                        $my_properties->execute();
+                        $result = $my_properties->get_result();
+                        if($result->num_rows>0){
+                            while($row_l = mysqli_fetch_assoc($result)){
+                                $property_name = $row_l['property_name'];
+                                $landlord_id = $row_l['landlord_id'];
+
+                                echo '
+                                <a href="my_property.php?property_id=' . $landlord_id . '" class="block text-sm text-white hover:text-white py-1 px-2 "  >
+                                    ' . $property_name . '
+                                </a>
+                                ';
+                            }
+                        }
+                    ?>
+                    </li>
                 </ul>
             </li>
             <div class="divider text-white"></div>

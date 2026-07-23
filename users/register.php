@@ -167,7 +167,7 @@
                               <option value="Warehouse / Industrial Space">Warehouse / Industrial Space</option>
                               <option value="Event Space / Function Hall">Event Space / Function Hall</option>
                               <option value="Cloud Kitchen / Commissary">Cloud Kitchen / Commissary</option>
-                              <option value="BStorage Unit">Storage Unit</option>
+                              <option value="Storage Unit">Storage Unit</option>
                               <option value="Vacation Rental (e.g., Airbnb / Transient House)">Vacation Rental (e.g., Airbnb / Transient House)</option>
                             </select>
                         </label>
