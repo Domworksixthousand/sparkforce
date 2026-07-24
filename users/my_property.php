@@ -96,45 +96,8 @@
                     </select>
                     <p>Entries per Page</p>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="table table-zebra">
-                        <thead>
-                            <tr  class="bg-[#0d9488] text-white">
-                                <th class="text-center">Amenity</th>
-                                <th class="text-center">Desc</th>
-                                <th class="text-center">Actions</th>
-                            </tr>
-                        </thead>
-                            <tbody class="myTable1">
-                                <?php
-                                        $yes_status = "yes";
-                                        $get_amen = $conn->prepare("SELECT * FROM `amenities` WHERE `user_id` = ? AND `active` = ?");
-                                        $get_amen->bind_param("ss",$user_id_login,$yes_status);
-                                        $get_amen->execute();
-                                        $result_amen = $get_amen->get_result();
-                                        if($result_amen->num_rows>0){
-                                            while($row = mysqli_fetch_assoc($result_amen)){
-                                                $amen_id = $row['amen_id'];
-                                                $amenity = $row['amenity'];
-                                                $description = $row['description'];
-                                                $short_desc = (strlen($description) > 10) 
-                                                ? mb_substr($description, 0, 10) . '...' 
-                                                : $description;
-                                            
-                                        echo '
-                                            <tr class="data-row1">
-                                                <td class="text-center">' . $amenity . '</td>
-                                                <td class="text-center">' . $short_desc . '</td>
-                                                <td class="text-center">
-                                                    <a href="amenities_delete.php?id=' . $amen_id . '" class="btn btn-error text-white">Delete</a>
-                                                    <a href="amenities_edit.php?id=' . $amen_id . '" class="btn btn-primary text-white">Edit</a>
-                                                </td>
-                                            </tr>';
-                                        }
-                                    }
-                                ?>
-                        </tbody>
-                    </table>
+                <div>
+                  
                 </div>
             </section>
         </main>

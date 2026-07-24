@@ -1540,3 +1540,125 @@ if(isset($_POST['edit_amenity'])){
 
     }
 }
+
+
+if (isset($_POST['save_boarding'])) {
+    $landlord_id  = $_POST['landlord_id'] ?? '';
+    $room_name    = trim($_POST['name'] ?? '');
+    $price        = trim($_POST['price'] ?? '');
+    $other_info   = trim($_POST['other_info'] ?? '');
+    $old_cover   = trim($_POST['old_cover'] ?? '');
+    
+
+    $_SESSION['name']        = $room_name;
+    $_SESSION['price']       = $price;
+    $_SESSION['other_info']  = $other_info;
+   
+
+    $rent_id = $room_name . rand(1000, 9999);
+    $type    = "Boarding House / Bedspace";
+
+        // Cover Photo Upload Handler
+if (isset($_FILES['cover']) && $_FILES['cover']['error'] === UPLOAD_ERR_OK) {
+    $fileTmpPath   = $_FILES['cover']['tmp_name'];
+    $fileName      = $_FILES['cover']['name'];
+    $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+    $cover_photo   = time() . '_cover.' . $fileExtension;
+    $uploadDir     = 'assets/uploads/';
+
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+
+    if (move_uploaded_file($fileTmpPath, $uploadDir . $cover_photo)) {
+        $_SESSION['fileName'] = $cover_photo; 
+    }
+    } else if (isset($_FILES['cover'])) {
+      
+        error_log("Upload Error Code: " . $_FILES['cover']['error']);
+    }
+
+    // Check duplicate room name for this landlord
+    $check_room = $conn->prepare("SELECT 1 FROM `rentspace` WHERE `landlord_id` = ? AND `name` = ?");
+    $check_room->bind_param("ss", $landlord_id, $room_name);
+    $check_room->execute();
+    $result_room_name = $check_room->get_result();
+
+    if ($result_room_name->num_rows > 0) {
+        $_SESSION['error'] = "$room_name Already Exists";
+        header("Location: users/boarding_house_add.php?property_id=" . urlencode($landlord_id));
+        exit;
+    }
+
+
+
+    //  Validate Amenities input (Duplicates check)
+    $selected_amenities = [];
+    if (!empty($_POST['amenity']) && is_array($_POST['amenity'])) {
+        foreach ($_POST['amenity'] as $amenity_id) {
+            $amenity_id = trim($amenity_id);
+
+            if ($amenity_id !== '') {
+                if (in_array($amenity_id, $selected_amenities)) {
+                    $_SESSION['error'] = "Amenities Selected Must Not Be The Same";
+                    header("Location: users/boarding_house_add.php?property_id=" . urlencode($landlord_id));
+                    exit;
+                }
+                $selected_amenities[] = $amenity_id;
+            }
+        }
+    }
+
+    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $insert->bind_param("sssssiss", $rent_id, $room_name, $landlord_id, $user_id_login, $type, $price, $cover_photo, $other_info);
+    $insert->execute();
+
+    if (!empty($selected_amenities)) {
+        $insert_amen = $conn->prepare("INSERT INTO `rentspace_amenities` (`rent_id`, `amen_id`) VALUES (?, ?)");
+        foreach ($selected_amenities as $amenity_id) {
+            $insert_amen->bind_param("si", $rent_id, $amenity_id);
+            $insert_amen->execute();
+        }
+    }
+
+    if (!empty($_POST['bednum']) && is_array($_POST['bednum'])) {
+        $insert_beds = $conn->prepare("INSERT INTO `boarding_house` (`boarding_id`, `bed_number`, `status`, `num_decks`, `image`, `rent_id`) VALUES (?, ?, ?, ?, ?, ?)");
+
+        foreach ($_POST['bednum'] as $index => $bed_number) {
+            $bed_number  = trim($bed_number);
+            $num_deck    = $_POST['num_deck'][$index] ?? '';
+            $boarding_id = $room_name . rand(1000, 9999);
+            $status      = "Available";
+
+            $bed_image = $_POST['old_id_photo'][$index] ?? '';
+
+            if (
+                isset($_FILES['image']['name'][$index]) &&
+                $_FILES['image']['error'][$index] === UPLOAD_ERR_OK
+            ) {
+                $fileTmp   = $_FILES['image']['tmp_name'][$index];
+                $fileName  = $_FILES['image']['name'][$index];
+                $fileExt   = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+                $bed_image = time() . "_{$index}_bed." . $fileExt;
+                $uploadDir = 'assets/uploads/';
+
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
+
+                move_uploaded_file($fileTmp, $uploadDir . $bed_image);
+            }
+
+            $insert_beds->bind_param("sssiss", $boarding_id, $bed_number, $status, $num_deck, $bed_image, $rent_id);
+            $insert_beds->execute();
+        }
+    }
+
+    $_SESSION['success'] = "Successfully Inserted";
+    header("Location: users/my_property.php?property_id=" . urlencode($landlord_id));
+    exit;
+}
+
+
