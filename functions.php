@@ -1548,12 +1548,70 @@ if (isset($_POST['save_boarding'])) {
     $price        = trim($_POST['price'] ?? '');
     $other_info   = trim($_POST['other_info'] ?? '');
     $old_cover   = trim($_POST['old_cover'] ?? '');
+
+    //bed session
+    $beds = [];
+
+    foreach ($_POST['bednum'] as $index => $bed_number) {
+        $bed_number  = trim($bed_number);
+        $num_deck    = $_POST['num_deck'][$index] ?? '';
+        $boarding_id = $room_name . rand(1000, 9999);
+        $status      = "Available";
+
+        $bed_image = $_POST['old_image'][$index] ?? '';
+
+        if (
+            isset($_FILES['image']['name'][$index]) &&
+            $_FILES['image']['error'][$index] === UPLOAD_ERR_OK
+        ) {
+            $fileTmp   = $_FILES['image']['tmp_name'][$index];
+            $fileName  = $_FILES['image']['name'][$index];
+            $fileExt   = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+            $bed_image = time() . "_{$index}_bed." . $fileExt;
+            $uploadDir = 'assets/uploads/';
+
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+
+            move_uploaded_file($fileTmp, $uploadDir . $bed_image);
+        }
+
+        $beds[] = [
+            'bed_number'   => $bed_number,
+            'num_deck'     => $num_deck,
+            'boarding_id'  => $boarding_id,
+            'bed_image'    => $bed_image
+
+        ];
+    }
+
+       //  Validate Amenities input (Duplicates check)
+    $selected_amenities = [];
+    if (!empty($_POST['amenity']) && is_array($_POST['amenity'])) {
+        foreach ($_POST['amenity'] as $amenity_id) {
+            $amenity_id = trim($amenity_id);
+
+            if ($amenity_id !== '') {
+                if (in_array($amenity_id, $selected_amenities)) {
+                    $_SESSION['error'] = "Amenities Selected Must Not Be The Same";
+                    header("Location: users/boarding_house_add.php?property_id=" . urlencode($landlord_id));
+                    exit;
+                }
+                $selected_amenities[] = $amenity_id;
+                
+            }
+        }
+    }
     
 
     $_SESSION['name']        = $room_name;
     $_SESSION['price']       = $price;
     $_SESSION['other_info']  = $other_info;
-   
+    $_SESSION['beds'] = $beds;
+    $_SESSION['bed_image'] = $bed_image;
+    $_SESSION['amenities'] = $selected_amenities;
 
     $rent_id = $room_name . rand(1000, 9999);
     $type    = "Boarding House / Bedspace";
@@ -1593,25 +1651,10 @@ if (isset($_FILES['cover']) && $_FILES['cover']['error'] === UPLOAD_ERR_OK) {
 
 
 
-    //  Validate Amenities input (Duplicates check)
-    $selected_amenities = [];
-    if (!empty($_POST['amenity']) && is_array($_POST['amenity'])) {
-        foreach ($_POST['amenity'] as $amenity_id) {
-            $amenity_id = trim($amenity_id);
-
-            if ($amenity_id !== '') {
-                if (in_array($amenity_id, $selected_amenities)) {
-                    $_SESSION['error'] = "Amenities Selected Must Not Be The Same";
-                    header("Location: users/boarding_house_add.php?property_id=" . urlencode($landlord_id));
-                    exit;
-                }
-                $selected_amenities[] = $amenity_id;
-            }
-        }
-    }
+ 
 
     $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $insert->bind_param("sssssiss", $rent_id, $room_name, $landlord_id, $user_id_login, $type, $price, $cover_photo, $other_info);
+    $insert->bind_param("sssssiss", $rent_id, $room_name, $landlord_id, $user_id_login, $type, $price, $_SESSION['fileName'], $other_info);
     $insert->execute();
 
     if (!empty($selected_amenities)) {
@@ -1622,39 +1665,24 @@ if (isset($_FILES['cover']) && $_FILES['cover']['error'] === UPLOAD_ERR_OK) {
         }
     }
 
+    //insert beds
     if (!empty($_POST['bednum']) && is_array($_POST['bednum'])) {
-        $insert_beds = $conn->prepare("INSERT INTO `boarding_house` (`boarding_id`, `bed_number`, `status`, `num_decks`, `image`, `rent_id`) VALUES (?, ?, ?, ?, ?, ?)");
-
-        foreach ($_POST['bednum'] as $index => $bed_number) {
-            $bed_number  = trim($bed_number);
-            $num_deck    = $_POST['num_deck'][$index] ?? '';
-            $boarding_id = $room_name . rand(1000, 9999);
-            $status      = "Available";
-
-            $bed_image = $_POST['old_id_photo'][$index] ?? '';
-
-            if (
-                isset($_FILES['image']['name'][$index]) &&
-                $_FILES['image']['error'][$index] === UPLOAD_ERR_OK
-            ) {
-                $fileTmp   = $_FILES['image']['tmp_name'][$index];
-                $fileName  = $_FILES['image']['name'][$index];
-                $fileExt   = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-
-                $bed_image = time() . "_{$index}_bed." . $fileExt;
-                $uploadDir = 'assets/uploads/';
-
-                if (!is_dir($uploadDir)) {
-                    mkdir($uploadDir, 0755, true);
-                }
-
-                move_uploaded_file($fileTmp, $uploadDir . $bed_image);
-            }
-
-            $insert_beds->bind_param("sssiss", $boarding_id, $bed_number, $status, $num_deck, $bed_image, $rent_id);
-            $insert_beds->execute();
-        }
+         foreach ($beds as $bed){
+            $boarding_id = $rent_id . rand();
+            $status = "Available";
+            $insert_beds = $conn->prepare("INSERT INTO `boarding_house` (`boarding_id`, `bed_number`, `status`, `num_decks`, `image`, `rent_id`) VALUES (?, ?, ?, ?, ?, ?)");
+            $insert_beds->bind_param("sssiss", $boarding_id,$bed['bed_number'],$status,$bed['num_deck'],$bed['bed_image'],$rent_id);
+            $insert_beds->execute();   
+         }
     }
+
+    unset($_SESSION['name']);
+    unset($_SESSION['price']);
+    unset($_SESSION['other_info']);
+    unset($_SESSION['beds']);
+    unset($_SESSION['bed_image']);
+    unset($_SESSION['amenities']);
+    unset($_SESSION['fileName']);
 
     $_SESSION['success'] = "Successfully Inserted";
     header("Location: users/my_property.php?property_id=" . urlencode($landlord_id));

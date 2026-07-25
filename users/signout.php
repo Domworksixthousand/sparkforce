@@ -1,5 +1,6 @@
 <?php
     $location_back = htmlspecialchars($_GET['location_back'] ?? '');
+    $property_id = htmlspecialchars($_GET['property_id'] ?? '');
     include "$location_back";
 ?>
 
@@ -23,7 +24,7 @@ window.addEventListener('DOMContentLoaded', function() {
             document.getElementById('assignForm').submit();
         } else {
   
-            location.href = '<?php echo $location_back; ?>';
+            location.href = "<?php echo $location_back . '?property_id=' . $property_id; ?>";
         }
     });
 });

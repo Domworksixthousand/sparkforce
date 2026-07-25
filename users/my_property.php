@@ -96,9 +96,77 @@
                     </select>
                     <p>Entries per Page</p>
                 </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <?php
+                  $get_data = $conn->prepare("SELECT * FROM `rentspace` WHERE `type` = ? AND `user_id` = ? AND `landlord_id` = ?");
+                  $get_data->bind_param("sss", $type, $user_id_login, $landlord_id);
+                  $get_data->execute();
+                  $result_data = $get_data->get_result();
+
+                  if($result_data->num_rows > 0){
+                      while($row = $result_data->fetch_assoc()){
+
+                         echo '
+<div class="group relative h-80 overflow-hidden rounded-2xl shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
+
+    <!-- Background Cover -->
+    <div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+        style="background-image:url(\'../assets/uploads/'.htmlspecialchars($row['image_cover']).'\');">
+    </div>
+
+    <!-- Gradient Overlay -->
+    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+
+    <!-- Content -->
+    <div class="relative flex h-full flex-col justify-end p-5 text-white">
+
+        <div class="backdrop-blur-sm bg-white/10 rounded-xl p-3 border border-white/20">
+
+            <h2 class="text-sm font-bold truncate">
+                '.htmlspecialchars($row['name']).'
+            </h2>
+
+            <div class="mt-2 flex items-center justify-between">
+
                 <div>
-                  
+
+                    <p class="font-bold text-green-400">
+                        &#8369; '.number_format($row['price'],2).'
+                    </p>
                 </div>
+
+                <a href="view_property.php?rent_id='.$row['rent_id'].'"
+                    class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700">
+
+                    View
+
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M5 12h14"/>
+                        <path d="m12 5 7 7-7 7"/>
+                    </svg>
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+';
+                      }
+                  }
+                  ?>
+                  </div>
             </section>
         </main>
 
