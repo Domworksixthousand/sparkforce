@@ -1,11 +1,13 @@
 <?php
 include 'my_property.php';
-if(isset($_GET['property_id'])){
+if(isset($_GET['id']) && isset($_GET['property_id'])){
+    $rent_id = $_GET['id'] ?? '';
     $landlord_id = $_GET['property_id'] ?? '';
 }else{
-    header("location:index.php");
+    echo "<script>location.href='index.php';</script>";
     exit;
 }
+
 
 
 ?>
@@ -258,8 +260,4 @@ if(isset($_GET['property_id'])){
     </form>
   </div>
 </dialog>
-
-
-
-
 

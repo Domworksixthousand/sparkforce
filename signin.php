@@ -74,7 +74,6 @@
 
     <script src="assets/scripts/email_animation.js"></script>
     <script src="assets/scripts/index.js"></script>
-    <script src="assets/scripts/address.js"></script>
 </body>
 </html>
 

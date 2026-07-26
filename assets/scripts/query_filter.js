@@ -1,4 +1,5 @@
-$(document).ready(function(){
+document.addEventListener("DOMContentLoaded", function () {
+   $(document).ready(function(){
     function updateTable() {
         var searchValue = $(".search_data").val().toLowerCase();
         var limit = $("#entries_limit").val();
@@ -47,10 +48,12 @@ $(document).ready(function(){
    
     updateTable();
 });
-
+ 
+});
 
 //hget user poerty requests
-$(document).ready(function(){
+document.addEventListener("DOMContentLoaded", function () {
+   $(document).ready(function(){
     function updateTable() {
         var searchValue = $(".search_data1").val().toLowerCase();
         var limit = $("#entries_limit1").val();
@@ -99,7 +102,8 @@ $(document).ready(function(){
    
     updateTable();
 });
-
+ 
+});
 
 //get
 document.addEventListener("DOMContentLoaded", ()=> {
@@ -175,3 +179,41 @@ document.addEventListener("DOMContentLoaded", ()=> {
     fetchData();
 
 });
+
+
+
+ document.addEventListener("DOMContentLoaded", function(){
+    function updateEntries() {
+
+      let limit = $("#entries_limit1").val();
+
+      let cards = $(".data-container .main-data");
+
+
+      cards.show();
+
+    
+      let value = $(".search_data_property").val().toLowerCase();
+
+      cards.each(function () {
+          if ($(this).text().toLowerCase().indexOf(value) === -1) {
+              $(this).hide();
+          }
+      });
+
+      if (limit !== "All") {
+          cards.filter(":visible").slice(parseInt(limit)).hide();
+      }
+
+  }
+
+  $("#entries_limit1").on("change", function () {
+      updateEntries();
+  });
+
+  $(".search_data_property").on("keyup", function () {
+      updateEntries();
+  });
+
+  updateEntries();
+ });

@@ -157,18 +157,16 @@
                               <option value="Boarding House / Bedspace">Boarding House / Bedspace</option>
                               <option value="Apartment">Apartment</option>
                               <option value="Condominium (Condo)">Condominium (Condo)</option>
-                              <option value="Townhouse / Rowhouse">Townhouse / Rowhouse</option>
-                              <option value="Single-Family House">Single-Family House</option>
+                              <option value="House">House (Single-Family, Townhouse, Duplex)</option>
                               <option value="Studio Unit">Studio Unit</option>
-                              <option value="Commercial House / Shophouse">Commercial House / Shophouse</option>
-                              <option value="Retail Space">Retail Space</option>
-                              <option value="Office Space">Office Space</option>
-                              <option value="Coworking Space / Hot Desk">Coworking Space / Hot Desk</option>
-                              <option value="Warehouse / Industrial Space">Warehouse / Industrial Space</option>
-                              <option value="Event Space / Function Hall">Event Space / Function Hall</option>
-                              <option value="Cloud Kitchen / Commissary">Cloud Kitchen / Commissary</option>
-                              <option value="Storage Unit">Storage Unit</option>
-                              <option value="Vacation Rental (e.g., Airbnb / Transient House)">Vacation Rental (e.g., Airbnb / Transient House)</option>
+                              <option value="Dormitory">Dormitory</option>
+                              <option value="Commercial Space">Commercial Space (Retail, Shophouse, Cloud Kitchen)</option>
+                              <option value="Office Space">Office Space (Private Office, Coworking)</option>
+                              <option value="Warehouse / Storage">Warehouse / Storage (Industrial Space, Storage Unit)</option>
+                              <option value="Event Space">Event Space (Function Hall, Venue)</option>
+                              <option value="Transient House">Transient House (Vacation Rental, Airbnb)</option>
+                              <option value="Parking Space">Parking Space (Garage, Carport)</option>
+                              <option value="Vacant Lot">Vacant Lot (Residential, Commercial, Agricultural)</option>
                             </select>
                         </label>
                     </span>

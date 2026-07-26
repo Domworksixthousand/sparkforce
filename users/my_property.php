@@ -26,6 +26,8 @@
 
   if($type === "Boarding House / Bedspace"){
     $location_add = "boarding_house_add.php";
+    $location_edit = "my_bh_edit.php";
+    $location_info = "my_bh_info.phpp";
   }
 
 
@@ -41,9 +43,6 @@
      <link rel="shortcut icon" href="./../assets/images/logo-icon.png" type="image/x-icon"> 
     <link rel="stylesheet" href="./../assets/styles/daisy_ui.css">
     <link rel="stylesheet" href="./../assets/styles/index.css">
-    <!--leaflet-- link-->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" /> 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-geosearch@3.11.0/dist/geosearch.css" />
     <script src="./../assets/scripts/tailwind.js"></script>
     <script src="./../assets/scripts/daisy_ui.js"></script>
     <script src="../assets/scripts/cool_alert.js"></script>
@@ -79,7 +78,7 @@
                 <div class="flex justify-start items-start mb-5  w-[100%]">
                     <label class="input validator  w-[100%] rounded-[5px]">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search-icon lucide-search"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
-                        <input type="text"  class="search_data1 input w-[100%] " placeholder="Search Amenities"  />
+                        <input type="text"  class="autoInput search_data_property input w-[100%] " placeholder="Search Room Name/ Number"  />
                     </label>
                 </div>
                 <div class="flex items-center gap-2 mb-10">
@@ -96,9 +95,9 @@
                     </select>
                     <p>Entries per Page</p>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div class="data-container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   <?php
-                  $get_data = $conn->prepare("SELECT * FROM `rentspace` WHERE `type` = ? AND `user_id` = ? AND `landlord_id` = ?");
+                  $get_data = $conn->prepare("SELECT * FROM `rentspace` as r WHERE `type` = ? AND `user_id` = ? AND `landlord_id` = ? ORDER BY name");
                   $get_data->bind_param("sss", $type, $user_id_login, $landlord_id);
                   $get_data->execute();
                   $result_data = $get_data->get_result();
@@ -107,66 +106,59 @@
                       while($row = $result_data->fetch_assoc()){
 
                          echo '
-<div class="group relative h-80 overflow-hidden rounded-2xl shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
+                        <div class="main-data group relative h-80 overflow-hidden rounded-2xl shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
 
-    <!-- Background Cover -->
-    <div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-        style="background-image:url(\'../assets/uploads/'.htmlspecialchars($row['image_cover']).'\');">
-    </div>
+                            <!-- Background Cover -->
+                            <div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+                                style="background-image:url(\'../assets/uploads/'.htmlspecialchars($row['image_cover']).'\');">
+                            </div>
 
-    <!-- Gradient Overlay -->
-    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+                            <!-- Gradient Overlay -->
+                            <div class="absolute inset-0 bg-gradient-to-t from-[#0d9488] via-black/40 to-transparent"></div>
 
-    <!-- Content -->
-    <div class="relative flex h-full flex-col justify-end p-5 text-white">
+                            <!-- Content -->
+                            <div class="relative flex h-full flex-col justify-end p-5 text-white">
+                               <div class="flex flex-col items-end gap-2">
+                                  <div class="tooltip tooltip-left tooltip-start" data-tip="Edit">
+                                    <a href="'.$location_edit.'?property_id=' .$landlord_id. '&id='.htmlspecialchars($row['rent_id']).'" class="btn btn-primary btn-sm w-fit "  >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-pen-icon lucide-square-pen"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"/></svg>
+                                    </a>
+                                  </div>
+                                  <div class="tooltip tooltip-left tooltip-start" data-tip="View">
+                                    <a href="'.$location_info.'?property_id=' .$landlord_id. '&id='.htmlspecialchars($row['rent_id']).'" class="btn btn-success btn-sm w-fit text-white">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-icon lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+                                    </a>
+                                  </div>
+                                  <div class="tooltip tooltip-left tooltip-start" data-tip="Delete">
+                                    <a href="" class="btn btn-error btn-sm w-fit text-white">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-icon lucide-trash"><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                    </a>
+                                  </div>
+                              </div>
+                              <h2 class="text-sm font-bold truncate mb-3">
+                                  '.htmlspecialchars($row['name']).'
+                              </h2>
+                                <div class="backdrop-blur-sm bg-white/10 rounded-xl p-2 border border-white/20">
+                                    <div class="flex flex-col">
+                                        <div>
+                                            <p class="font-bold text-emerald-300 text-sm">
+                                                &#8369; '.number_format($row['price'],2).' / Month
+                                            </p>
+                                        </div>
+                                     
+                                    </div>
 
-        <div class="backdrop-blur-sm bg-white/10 rounded-xl p-3 border border-white/20">
+                                </div>
 
-            <h2 class="text-sm font-bold truncate">
-                '.htmlspecialchars($row['name']).'
-            </h2>
+                            </div>
 
-            <div class="mt-2 flex items-center justify-between">
-
-                <div>
-
-                    <p class="font-bold text-green-400">
-                        &#8369; '.number_format($row['price'],2).'
-                    </p>
-                </div>
-
-                <a href="view_property.php?rent_id='.$row['rent_id'].'"
-                    class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700">
-
-                    View
-
-                    <svg xmlns="http://www.w3.org/2000/svg"
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <path d="M5 12h14"/>
-                        <path d="m12 5 7 7-7 7"/>
-                    </svg>
-
-                </a>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
-';
+                        </div>
+                      ';
                       }
                   }
                   ?>
                   </div>
+                  
             </section>
         </main>
 
@@ -181,9 +173,6 @@
 
 
 
-  <!--leaflet script-->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="https://unpkg.com/leaflet-geosearch@3.11.0/dist/bundle.min.js"></script>
   <script src="./../assets/scripts/index.js"></script>
   <script src="./../assets/scripts/map.js"></script>
   <script src="./../assets/scripts/query_filter.js"></script>
