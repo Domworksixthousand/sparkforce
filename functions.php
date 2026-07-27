@@ -890,13 +890,13 @@ if (isset($_POST['change_credentials'])) {
     $repeat_password = $_POST['repeat_password'] ?? '';
 
     if (empty($username) && empty($password)) {
-        header("location:change_credentials.php");
+        header("location:users/change_credentials.php");
         exit;
     } elseif (!empty($username) && empty($password)) {
         //dapat 7 pataas an username
         if (strlen($username) < 7) {
             $_SESSION['error'] = "Username must be at least 7 characters long";
-            header("location:change_credentials.php");
+            header("location:users/change_credentials.php");
             exit;
         } else {
 

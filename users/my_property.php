@@ -98,7 +98,7 @@
                     </select>
                     <p>Entries per Page</p>
                 </div>
-                <div class="data-container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div class="data-container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-5">
                   <?php
                   $get_data = $conn->prepare("SELECT * FROM `rentspace` as r WHERE `type` = ? AND `user_id` = ? AND `landlord_id` = ? ORDER BY name");
                   $get_data->bind_param("sss", $type, $user_id_login, $landlord_id);
