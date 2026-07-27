@@ -27,7 +27,10 @@
   if($type === "Boarding House / Bedspace"){
     $location_add = "boarding_house_add.php";
     $location_edit = "my_bh_edit.php";
-    $location_info = "my_bh_info.phpp";
+    $location_info = "my_bh_info.php";
+  }elseif($type === "Apartment"){
+    $location_add = "apartment_add.php";
+
   }
 
 
@@ -130,7 +133,7 @@
                                     </a>
                                   </div>
                                   <div class="tooltip tooltip-left tooltip-start" data-tip="Delete">
-                                    <a href="" class="btn btn-error btn-sm w-fit text-white">
+                                    <a href="property_delete.php?property_id=' .$landlord_id. '&id='.htmlspecialchars($row['rent_id']).'" class="btn btn-error btn-sm w-fit text-white">
                                       <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-icon lucide-trash"><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                                     </a>
                                   </div>
@@ -155,10 +158,16 @@
                         </div>
                       ';
                       }
-                  }
+                  } else {
+                      echo '<div class="col-span-full flex items-center justify-center py-20 text-center">
+                              <div class="flex flex-col items-center gap-3 text-gray-400">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bed-icon lucide-bed"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>
+                                  <p class="text-sm font-medium">No Data Found</p>
+                              </div>
+                            </div>';
+                    }
                   ?>
-                  </div>
-                  
+                </div> 
             </section>
         </main>
 

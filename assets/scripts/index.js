@@ -369,3 +369,120 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
 });
+
+
+//edit boarding house 
+document.addEventListener('DOMContentLoaded', function () {
+    const addBedBtn1 = document.getElementById('addBedBtn1');
+  
+    const bedsContainer1 = addBedBtn1.closest('.mb-5'); 
+
+
+    function getNextBedNumber() {
+        const bedInputs = bedsContainer1.querySelectorAll('input[name="bednum[]"]');
+        let maxNum = 0;
+        
+        bedInputs.forEach(input => {
+            const val = parseInt(input.value.replace(/\D/g, ''), 10);
+            if (!isNaN(val) && val > maxNum) {
+                maxNum = val;
+            }
+        });
+        
+        return maxNum + 1;
+    }
+
+
+    addBedBtn1.addEventListener('click', function () {
+        const nextBedNum1 = getNextBedNumber();
+
+        const bedHTML1 = `
+            <div class="bed-item border-b border-base-200 pb-4 mb-5">
+                <div class="flex justify-between items-center mb-2">
+                    <p class="text-sm bed-title font-medium">
+                        Bed ${nextBedNum1}
+                    </p>
+                    <button type="button" class="btn btn-error btn-xs text-white remove-bed-btn">
+                        Remove
+                    </button>
+                </div>
+                
+                <!-- Empty for new beds -->
+                <input type="hidden" name="boarding_id[]" value="">
+                
+                <div class="w-full flex flex-col gap-3 mb-3">
+                    <span class="w-full">
+                        <label class="input w-full flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>
+                            <input type="text" name="bednum[]" class="grow" value="Bed ${nextBedNum1}" readonly>
+                        </label>
+                    </span>
+
+                    <span class="w-full">
+                        <p class="text-sm bed-title mb-2">Bed Image *</p>
+                        <input type="hidden" name="old_image[]" value="">
+                        <input type="file" class="file-input w-full" name="image[]" accept="image/jpeg,image/jpg" required>
+                    </span>
+                </div>
+
+                <div class="w-full flex flex-col lg:flex-row gap-3 mb-3">
+                    <span class="w-full">
+                        <p class="mb-2 text-sm">Number of Deck</p>
+                        <div class="flex items-center gap-2 border border-gray-300 rounded-md p-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-gray-500 ms-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/><path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/><path d="M12 4v6"/><path d="M2 18h20"/></svg>
+                            <select class="select w-[100%]" name="num_deck[]" required>
+                                <option value="" disabled selected>Select Number of Deck</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                            </select> 
+                        </div> 
+                    </span>
+                </div>
+
+                <div class="w-full flex flex-col lg:flex-row gap-3">
+                    <span class="w-full">
+                        <p class="mb-2 text-sm">Status</p>
+                        <div class="flex items-center gap-2 border border-gray-300 rounded-md p-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-gray-500 ms-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                            <select class="select w-[100%]" name="status[]" required>
+                                <option value="Available" selected>Available</option>
+                                <option value="Not Available">Not Available</option>
+                            </select> 
+                        </div> 
+                    </span>
+                </div>
+            </div>
+        `;
+
+        // Append the new bed HTML right above the "Add Bed" button block or container
+        bedsContainer1.insertAdjacentHTML('beforeend', bedHTML1);
+    });
+
+
+    bedsContainer1.addEventListener('click', function (e) {
+        if (e.target && e.target.classList.contains('remove-bed-btn')) {
+            const bedItem1 = e.target.closest('.bed-item');
+            if (bedItem1) {
+                bedItem1.remove();
+            }
+        }
+    });
+});
+
+
+//tab boarding house room info 
+document.addEventListener('DOMContentLoaded', function () {
+    const tabs   = document.querySelectorAll('.room-tab');
+    const panels = document.querySelectorAll('.tab-panel');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function () {
+            tabs.forEach(t => t.classList.remove('tab-active'));
+            panels.forEach(p => p.classList.add('hidden'));
+
+            this.classList.add('tab-active');
+            document.querySelector(`.tab-panel[data-panel="${this.dataset.tab}"]`).classList.remove('hidden');
+        });
+    });
+});

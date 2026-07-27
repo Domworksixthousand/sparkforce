@@ -25,7 +25,7 @@
         LEFT JOIN documents as d ON l.landlord_id = d.landlord_id 
         LEFT JOIN gallery as g ON l.landlord_id = g.landlord_id 
         WHERE l.landlord_id = ?");
-        $get->bind_param("i", $landlord_id);
+        $get->bind_param("s", $landlord_id);
         $get->execute();
         $result_get = $get->get_result();
         if($result_get->num_rows>0){

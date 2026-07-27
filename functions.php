@@ -1739,47 +1739,41 @@ if(isset($_POST['edit_boarding'])){
         
     }
 
-         //  Validate Amenities input (Duplicates check)
-  // Validate Amenities input (Duplicates check & extraction)
-$selected_amenities = [];
-$processed_amenities_data = []; // Dito mai-ipon ang pairings
+    $selected_amenities = [];
+    $processed_amenities_data = [];
 
-if (!empty($_POST['amenity']) && is_array($_POST['amenity'])) {
-    
-    // Kunin din ang array ng hidden rentspace_amenities_id input
-    $submitted_rent_amen_ids = $_POST['rentspace_amenities_id'] ?? [];
+    if (!empty($_POST['amenity']) && is_array($_POST['amenity'])) {
 
-    foreach ($_POST['amenity'] as $index => $amenity_id) {
-        $amenity_id = trim($amenity_id);
-        
-        // Kunin ang katapat na rentspace_amenity_id gamit ang index
-        $rentspace_amenity_id = trim($submitted_rent_amen_ids[$index] ?? '');
+        $submitted_rent_amen_ids = $_POST['rentspace_amenities_id'] ?? [];
 
-        if ($amenity_id !== '') {
-            // 1. DUPLICATE CHECK
-            if (in_array($amenity_id, $selected_amenities)) {
-                $_SESSION['error'] = "Amenities Selected Must Not Be The Same";
-                
-                // Siguraduhing kasama rin ang id=$rent_id sa redirect URL kung edit mode!
-                $redirect_url = "users/boarding_house_add.php?property_id=" . urlencode($landlord_id);
-                if (!empty($rent_id)) {
-                    $redirect_url .= "&id=" . urlencode($rent_id);
-                }
-
-                header("Location: " . $redirect_url);
-                exit;
-            }
-
-            // 2. IPONIN ANG VALIDATED DATA
-            $selected_amenities[] = $amenity_id;
+        foreach ($_POST['amenity'] as $index => $amenity_id) {
+            $amenity_id = trim($amenity_id);
             
-            $processed_amenities_data[] = [
-                'rentspace_amenity_id' => $rentspace_amenity_id,
-                'amenity_id'           => $amenity_id
-            ];
+        
+            $rentspace_amenity_id = trim($submitted_rent_amen_ids[$index] ?? '');
+
+            if ($amenity_id !== '') {
+        
+                if (in_array($amenity_id, $selected_amenities)) {
+                    $_SESSION['error'] = "Amenities Selected Must Not Be The Same";
+                    
+                
+                    $redirect_url = "users/my_bh_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id);
+                    if (!empty($rent_id)) {
+                        $redirect_url .= "&id=" . urlencode($rent_id);
+                    }
+
+                    header("Location: " . $redirect_url);
+                    exit;
+                }
+                $selected_amenities[] = $amenity_id; 
+                $processed_amenities_data[] = [
+                    'rentspace_amenity_id' => $rentspace_amenity_id,
+                    'amenity_id'           => $amenity_id
+                ];
+            }
         }
     }
-}
 
 
       // Check duplicate room name for this landlord
@@ -1789,7 +1783,7 @@ if (!empty($_POST['amenity']) && is_array($_POST['amenity'])) {
     $result_room_name = $check_room->get_result();
     if ($result_room_name->num_rows > 0) {
         $_SESSION['error'] = "$room_name Already Exists";
-        header("Location: users/boarding_house_add.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
+        header("Location: users/my_bh_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
         exit;
     }
 
@@ -1810,7 +1804,7 @@ if (!empty($_POST['amenity']) && is_array($_POST['amenity'])) {
                 }
             } else {
                 $_SESSION['error'] = "Technical error";
-                header("Location: users/boarding_house_add.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
+                header("Location: users/my_bh_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
                 exit;
             }
         }
@@ -1869,10 +1863,24 @@ if (!empty($_POST['amenity']) && is_array($_POST['amenity'])) {
     }
 
     $_SESSION['success'] = "Successfully Updated";
-    header("location:users/my_property.php?property_id='.$landlord_id.'");
+    header("location:users/my_property.php?property_id=" . urlencode($landlord_id));
     exit;
+  
+}
 
+if(isset($_POST['delete_room'])){
+    $landlord_id = $_POST['landlord_id'];
+    $rent_id = $_POST['rent_id'];
 
+    $delete = $conn->prepare("DELETE FROM `rentspace` WHERE `rent_id` = ?");
+    $delete->bind_param("s",$rent_id);
+    $delete->execute();
 
-    
+    $delete_amen = $conn->prepare("DELETE FROM `rentspace_amenities` WHERE `rent_id` = ?");
+    $delete_amen->bind_param("s",$rent_id);
+    $delete_amen->execute();
+
+    $_SESSION['success'] = "Sucessfully Deleted";
+    header("location:users/my_property.php?property_id=". urlencode($landlord_id));
+    exit;
 }

@@ -21,32 +21,27 @@ window.addEventListener('DOMContentLoaded', function() {
         confirmButtonText: "Confirm",
         showCancelButton: true,
         cancelButtonText: "Cancel",
-        allowOutsideClick: FileSystemWritableFileStream
+        allowOutsideClick: false
     }).then((result) => {
- 
+        if (result.isConfirmed) {
             CoolAlert.show({
                 title: 'Please Wait...',
-                text: 'Sending  email to user.',
+                text: 'Sending email to user.',
                 allowOutsideClick: false,
                 allowEscapeKey: false,
                 showConfirmButton: false,
                 showCancelButton: false,
                 didOpen: () => {
-                
                     if (typeof CoolAlert.showLoading === 'function') {
                         CoolAlert.showLoading();
                     }
                 }
             });
 
-          
             document.getElementById('assignForm').submit();
-     
         } else {
-       
             location.href = 'request_account_info.php?id=<?php echo $user_id ?>&location_back=<?php echo $location_back; ?>';
         }
     });
 });
 </script>
-
