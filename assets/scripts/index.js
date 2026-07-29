@@ -486,3 +486,80 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
+
+//apartment amenities
+document.addEventListener('DOMContentLoaded', function () {
+    const container1 = document.getElementById('amenities-container1');
+    const addamenBtn1 = document.getElementById('addamenBtn1');
+
+    if (!container1 || !addamenBtn1) return;
+
+    addamenBtn1.addEventListener('click', function () {
+        const firstSelect = container1.querySelector('select');
+        
+        if (!firstSelect) {
+            console.error("No base select element found to clone options from.");
+            return;
+        }
+
+        // Use innerHTML directly from the existing select options
+        const optionsMarkup = firstSelect.innerHTML;
+
+        const row = document.createElement('div');
+        row.className = 'amen-item flex items-center gap-2 border border-gray-300 rounded-md p-1 mb-2';
+
+        row.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg"
+                class="size-4 text-gray-500 ms-2 flex-shrink-0"
+                viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10 22a2 2 0 0 1-2-2"/>
+                <path d="M14 2a2 2 0 0 1 2 2"/>
+                <path d="M16 22h-2"/>
+                <path d="M2 10V8"/>
+                <path d="M2 4a2 2 0 0 1 2-2"/>
+                <path d="M20 8a2 2 0 0 1 2 2"/>
+                <path d="M22 14v2"/>
+                <path d="M22 20a2 2 0 0 1-2 2"/>
+                <path d="M4 16a2 2 0 0 1-2-2"/>
+                <path d="M8 10a2 2 0 0 1 2 2h5a1 1 0 0 1 1 1v5a2 2 0 0 1-2 2H9a1 1 0 0 1-1-1z"/>
+                <path d="M8 2h2"/>
+            </svg>
+
+            <select class="select w-[100%]" name="apartment_amenity[]" required>
+                ${optionsMarkup}
+            </select>
+
+            <button type="button"
+                    class="remove-amen-btn btn btn-error btn-sm text-white me-1 px-2 py-1"
+                    title="Remove">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                    width="16" height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M18 6 6 18"/>
+                    <path d="m6 6 12 12"/>
+                </svg>
+            </button>
+        `;
+
+
+        const newSelect = row.querySelector('select');
+        newSelect.selectedIndex = 0;
+
+        container1.appendChild(row);
+    });
+
+    
+    container1.addEventListener('click', function(e) {
+        const btn = e.target.closest('.remove-amen-btn');
+        if (btn) {
+            btn.closest('.amen-item').remove();
+        }
+    });
+});

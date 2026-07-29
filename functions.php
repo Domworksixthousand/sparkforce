@@ -1617,7 +1617,7 @@ if (isset($_POST['save_boarding'])) {
     $type    = "Boarding House / Bedspace";
 
         // Cover Photo Upload Handler
-if (isset($_FILES['cover']) && $_FILES['cover']['error'] === UPLOAD_ERR_OK) {
+    if (isset($_FILES['cover']) && $_FILES['cover']['error'] === UPLOAD_ERR_OK) {
     $fileTmpPath   = $_FILES['cover']['tmp_name'];
     $fileName      = $_FILES['cover']['name'];
     $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
@@ -1868,6 +1868,8 @@ if(isset($_POST['edit_boarding'])){
   
 }
 
+
+
 if(isset($_POST['delete_room'])){
     $landlord_id = $_POST['landlord_id'];
     $rent_id = $_POST['rent_id'];
@@ -1882,5 +1884,162 @@ if(isset($_POST['delete_room'])){
 
     $_SESSION['success'] = "Sucessfully Deleted";
     header("location:users/my_property.php?property_id=". urlencode($landlord_id));
+    exit;
+}
+
+//insert apartment
+
+
+if (isset($_POST['save_apartment'])) {
+
+    // ============================================
+    // STEP 0: Capture ALL inputs FIRST
+    // ============================================
+    $landlord_id    = $_POST['landlord_id'] ?? '';
+    $room_name      = trim($_POST['apartment_name'] ?? '');
+    $price          = trim($_POST['apartment_price'] ?? '');
+    $other_info     = trim($_POST['apartment_other_info'] ?? '');
+    $apartment_type = $_POST['type'] ?? '';
+    $raw_amenities  = $_POST['apartment_amenity'] ?? [];
+
+    foreach($raw_amenities as $yeah){
+        echo "$yeah <br>";
+    }
+ 
+
+    $status       = "Available";
+    $rent_id      = $room_name . rand(1000, 9999);
+    $type         = "Apartment";
+    $apartment_id = $room_name . rand();
+
+    $uploadDir = 'assets/uploads/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+
+    // ============================================
+    // STEP 1: Validate & deduplicate Amenities
+    // ============================================
+    $selected_amenities = [];
+    foreach ($raw_amenities as $amenity_id) {
+        $amenity_id = trim($amenity_id);
+        if ($amenity_id === '') continue;
+
+        if (in_array($amenity_id, $selected_amenities)) {
+            $_SESSION['error'] = "Amenities Selected Must Not Be The Same";
+            header("Location: users/apartment_add.php?property_id=" . urlencode($landlord_id));
+            exit;
+        }
+        $selected_amenities[] = $amenity_id;
+    }
+       $_SESSION['apartment_name']       = $room_name;
+    $_SESSION['apartment_price']      = $price;
+    $_SESSION['apartment_other_info'] = $other_info;
+    $_SESSION['type']                 = $apartment_type;
+    $_SESSION['amenities']            = $raw_amenities ?? [];   // <-- KEY FIX: keep raw selections
+
+    // ============================================
+    // STEP 2: Handle Cover Photo (retain old if none new)
+    // ============================================
+    if (isset($_FILES['apartment_cover']) && $_FILES['apartment_cover']['error'] === UPLOAD_ERR_OK) {
+        $fileTmpPath   = $_FILES['apartment_cover']['tmp_name'];
+        $fileExtension = strtolower(pathinfo($_FILES['apartment_cover']['name'], PATHINFO_EXTENSION));
+        $new_cover     = time() . '_cover.' . $fileExtension;
+
+        if (move_uploaded_file($fileTmpPath, $uploadDir . $new_cover)) {
+            $_SESSION['apartment_cover'] = $new_cover;
+        }
+    }
+    $cover_photo = $_SESSION['apartment_cover'] ?? '';
+
+    if (empty($cover_photo)) {
+        $_SESSION['error'] = "Cover photo is required";
+        header("Location: users/apartment_add.php?property_id=" . urlencode($landlord_id));
+        exit;
+    }
+
+    // ============================================
+    // STEP 3: Handle Gallery Photos (retain old if none new)
+    // ============================================
+    if (!empty($_FILES['gallery']['name'][0])) {
+        $new_gallery = [];
+        foreach ($_FILES['gallery']['name'] as $i => $img_name) {
+            if ($_FILES['gallery']['error'][$i] !== UPLOAD_ERR_OK) continue;
+            $ext      = strtolower(pathinfo($img_name, PATHINFO_EXTENSION));
+            $new_name = uniqid() . '_' . $i . '.' . $ext;
+            if (move_uploaded_file($_FILES['gallery']['tmp_name'][$i], $uploadDir . $new_name)) {
+                $new_gallery[] = $new_name;
+            }
+        }
+        if (!empty($new_gallery)) {
+            $_SESSION['gallery'] = $new_gallery;
+        }
+    }
+    $gallery_images = $_SESSION['gallery'] ?? [];
+
+    if (count($gallery_images) < 3 || count($gallery_images) > 10) {
+        $_SESSION['error'] = "Please upload 3 to 10 photos for the gallery";
+        header("Location: users/apartment_add.php?property_id=" . urlencode($landlord_id));
+        exit;
+    }
+
+    // ============================================
+    // STEP 4: Check duplicate room name
+    // ============================================
+    $check_room = $conn->prepare("SELECT 1 FROM `rentspace` WHERE `landlord_id` = ? AND `name` = ?");
+    $check_room->bind_param("ss", $landlord_id, $room_name);
+    $check_room->execute();
+    $result_room_name = $check_room->get_result();
+
+    if ($result_room_name->num_rows > 0) {
+        $_SESSION['error'] = "$room_name Already Exists";
+        header("Location: users/apartment_add.php?property_id=" . urlencode($landlord_id));
+        exit;
+    }
+
+    // ============================================
+    // STEP 5: All validations passed — INSERT to DB
+    // ============================================
+    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $insert->bind_param("ssssssss", $rent_id, $room_name, $landlord_id, $user_id_login, $type, $price, $cover_photo, $other_info);
+    $insert->execute();
+
+    if (!empty($selected_amenities)) {
+        $insert_amen = $conn->prepare("INSERT INTO `rentspace_amenities` (`rent_id`, `amen_id`) VALUES (?, ?)");
+        foreach ($selected_amenities as $amenity_id) {
+            $insert_amen->bind_param("si", $rent_id, $amenity_id);
+            $insert_amen->execute();
+        }
+    }
+
+    if (!empty($gallery_images)) {
+        $insert_gallery = $conn->prepare("INSERT INTO `gallery2` (`image`, `rent_id`) VALUES (?, ?)");
+        foreach ($gallery_images as $img) {
+            $insert_gallery->bind_param("ss", $img, $rent_id);
+            $insert_gallery->execute();
+        }
+    }
+
+    if (!empty($apartment_type)) {
+        $insert_apartment = $conn->prepare("INSERT INTO `apartment` (`apartment_id`, `apartment_type`, `status`, `rent_id`) VALUES (?, ?, ?, ?)");
+        $insert_apartment->bind_param("ssss", $apartment_id, $apartment_type, $status, $rent_id);
+        $insert_apartment->execute();
+    }
+
+    // ============================================
+    // SUCCESS — now clear session cache only
+    // ============================================
+    unset(
+        $_SESSION['apartment_name'],
+        $_SESSION['apartment_price'],
+        $_SESSION['apartment_other_info'],
+        $_SESSION['apartment_cover'],
+        $_SESSION['gallery'],
+        $_SESSION['type'],
+        $_SESSION['amenities']
+    );
+
+    $_SESSION['success'] = "Successfully Inserted";
+    header("Location: users/my_property.php?property_id=" . urlencode($landlord_id));
     exit;
 }

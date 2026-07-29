@@ -20,6 +20,13 @@ if(isset($_GET['property_id'])){
         ✕
       </button>
     </form>
+
+    <?php if (!empty($_SESSION['error'])): ?>
+        <div class="alert alert-error text-white mb-4 text-sm">
+            <?php echo htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?>
+        </div>
+    <?php endif; ?>
+
     <form action="../functions.php" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="landlord_id" value="<?php echo $landlord_id; ?>">
         <p class="mb-3">Apartment Information </p>
@@ -28,24 +35,24 @@ if(isset($_GET['property_id'])){
                 <p class="mb-2 text-sm">Apartment Name / Number *</p>
                 <label class="input w-[100%]">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5 text-gray-500"><path d="M18 21V10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1v11"/><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 1.132-1.803l7.95-3.974a2 2 0 0 1 1.837 0l7.948 3.974A2 2 0 0 1 22 8z"/><path d="M6 13h12"/><path d="M6 17h12"/></svg>
-                    <input type="text" class="autoInput grow w-[100%]" name="name" value="<?php echo $_SESSION['name'] ?? ''; ?>" placeholder="Enter Name / Number" required />
+                    <input type="text" class="autoInput grow w-[100%]" name="apartment_name" value="<?php echo htmlspecialchars($_SESSION['apartment_name'] ?? ''); ?>" placeholder="Enter Name / Number" required />
                 </label>
             </span>
             <span class="w-[100%]">
                 <p class="mb-2 text-sm">Price /Month *</p>
                 <label class="input w-[100%]">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5 text-gray-500"><path d="M20 11H4"/><path d="M20 7H4"/><path d="M7 21V4a1 1 0 0 1 1-1h4a1 1 0 0 1 0 12H7"/></svg>
-                    <input type="text" class="numbers_only grow w-[100%]" name="price"  value="<?php echo $_SESSION['price'] ?? ''; ?>" placeholder="Enter Price /Month" required />
+                    <input type="text" class="numbers_only grow w-[100%]" name="apartment_price"  value="<?php echo htmlspecialchars($_SESSION['apartment_price'] ?? ''); ?>" placeholder="Enter Price /Month" required />
                 </label>
             </span>
             <span class="w-[100%]">
                 <p class="mb-2 text-sm"> Cover Photo * </p>
-                <?php if (!empty($_SESSION['fileName'])): ?>
-                    <input type="hidden" name="old_cover" value="<?php echo htmlspecialchars($_SESSION['fileName']); ?>">
+                <?php if (!empty($_SESSION['apartment_cover'])): ?>
+                    <input type="hidden" name="old_cover" value="<?php echo htmlspecialchars($_SESSION['apartment_cover']); ?>">
                     <div class="alert alert-success bg-success/10 text-success border border-success/20 p-2 mb-2 text-xs flex items-center justify-between rounded-lg">
                         <div class="flex items-center gap-2">
-                            <img src="../assets/uploads/<?php echo htmlspecialchars($_SESSION['fileName']); ?>" class="w-10 h-10 object-cover rounded" alt="Preview">
-                            <span>Previously selected: <strong class="underline"><?php echo htmlspecialchars($_SESSION['fileName'] ?? 'Cover Image'); ?></strong></span>
+                            <img src="../assets/uploads/<?php echo htmlspecialchars($_SESSION['apartment_cover']); ?>" class="w-10 h-10 object-cover rounded" alt="Preview">
+                            <span>Previously selected: <strong class="underline"><?php echo htmlspecialchars($_SESSION['apartment_cover']); ?></strong></span>
                         </div>
                         <span class="badge badge-success text-white">Retained</span>
                     </div>
@@ -60,10 +67,10 @@ if(isset($_GET['property_id'])){
                         type="file" 
                         class="file-input grow w-[100%]" 
                         id="cover" 
-                        name="cover" 
+                        name="apartment_cover" 
                         accept="image/jpeg, image/png, image/jpg" 
                     
-                        <?php echo !empty($_SESSION['fileName']) ? '' : 'required'; ?> 
+                        <?php echo !empty($_SESSION['apartment_cover']) ? '' : 'required'; ?> 
                     />
                 </label>
             </span>
@@ -71,88 +78,59 @@ if(isset($_GET['property_id'])){
         <div class="w-[100%] flex flex-col lg:flex-row gap-3 mb-5">
             <span class="w-[100%]">
                 <p class="mb-2 text-sm">Other Informations *</p>
-                <textarea class="input w-[100%] border border-gray-300 rounded-sm min-h-50 p-3" name="other_info" placeholder="Enter Other Informations" required><?php echo $_SESSION['other_info'] ?? ''; ?></textarea>
+                <textarea class="input w-[100%] border border-gray-300 rounded-sm min-h-50 p-3" name="apartment_other_info" placeholder="Enter Other Informations" required><?php echo htmlspecialchars($_SESSION['apartment_other_info'] ?? ''); ?></textarea>
             </span>
         </div>
-        <p class="mb-3">Beds Information</p>
-        <div class="mb-5">
-        <div class="mb-3">
-            <button type="button" id="addBedBtn" class="btn btn-success text-white btn-sm">
-                Add Bed
-            </button>
-        </div>
-
-        <div id="beds">
-
-        <?php
-        $beds = $_SESSION['beds'] ?? [
-            [
-                'bed_number' => 'Bed 1',
-                'num_deck'   => '',
-                'bed_image'  => ''
-            ]
-        ];
-
-        foreach ($beds as $bed):
-        ?>
-
-            <div class="bed-item border-b border-base-200 pb-4 mb-5">
-
-                <div class="flex justify-between items-center mb-2">
-                    <p class="text-sm bed-title">
-                        <?php echo htmlspecialchars($bed['bed_number']); ?>
-                    </p>
-
-                    <button type="button"
-                        class="btn btn-error btn-xs text-white remove-bed-btn">
-                        Remove
-                    </button>
-                </div>
-
-                <div class="w-full flex flex-col gap-3 mb-3">
-                    <span class="w-full">
-                        <label class="input w-full">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="size-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bed"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>
-                            <input
-                            type="text"
-                            name="bednum[]"
-                            class="grow"
-                            value="<?php echo htmlspecialchars($bed['bed_number']); ?>"
-                            readonly>
-                        </label>
-                    </span>
-                    <span class="w-full">
-                        <p class="text-sm bed-title mb-2">
-                            Bed Image
-                        </p>
-                        <?php if (!empty($bed['bed_image'])): ?>
-                            <input type="hidden" name="old_image[]" value="<?php echo htmlspecialchars($bed['bed_image']); ?>">
-                            <div class="alert alert-success bg-success/10 text-success border border-success/20 p-2 mb-2 text-xs flex items-center justify-between rounded-lg">
-                                <div class="flex items-center gap-2">
-                                    <img src="../assets/uploads/<?php echo htmlspecialchars($bed['bed_image']); ?>" class="w-10 h-10 object-cover rounded" alt="Preview">
-                                    <span>Previously selected: <strong class="underline"><?php echo htmlspecialchars($bed['bed_image'] ?? 'Bed Image'); ?></strong></span>
-                                </div>
-                                <span class="badge badge-success text-white">Retained</span>
-                            </div>
-                        <?php endif; ?>
-                        <input
-                            type="file"
-                            class="file-input w-full"
-                            name="image[]"
-                            accept="image/jpeg,image/jpg"
-                            <?php echo empty($bed['bed_image']) ? 'required' : ''; ?>>
-                    </span>
-                </div>
-
+        <p class="mb-3">Units Specification</p>
+        <div class="mb-5">        
+            <div class="w-[100%] mb-3">
+                <p class="mb-2 text-sm">Apartment Type *</p>
+                <label class="input w-[100%]">
+                    <svg xmlns="http://www.w3.org/2000/svg"  class="size-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>
+                    <select class="select w-[100%]" name="type" required>
+                        <option value="" disabled <?php echo empty($_SESSION['type']) ? 'selected' : ''; ?>>Select Apartment Type</option>
+                        <option value="Studio" <?php echo (($_SESSION['type'] ?? '') == 'Studio') ? 'selected' : ''; ?>>Studio</option>
+                        <option value="1 Bed Room" <?php echo (($_SESSION['type'] ?? '') == '1 Bed Room') ? 'selected' : ''; ?>>1 Bed Room</option>
+                        <option value="2 Bed Room" <?php echo (($_SESSION['type'] ?? '') == '2 Bed Room') ? 'selected' : ''; ?>>2 Bed Room</option>
+                        <option value="3 Bed Room" <?php echo (($_SESSION['type'] ?? '') == '3 Bed Room') ? 'selected' : ''; ?>>3 Bed Room</option>
+                    </select>
+                </label>
             </div>
+             <div class="w-[100%] mb-3">
+                <p class="mb-2 text-sm">Multiple Photos (Upload 3 to 10 Photos) *</p>
 
-        <?php endforeach; ?>
+                <?php if (!empty($_SESSION['gallery'])): ?>
+                    <div class="grid grid-cols-4 sm:grid-cols-5 gap-2 mb-3">
+                        <?php foreach ($_SESSION['gallery'] as $img): ?>
+                            <div class="relative">
+                                <img src="../assets/uploads/<?php echo htmlspecialchars($img); ?>" 
+                                    class="w-full h-16 object-cover rounded border border-success/30">
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="alert alert-success bg-success/10 text-success border border-success/20 p-2 mb-2 text-xs rounded-lg">
+                        <?php echo count($_SESSION['gallery']); ?> photo(s) retained. Upload new photos below to replace them.
+                    </div>
+                <?php endif; ?>
 
-        </div>
-    </div>
+                <label class="input w-[100%] flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="size-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 11-1.296-1.296a2.4 2.4 0 0 0-3.408 0L11 16"/><path d="M4 8a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2"/><circle cx="13" cy="7" r="1" fill="currentColor"/><rect x="8" y="2" width="14" height="14" rx="2"/></svg>
+                    <input 
+                        type="file" 
+                        class="file-input grow w-[100%]" 
+                        id="gallery" 
+                        name="gallery[]" 
+                        accept="image/jpeg, image/png, image/jpg" 
+                        multiple
+                        <?php echo !empty($_SESSION['gallery']) ? '' : 'required'; ?>
+                    />
+                </label>
+                <p class="text-xs text-gray-400 mt-1">Please select 3–10 photos.</p>
+            </div>               
+        </div>           
          <p class="mb-3">Room Amenities</p>
          <div class="mb-3">
-            <button type="button" id="addamenBtn" class="btn btn-success text-white btn-sm">
+            <button type="button" id="addamenBtn1" class="btn btn-success text-white btn-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="10"/>
                     <path d="M8 12h8"/>
@@ -161,7 +139,7 @@ if(isset($_GET['property_id'])){
                 Add Amenities
             </button>
         </div>
-      <div id="amenities-container">
+      <div id="amenities-container1">
 
             <?php
             $active = "yes";
@@ -205,8 +183,8 @@ if(isset($_GET['property_id'])){
                     <path d="M8 2h2"/>
                 </svg>
 
-                <select class="select w-[100%]" name="amenity[]" required>
-                    <option value="">Select Amenity</option>
+                <select class="select w-[100%]" name="apartment_amenity[]" required>
+                    <option value="" disabled <?php echo empty($selectedAmen) ? 'selected' : ''; ?>>Select Amenity</option>
 
                     <?php foreach($amenities as $amen){ ?>
                         <option value="<?= $amen['amen_id']; ?>"
@@ -238,13 +216,10 @@ if(isset($_GET['property_id'])){
 
             </div>
         <div class="text-end mt-4">
-            <button type="submit" name="save_boarding" class="btn btn-success text-white">Save</button>
+            <button type="submit" name="save_apartment" class="btn btn-success text-white">Save</button>
         </div>
     </form>
   </div>
 </dialog>
-
-
-
 
 
