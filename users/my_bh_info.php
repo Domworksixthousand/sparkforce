@@ -31,12 +31,13 @@ if ($rent_row = $rent_res->fetch_assoc()) {
 }
 
 // BOARDING HOUSES
+$stat = "Out of Order";
 $get_bh = $conn->prepare("
     SELECT boarding_id, status, num_decks, image, bed_number 
     FROM boarding_house 
-    WHERE rent_id = ? ORDER BY bed_number
+    WHERE rent_id = ? AND status != ? ORDER BY bed_number
 ");
-$get_bh->bind_param("s", $rent_id);
+$get_bh->bind_param("ss", $rent_id,$stat);
 $get_bh->execute();
 $bh_res = $get_bh->get_result();
 
@@ -154,10 +155,6 @@ $availableBeds = count(array_filter($boarding_houses, fn($b) => $b['status'] ===
                       <?php echo htmlspecialchars($bh['status']); ?>
                     </span>
                   </div>
-                  <p class="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/><path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/><path d="M12 4v6"/><path d="M2 18h20"/></svg>
-                    <?php echo htmlspecialchars($bh['num_decks']); ?> Deck<?php echo $bh['num_decks'] != 1 ? 's' : ''; ?>
-                  </p>
                 </div>
               </div>
             <?php endforeach; ?>

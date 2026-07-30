@@ -1543,51 +1543,50 @@ if(isset($_POST['edit_amenity'])){
 
 
 if (isset($_POST['save_boarding'])) {
-    $landlord_id  = $_POST['landlord_id'] ?? '';
-    $room_name    = trim($_POST['name'] ?? '');
-    $price        = trim($_POST['price'] ?? '');
-    $other_info   = trim($_POST['other_info'] ?? '');
+    $landlord_id = $_POST['landlord_id'] ?? '';
+    $room_name   = trim($_POST['name'] ?? '');
+    $price       = trim($_POST['price'] ?? '');
+    $other_info  = trim($_POST['other_info'] ?? '');
     $old_cover   = trim($_POST['old_cover'] ?? '');
 
-    //bed session
+    // 1. BED SESSION / PROCESSING
     $beds = [];
 
-    foreach ($_POST['bednum'] as $index => $bed_number) {
-        $bed_number  = trim($bed_number);
-        $num_deck    = $_POST['num_deck'][$index] ?? '';
-        $boarding_id = $room_name . rand(1000, 9999);
-        $status      = "Available";
+    if (!empty($_POST['bednum']) && is_array($_POST['bednum'])) {
+        foreach ($_POST['bednum'] as $index => $bed_number) {
+            $bed_number = trim($bed_number);
+            // Default to 1 deck if not specified
+            $num_deck   = !empty($_POST['num_deck'][$index]) ? (int)$_POST['num_deck'][$index] : 1; 
+            $bed_image  = $_POST['old_image'][$index] ?? '';
 
-        $bed_image = $_POST['old_image'][$index] ?? '';
+            // Handle individual bed image upload
+            if (
+                isset($_FILES['image']['name'][$index]) &&
+                $_FILES['image']['error'][$index] === UPLOAD_ERR_OK
+            ) {
+                $fileTmp   = $_FILES['image']['tmp_name'][$index];
+                $fileName  = $_FILES['image']['name'][$index];
+                $fileExt   = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
-        if (
-            isset($_FILES['image']['name'][$index]) &&
-            $_FILES['image']['error'][$index] === UPLOAD_ERR_OK
-        ) {
-            $fileTmp   = $_FILES['image']['tmp_name'][$index];
-            $fileName  = $_FILES['image']['name'][$index];
-            $fileExt   = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+                $bed_image = time() . "_{$index}_bed." . $fileExt;
+                $uploadDir = 'assets/uploads/';
 
-            $bed_image = time() . "_{$index}_bed." . $fileExt;
-            $uploadDir = 'assets/uploads/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
 
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0755, true);
+                move_uploaded_file($fileTmp, $uploadDir . $bed_image);
             }
 
-            move_uploaded_file($fileTmp, $uploadDir . $bed_image);
+            $beds[] = [
+                'bed_number' => $bed_number,
+                'num_deck'   => $num_deck,
+                'bed_image'  => $bed_image
+            ];
         }
-
-        $beds[] = [
-            'bed_number'   => $bed_number,
-            'num_deck'     => $num_deck,
-            'boarding_id'  => $boarding_id,
-            'bed_image'    => $bed_image
-
-        ];
     }
 
-       //  Validate Amenities input (Duplicates check)
+    // 2. VALIDATE AMENITIES INPUT (Duplicates Check)
     $selected_amenities = [];
     if (!empty($_POST['amenity']) && is_array($_POST['amenity'])) {
         foreach ($_POST['amenity'] as $amenity_id) {
@@ -1600,44 +1599,33 @@ if (isset($_POST['save_boarding'])) {
                     exit;
                 }
                 $selected_amenities[] = $amenity_id;
-                
             }
         }
     }
-    
-
-    $_SESSION['name']        = $room_name;
-    $_SESSION['price']       = $price;
-    $_SESSION['other_info']  = $other_info;
-    $_SESSION['beds'] = $beds;
-    $_SESSION['bed_image'] = $bed_image;
-    $_SESSION['amenities'] = $selected_amenities;
 
     $rent_id = $room_name . rand(1000, 9999);
     $type    = "Boarding House / Bedspace";
 
-        // Cover Photo Upload Handler
+    // 3. COVER PHOTO UPLOAD HANDLER
+    $cover_photo_filename = '';
     if (isset($_FILES['cover']) && $_FILES['cover']['error'] === UPLOAD_ERR_OK) {
-    $fileTmpPath   = $_FILES['cover']['tmp_name'];
-    $fileName      = $_FILES['cover']['name'];
-    $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        $fileTmpPath   = $_FILES['cover']['tmp_name'];
+        $fileName      = $_FILES['cover']['name'];
+        $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
-    $cover_photo   = time() . '_cover.' . $fileExtension;
-    $uploadDir     = 'assets/uploads/';
+        $cover_photo_filename = time() . '_cover.' . $fileExtension;
+        $uploadDir            = 'assets/uploads/';
 
-    if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0755, true);
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        if (!move_uploaded_file($fileTmpPath, $uploadDir . $cover_photo_filename)) {
+            $cover_photo_filename = '';
+        }
     }
 
-    if (move_uploaded_file($fileTmpPath, $uploadDir . $cover_photo)) {
-        $_SESSION['fileName'] = $cover_photo; 
-    }
-    } else if (isset($_FILES['cover'])) {
-      
-        error_log("Upload Error Code: " . $_FILES['cover']['error']);
-    }
-
-    // Check duplicate room name for this landlord
+    // 4. CHECK DUPLICATE ROOM NAME
     $check_room = $conn->prepare("SELECT 1 FROM `rentspace` WHERE `landlord_id` = ? AND `name` = ?");
     $check_room->bind_param("ss", $landlord_id, $room_name);
     $check_room->execute();
@@ -1649,37 +1637,43 @@ if (isset($_POST['save_boarding'])) {
         exit;
     }
 
-
+    // 5. INSERT INTO RENTSPACE
     $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $insert->bind_param("sssssiss", $rent_id, $room_name, $landlord_id, $user_id_login, $type, $price, $_SESSION['fileName'], $other_info);
+    $insert->bind_param("sssssiss", $rent_id, $room_name, $landlord_id, $user_id_login, $type, $price, $cover_photo_filename, $other_info);
     $insert->execute();
 
+    // INSERT AMENITIES
     if (!empty($selected_amenities)) {
         $insert_amen = $conn->prepare("INSERT INTO `rentspace_amenities` (`rent_id`, `amen_id`) VALUES (?, ?)");
         foreach ($selected_amenities as $amenity_id) {
-            $insert_amen->bind_param("si", $rent_id, $amenity_id);
+            $insert_amen->bind_param("ss", $rent_id, $amenity_id);
             $insert_amen->execute();
         }
     }
 
-    //insert beds
-    if (!empty($_POST['bednum']) && is_array($_POST['bednum'])) {
-         foreach ($beds as $bed){
-            $boarding_id = $rent_id . rand();
-            $status = "Available";
-            $insert_beds = $conn->prepare("INSERT INTO `boarding_house` (`boarding_id`, `bed_number`, `status`, `num_decks`, `image`, `rent_id`) VALUES (?, ?, ?, ?, ?, ?)");
-            $insert_beds->bind_param("sssiss", $boarding_id,$bed['bed_number'],$status,$bed['num_deck'],$bed['bed_image'],$rent_id);
-            $insert_beds->execute();   
-         }
-    }
+    // 6. INSERT BEDS (MULTIPLE DECKS CREATION)
+    if (!empty($beds)) {
+        $insert_beds = $conn->prepare("INSERT INTO `boarding_house` (`boarding_id`, `bed_number`, `status`, `num_decks`, `image`, `rent_id`) VALUES (?, ?, ?, ?, ?, ?)");
 
-    unset($_SESSION['name']);
-    unset($_SESSION['price']);
-    unset($_SESSION['other_info']);
-    unset($_SESSION['beds']);
-    unset($_SESSION['bed_image']);
-    unset($_SESSION['amenities']);
-    unset($_SESSION['fileName']);
+        foreach ($beds as $bed) {
+            $deck_count = (int)$bed['num_deck'];
+            $status     = "Available";
+
+            // If num_deck is 2, this loops twice (i = 1, i = 2)
+            for ($d = 1; $d <= $deck_count; $d++) {
+                $boarding_id    = $rent_id . '_' . uniqid(); 
+                
+                // Formats as "Bed 1 - Deck 1", "Bed 1 - Deck 2", etc.
+                // If there's only 1 deck, it just keeps the bed number or appends " - Deck 1"
+                $deck_bed_number = ($deck_count > 1) 
+                    ? $bed['bed_number'] . " - Deck " . $d 
+                    : $bed['bed_number'];
+
+                $insert_beds->bind_param("sssiss", $boarding_id, $deck_bed_number, $status, $d, $bed['bed_image'], $rent_id);
+                $insert_beds->execute();
+            }
+        }
+    }
 
     $_SESSION['success'] = "Successfully Inserted";
     header("Location: users/my_property.php?property_id=" . urlencode($landlord_id));
@@ -1687,86 +1681,79 @@ if (isset($_POST['save_boarding'])) {
 }
 
 
-if(isset($_POST['edit_boarding'])){
-    $rent_id = $_POST['rent_id'];
+if (isset($_POST['edit_boarding'])) {
+    $rent_id     = $_POST['rent_id'];
     $landlord_id = $_POST['landlord_id'];
-    $room_name = $_POST['name'];
-    $price = $_POST['price'];
-    $other_info = $_POST['other_info'];
-    $cover = $_FILES['cover']['name'];
-    $tmp_cover = $_FILES['cover']['tmp_name'];
-    $cover_photo   = time() . '_cover.' . $cover;
-    $location = 'assets/uploads/' . $cover_photo;
-    $rent_id_generate = $room_name . rand(1000, 9999);
-    $type    = "Boarding House / Bedspace";
+    $room_name   = $_POST['name'];
+    $price       = $_POST['price'];
+    $other_info  = $_POST['other_info'];
+    $old_cover   = $_POST['old_cover'] ?? '';
 
-     //bed session
-    $beds = [];
-
-    foreach ($_POST['bednum'] as $index => $bed_number) {
-        $bed_number  = trim($bed_number);
-        $num_deck    = $_POST['num_deck'][$index] ?? '';
-        $boarding_id = $room_name . rand(1000, 9999);
-        $status      = "Available";
-
-        $bed_image = $_POST['old_image'][$index] ?? '';
-
-        if (
-            isset($_FILES['image']['name'][$index]) &&
-            $_FILES['image']['error'][$index] === UPLOAD_ERR_OK
-        ) {
-            $fileTmp   = $_FILES['image']['tmp_name'][$index];
-            $fileName  = $_FILES['image']['name'][$index];
-            $fileExt   = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-
-            $bed_image = time() . "_{$index}_bed." . $fileExt;
-            $uploadDir = 'assets/uploads/';
-
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0755, true);
-            }
-
-            move_uploaded_file($fileTmp, $uploadDir . $bed_image);
-        }
-
-        $beds[] = [
-            'bed_number'   => $bed_number,
-            'num_deck'     => $num_deck,
-            'boarding_id'  => $boarding_id,
-            'bed_image'    => $bed_image,
-            'status'    => $status
-        ];
-        
+    $uploadDir = 'assets/uploads/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
     }
 
+    // 1. BED SESSION / PROCESSING
+    $beds = [];
+    if (!empty($_POST['bednum']) && is_array($_POST['bednum'])) {
+        foreach ($_POST['bednum'] as $index => $bed_number) {
+            $base_bed_name = trim($bed_number);
+            $num_deck      = (int)($_POST['num_deck'][$index] ?? 1);
+            $bed_image     = $_POST['old_image'][$index] ?? '';
+
+            // Handling bed image upload
+            if (
+                isset($_FILES['image']['name'][$index]) &&
+                $_FILES['image']['error'][$index] === UPLOAD_ERR_OK
+            ) {
+                $fileTmp   = $_FILES['image']['tmp_name'][$index];
+                $fileName  = $_FILES['image']['name'][$index];
+                $fileExt   = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+                $bed_image = time() . "_{$index}_bed." . $fileExt;
+                move_uploaded_file($fileTmp, $uploadDir . $bed_image);
+            }
+
+            // Extract status array for this specific bed index
+            $deck_statuses = $_POST['status'][$index] ?? [];
+
+            // Loop through each deck for multi-deck beds
+            for ($d = 0; $d < $num_deck; $d++) {
+                $deck_status = $deck_statuses[$d] ?? 'Available';
+                
+                // Append deck suffix if more than 1 deck exists
+                $formatted_bed_name = ($num_deck > 1) 
+                    ? "{$base_bed_name} - Deck " . ($d + 1) 
+                    : $base_bed_name;
+
+                $beds[] = [
+                    'bed_number' => $formatted_bed_name,
+                    'num_deck'   => $num_deck,
+                    'bed_image'  => $bed_image,
+                    'status'     => $deck_status
+                ];
+            }
+        }
+    }
+
+    // 2. AMENITIES VALIDATION
     $selected_amenities = [];
     $processed_amenities_data = [];
 
     if (!empty($_POST['amenity']) && is_array($_POST['amenity'])) {
-
         $submitted_rent_amen_ids = $_POST['rentspace_amenities_id'] ?? [];
 
         foreach ($_POST['amenity'] as $index => $amenity_id) {
             $amenity_id = trim($amenity_id);
-            
-        
             $rentspace_amenity_id = trim($submitted_rent_amen_ids[$index] ?? '');
 
             if ($amenity_id !== '') {
-        
                 if (in_array($amenity_id, $selected_amenities)) {
                     $_SESSION['error'] = "Amenities Selected Must Not Be The Same";
-                    
-                
-                    $redirect_url = "users/my_bh_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id);
-                    if (!empty($rent_id)) {
-                        $redirect_url .= "&id=" . urlencode($rent_id);
-                    }
-
-                    header("Location: " . $redirect_url);
+                    header("Location: users/my_bh_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
                     exit;
                 }
-                $selected_amenities[] = $amenity_id; 
+                $selected_amenities[] = $amenity_id;
                 $processed_amenities_data[] = [
                     'rentspace_amenity_id' => $rentspace_amenity_id,
                     'amenity_id'           => $amenity_id
@@ -1775,104 +1762,105 @@ if(isset($_POST['edit_boarding'])){
         }
     }
 
-
-      // Check duplicate room name for this landlord
+    // 3. CHECK DUPLICATE ROOM NAME
     $check_room = $conn->prepare("SELECT 1 FROM `rentspace` WHERE `landlord_id` = ? AND `name` = ? AND `rent_id` != ?");
-    $check_room->bind_param("sss", $landlord_id,$room_name,$rent_id);
+    $check_room->bind_param("sss", $landlord_id, $room_name, $rent_id);
     $check_room->execute();
     $result_room_name = $check_room->get_result();
+
     if ($result_room_name->num_rows > 0) {
         $_SESSION['error'] = "$room_name Already Exists";
         header("Location: users/my_bh_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
         exit;
     }
 
-    //update rentspace
-    $update_rentspace = $conn->prepare("UPDATE rentspace SET `name` = ?,`price` = ?,`other_info` = ? WHERE `rent_id` = ? ");
+    // 4. UPDATE RENTSPACE BASIC INFO
+    $update_rentspace = $conn->prepare("UPDATE rentspace SET `name` = ?, `price` = ?, `other_info` = ? WHERE `rent_id` = ?");
     $update_rentspace->bind_param("ssss", $room_name, $price, $other_info, $rent_id);
     $update_rentspace->execute();
 
+    // 5. UPDATE COVER PHOTO
+    if (isset($_FILES['cover']) && $_FILES['cover']['error'] === UPLOAD_ERR_OK) {
+        $fileTmpPath   = $_FILES['cover']['tmp_name'];
+        $fileName      = $_FILES['cover']['name'];
+        $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        $cover_photo   = time() . '_cover.' . $fileExtension;
+        $location      = $uploadDir . $cover_photo;
 
-    //update bg
-    if(!empty($cover)){
-        if (file_exists($location)) {
-            if (unlink($location)) {
-                if(move_uploaded_file($tmp_cover,$location)){
-                    $update = $conn->prepare("UPDATE `rentspace` SET image_cover = ? SET `rent_id` = ?");
-                    $update->bind_param("ss",$cover_photo,$rent_id);
-                    $update->execute();
-                }
-            } else {
-                $_SESSION['error'] = "Technical error";
-                header("Location: users/my_bh_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
-                exit;
+        if (move_uploaded_file($fileTmpPath, $location)) {
+            if (!empty($old_cover) && file_exists($uploadDir . $old_cover)) {
+                unlink($uploadDir . $old_cover);
             }
+
+            $update = $conn->prepare("UPDATE `rentspace` SET `image_cover` = ? WHERE `rent_id` = ?");
+            $update->bind_param("ss", $cover_photo, $rent_id);
+            $update->execute();
+        } else {
+            $_SESSION['error'] = "Failed to upload cover photo";
+            header("Location: users/my_bh_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
+            exit;
         }
     }
 
-
-       //update beds
-    if (!empty($_POST['bednum']) && is_array($_POST['bednum'])) {
-
-   
+    // 6. UPDATE BEDS IN DATABASE
+    if (!empty($beds)) {
+        // Delete old bed records for this rent_id
         $delete = $conn->prepare("DELETE FROM `boarding_house` WHERE `rent_id` = ?");
         $delete->bind_param("s", $rent_id);
         $delete->execute();
 
+        // Re-insert with individual status per deck
         $insert_beds = $conn->prepare("INSERT INTO `boarding_house` (`boarding_id`, `bed_number`, `status`, `num_decks`, `image`, `rent_id`) VALUES (?, ?, ?, ?, ?, ?)");
 
-
         foreach ($beds as $bed) {
-        
-            $boarding_id = $rent_id . '_' . uniqid(); 
+            $boarding_id = $rent_id . '_' . uniqid();
+            $bed_number  = $bed['bed_number'];
+            $status      = $bed['status'];
+            $num_deck    = $bed['num_deck'];
+            $bed_image   = $bed['bed_image'];
 
-            $bed_number = $bed['bed_number'] ?? '';
-            $status     = $bed['status'] ?? 'available';
-            $num_deck   = $bed['num_deck'] ?? 1;
-            $bed_image  = $bed['bed_image'] ?? '';
-
-            $insert_beds->bind_param("sssiss", 
-                $boarding_id, 
-                $bed_number, 
-                $status, 
-                $num_deck, 
-                $bed_image, 
-                $rent_id
-            );
-            $insert_beds->execute(); 
+            $insert_beds->bind_param("sssiss", $boarding_id, $bed_number, $status, $num_deck, $bed_image, $rent_id);
+            $insert_beds->execute();
         }
     }
 
-
-    // Update Amenities (Delete All Existing -> Insert New Selected Ones)
+    // 7. UPDATE AMENITIES IN DATABASE
     if (!empty($selected_amenities)) {
+        $delete_amen = $conn->prepare("DELETE FROM `rentspace_amenities` WHERE `rent_id` = ?");
+        $delete_amen->bind_param("s", $rent_id);
+        $delete_amen->execute();
 
-    
-        $delete = $conn->prepare("DELETE FROM `rentspace_amenities` WHERE `rent_id` = ?");
-        $delete->bind_param("s", $rent_id);
-        $delete->execute();
-
-    
         $insert_amen = $conn->prepare("INSERT INTO `rentspace_amenities` (`rent_id`, `amen_id`) VALUES (?, ?)");
-        
         foreach ($selected_amenities as $amenity_id) {
-        
             $insert_amen->bind_param("ss", $rent_id, $amenity_id);
             $insert_amen->execute();
         }
     }
 
     $_SESSION['success'] = "Successfully Updated";
-    header("location:users/my_property.php?property_id=" . urlencode($landlord_id));
+    header("Location: users/my_property.php?property_id=" . urlencode($landlord_id));
     exit;
-  
 }
-
-
 
 if(isset($_POST['delete_room'])){
     $landlord_id = $_POST['landlord_id'];
     $rent_id = $_POST['rent_id'];
+
+    $get_type = $conn->prepare("SELECT `type` FROM `landlord` WHERE `landlord_id` = ?");
+    $get_type->bind_param("s", $landlord_id);
+    $get_type->execute();
+    $result_type = $get_type->get_result();
+    if($result_type->num_rows>0){
+        while($row_type = mysqli_fetch_assoc($result_type)){
+            $type = $row_type['type'];
+        }
+    }
+
+    if($type === "Boarding House / Bedspace"){
+        $delete = $conn->prepare("DELETE  FROM `boarding_house` WHERE `rent_id` = ?");
+        $delete->bind_param("s", $rent_id);
+        $delete->execute();
+    }
 
     $delete = $conn->prepare("DELETE FROM `rentspace` WHERE `rent_id` = ?");
     $delete->bind_param("s",$rent_id);

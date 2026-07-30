@@ -31,9 +31,9 @@
   $placeholder = "Search Room Name / Number";
   }elseif($type === "Apartment"){
     $location_add = "apartment_add.php";
-  $location_edit = "my_bh_edit.php";
+    $location_edit = "apartment_edit.php";
     $location_info = "my_bh_info.php";
-      $placeholder = "Search Apartment Name / Number";
+    $placeholder = "Search Apartment Name / Number";
   }
 
 
@@ -58,8 +58,6 @@
 
   <?php 
     include '../alerts.php'; 
-  
-
   ?>
 
 
@@ -89,15 +87,15 @@
                 </div>
                 <div class="flex items-center gap-2 mb-10">
                     <select id="entries_limit1" class="select w-fit rounded-[5px]">
-                        <option value="8" selected>8</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="6">6</option>
-                        <option value="7">7</option>
-                        <option value="All">All</option>
+                      <option value="8" selected>8</option>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                      <option value="5">5</option>
+                      <option value="6">6</option>
+                      <option value="7">7</option>
+                      <option value="All">All</option>
                     </select>
                     <p>Entries per Page</p>
                 </div>
