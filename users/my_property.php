@@ -32,7 +32,7 @@
   }elseif($type === "Apartment"){
     $location_add = "apartment_add.php";
     $location_edit = "apartment_edit.php";
-    $location_info = "my_bh_info.php";
+    $location_info = "apartment_info.php";
     $placeholder = "Search Apartment Name / Number";
   }
 

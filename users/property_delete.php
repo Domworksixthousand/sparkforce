@@ -32,7 +32,7 @@ window.addEventListener('DOMContentLoaded', function() {
             document.getElementById('assignForm').submit(); 
         } else {
 
-            window.location.href = 'amenities.php';
+            window.location.href = 'my_property.php?property_id=<?php echo urlencode($landlord_id); ?>';
         }
     });
 });

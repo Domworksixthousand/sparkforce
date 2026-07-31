@@ -563,3 +563,29 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 });
+
+
+//splide
+document.addEventListener('DOMContentLoaded', function () {
+    // Access global Splide and window.splide.Extensions.AutoScroll
+    const splide = new Splide('.splide', {
+    type: 'loop',
+    drag: 'free',
+    focus: 'center',
+    perPage: 3,
+    gap: '1rem',
+    pagination: false,
+    autoScroll: {
+        speed: 0.4,
+        pauseOnHover: true,
+        pauseOnFocus: false,
+    },
+    breakpoints: {
+        768: { perPage: 2 },
+        480: { perPage: 1 }
+    }
+    });
+
+    // Mount using global extension object
+    splide.mount(window.splide.Extensions);
+});

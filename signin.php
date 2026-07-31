@@ -29,7 +29,7 @@
                 <h1 class="cursive-text text-white font-black tracking-wider text-[1rem] mb-4 drop-shadow-sm">
                     RENTSPACE
                 </h1>
-                <div class="w-16 h-[3px] bg-white/50 rounded-full mb-6"></div>
+                <div class="w-16 h-[3px] bg-green-800/50 rounded-full mb-6"></div>
             </div>
             
             <form action="functions.php" method="POST" id="signin_form" class="w-full md:w-[500px] block box-border px-4 md:px-0">

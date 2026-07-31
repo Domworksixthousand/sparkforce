@@ -31,38 +31,36 @@ if ($rent_row = $rent_res->fetch_assoc()) {
 }
 
 //apartment details
-$get_apartment = $conn->prepare("SELECT  * FROM `apartment` WHERE `rent_id` = ?");
+$apartment_id = "";
+$apartment_type = "";
+$status = "";
+$get_apartment = $conn->prepare("SELECT * FROM `apartment` WHERE `rent_id` = ?");
 $get_apartment->bind_param("s", $rent_id);
 $get_apartment->execute();
 $result_execute = $get_apartment->get_result();
-if($result_execute->num_rows>0){
+if($result_execute->num_rows > 0){
     while($row_apar = mysqli_fetch_assoc($result_execute)){
-        $apartment_id = $row_apar['apartment_id'];
+        $apartment_id   = $row_apar['apartment_id'];
         $apartment_type = $row_apar['apartment_type'];
-        $status = $row_apar['status'];
+        $status         = $row_apar['status'];
     }
 }
-
 
 //apartment images
 $apartment_images = [];
-$get_gallery = $conn->prepare("SELECT  * FROM `gallery2` WHERE `rent_id` = ?");
+$get_gallery = $conn->prepare("SELECT * FROM `gallery2` WHERE `rent_id` = ?");
 $get_gallery->bind_param("s", $rent_id);
 $get_gallery->execute();
 $result_gallery = $get_gallery->get_result();
-if($result_gallery->num_rows>0){
+if($result_gallery->num_rows > 0){
     while($row_gallery = mysqli_fetch_assoc($result_gallery)){
         $gallery2_id = $row_gallery['gallery2_id'];
-        
         $apartment_images[] = $row_gallery['image'];
-
     }
 }
 
-
-
 //  AMENITIES
-// AMENITIES FROM DATABASE
+// AMENITIES FROM DATABASE (already saved for this rentspace)
 $get_amen = $conn->prepare("
     SELECT a.amen_id, a.amenity, ra.rent_amen_id
     FROM rentspace_amenities AS ra
@@ -82,6 +80,12 @@ while ($row = $amen_res->fetch_assoc()) {
     ];
 }
 
+// Use the DB-saved amenities to pre-select the dropdowns instead of $_SESSION
+if (empty($saved_amenities)) {
+    $selected_amen_ids = [""];
+} else {
+    $selected_amen_ids = array_column($saved_amenities, 'amen_id');
+}
 ?>
 
 <dialog id="my_modal_3" class="modal">
@@ -89,13 +93,15 @@ while ($row = $amen_res->fetch_assoc()) {
     <form method="dialog">
       <button 
         type="button" 
-        onclick="window.location.href='my_property.php?property_id=<?php echo $landlord_id; ?>';" 
+        onclick="window.location.href='my_property.php?property_id=<?php echo urlencode($landlord_id); ?>';" 
         class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
         ✕
       </button>
     </form>
     <form action="../functions.php" method="POST" enctype="multipart/form-data">
-        <input type="hidden" name="landlord_id" value="<?php echo $landlord_id; ?>">
+        <input type="hidden" name="landlord_id" value="<?php echo htmlspecialchars($landlord_id); ?>">
+        <input type="hidden" name="rent_id" value="<?php echo htmlspecialchars($rent_id); ?>">
+        <input type="hidden" name="apartment_id" value="<?php echo htmlspecialchars($apartment_id); ?>">
         <p class="mb-3">Apartment Information </p>
         <div class="w-[100%] flex flex-col  gap-3 mb-5">
             <span class="w-[100%]">
@@ -136,7 +142,6 @@ while ($row = $amen_res->fetch_assoc()) {
                         id="cover" 
                         name="apartment_cover" 
                         accept="image/jpeg, image/png, image/jpg" 
-                    
                         <?php echo !empty($image_cover) ? '' : 'required'; ?> 
                     />
                 </label>
@@ -155,11 +160,13 @@ while ($row = $amen_res->fetch_assoc()) {
                 <label class="input w-[100%]">
                     <svg xmlns="http://www.w3.org/2000/svg"  class="size-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>
                     <select class="select w-[100%]" name="type" required>
-                        <option value="<?php echo $apartment_type; ?>" > <?php echo $apartment_type; ?></option>
-                        <option value="Studio" <?php echo (($_SESSION['type'] ?? '') == 'Studio') ? 'selected' : ''; ?>>Studio</option>
-                        <option value="1 Bed Room" <?php echo (($_SESSION['type'] ?? '') == '1 Bed Room') ? 'selected' : ''; ?>>1 Bed Room</option>
-                        <option value="2 Bed Room" <?php echo (($_SESSION['type'] ?? '') == '2 Bed Room') ? 'selected' : ''; ?>>2 Bed Room</option>
-                        <option value="3 Bed Room" <?php echo (($_SESSION['type'] ?? '') == '3 Bed Room') ? 'selected' : ''; ?>>3 Bed Room</option>
+                        <option value="<?php echo htmlspecialchars($apartment_type ?? ''); ?>">
+                            <?php echo htmlspecialchars($apartment_type ?? ''); ?>
+                        </option>
+                        <option value="Studio" <?php echo ($apartment_type == 'Studio') ? 'selected' : ''; ?>>Studio</option>
+                        <option value="1 Bed Room" <?php echo ($apartment_type == '1 Bed Room') ? 'selected' : ''; ?>>1 Bed Room</option>
+                        <option value="2 Bed Room" <?php echo ($apartment_type == '2 Bed Room') ? 'selected' : ''; ?>>2 Bed Room</option>
+                        <option value="3 Bed Room" <?php echo ($apartment_type == '3 Bed Room') ? 'selected' : ''; ?>>3 Bed Room</option>
                     </select>
                 </label>
             </div>
@@ -189,7 +196,7 @@ while ($row = $amen_res->fetch_assoc()) {
                         name="gallery[]" 
                         accept="image/jpeg, image/png, image/jpg" 
                         multiple
-                        <?php echo !empty($_SESSION['gallery']) ? '' : 'required'; ?>
+                        <?php echo !empty($apartment_images) ? '' : 'required'; ?>
                     />
                 </label>
                 <p class="text-xs text-gray-400 mt-1">Please select 3–10 photos.</p>
@@ -211,25 +218,19 @@ while ($row = $amen_res->fetch_assoc()) {
             <?php
             $active = "yes";
 
-            // Kunin lahat ng amenities isang beses lang
-            $get_amen = $conn->prepare("SELECT * FROM amenities WHERE user_id=? AND active=?");
-            $get_amen->bind_param("ss", $user_id_login, $active);
-            $get_amen->execute();
-            $result = $get_amen->get_result();
+            $get_amen_all = $conn->prepare("SELECT * FROM amenities WHERE user_id=? AND active=?");
+            $get_amen_all->bind_param("ss", $user_id_login, $active);
+            $get_amen_all->execute();
+            $result = $get_amen_all->get_result();
 
             $amenities = [];
             while($row = $result->fetch_assoc()){
                 $amenities[] = $row;
             }
 
-            // Kung walang session, gumawa ng isang blank dropdown
-            if(empty($_SESSION['amenities'])){
-                $_SESSION['amenities'] = [""];
-            }
-
             $index = 0;
 
-            foreach($_SESSION['amenities'] as $selectedAmen){
+            foreach($selected_amen_ids as $selectedAmen){
             ?>
 
             <div class="amen-item flex items-center gap-2 border border-gray-300 rounded-md p-1 mb-2">
@@ -254,9 +255,9 @@ while ($row = $amen_res->fetch_assoc()) {
                     <option value="" disabled <?php echo empty($selectedAmen) ? 'selected' : ''; ?>>Select Amenity</option>
 
                     <?php foreach($amenities as $amen){ ?>
-                        <option value="<?= $amen['amen_id']; ?>"
-                            <?= ($selectedAmen == $amen['amen_id']) ? 'selected' : ''; ?>>
-                            <?= htmlspecialchars($amen['amenity']); ?>
+                        <option value="<?php echo htmlspecialchars($amen['amen_id']); ?>"
+                            <?php echo ($selectedAmen == $amen['amen_id']) ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($amen['amenity']); ?>
                         </option>
                     <?php } ?>
                 </select>
@@ -283,10 +284,8 @@ while ($row = $amen_res->fetch_assoc()) {
 
             </div>
         <div class="text-end mt-4">
-            <button type="submit" name="save_apartment" class="btn btn-success text-white">Save</button>
+            <button type="submit" name="edit_apartment" class="btn btn-success text-white">Update</button>
         </div>
     </form>
   </div>
 </dialog>
-
-

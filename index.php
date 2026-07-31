@@ -9,6 +9,7 @@
     <link rel="shortcut icon" href="assets/images/logo-icon.png" type="image/x-icon"> 
     <link rel="stylesheet" href="assets/styles/daisy_ui.css">
     <link rel="stylesheet" href="assets/styles/index.css">
+    <link rel="stylesheet" href="assets/styles/splide.css">
     <script src="assets/scripts/cool_alert.js"></script>
     <script src="assets/scripts/tailwind.js"></script>
     <script src="assets/scripts/daisy_ui.js"></script>
@@ -89,8 +90,18 @@
                 <div class="text-start w-[100%]">
                     <span>
                     <select class="select w-[100%]  text-black rounded-[10px]" >
-                        <option>Property Type</option>
-                        <option>asda</option>
+                        <option disabled selected>Property Type</option>
+                        <option value="Boarding House / Bedspace">Boarding House / Bedspace</option>
+                        <option value="Apartment">Apartment</option>
+                        <option value="Condominium (Condo)">Condominium (Condo)</option>
+                        <option value="House">House (Single-Family, Townhouse, Duplex)</option>
+                        <option value="Commercial Space">Commercial Space (Retail, Shophouse, Cloud Kitchen)</option>
+                        <option value="Office Space">Office Space (Private Office, Coworking)</option>
+                        <option value="Warehouse / Storage">Warehouse / Storage (Industrial Space, Storage Unit)</option>
+                        <option value="Event Space">Event Space (Function Hall, Venue)</option>
+                        <option value="Transient House">Transient House (Vacation Rental, Airbnb)</option>
+                        <option value="Parking Space">Parking Space (Garage, Carport)</option>
+                        <option value="Vacant Lot">Vacant Lot (Residential, Commercial, Agricultural)</option>
                     </select>
                     </span>
                 </div>
@@ -108,17 +119,209 @@
     </div>
   </header>
 
-
   <main>
     <section class="my-container py-[100px] px-[10px] lg:px-[0px]" id="properties">
-      <div class="flex justify-center items-center flex-col   w-[100%]">
+      <div class="flex justify-center items-center flex-col   w-[100%] ">
         <p class="bg-[#f0fdfa] p-[10px] rounded-xl text-emerald-800 font-bold mb-3">Property Categories</p>
         <h1 class="font-bold text-[1.5rem] border-b-5 border-b-emerald-800 w-fit mb-4">Find the Perfect Property Type</h1>
         <p>Whether you need a short-term stay or long-term rental, browse through our diverse range of verified property types.</p>
       </div>
-      <div>
-        <h1>sadsada</h1>
-      </div>
+      <div class="pt-[80px]">
+      <!-- Section Header -->
+      <!-- Main Carousel Container -->
+   <div class="splide max-w-6xl w-full mx-auto px-10 relative group" aria-label="Accommodations Carousel">
+    
+    <!-- Track Container -->
+    <div class="splide__track py-4 relative">
+      <div class="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-white via-white/80 to-transparent z-10 pointer-events-none"></div>
+      <div class="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white via-white/80 to-transparent z-10 pointer-events-none"></div>
+      <ul class="splide__list">
+      
+        <!-- Card 1 -->
+        <li class="splide__slide px-2">
+          <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
+              <img src="assets/images/king-size.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+            </div>
+            <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
+              Boarding House / Bed Space
+            </p>
+            <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
+              <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
+            </div>
+          </a>
+        </li>
+
+        <!-- Card 2 -->
+        <li class="splide__slide px-2">
+          <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
+              <img src="assets/images/living-room.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+            </div>
+            <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
+              Transient House 
+            </p>
+            <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
+              <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
+            </div>
+          </a>
+        </li>
+
+        <!-- Card 3 -->
+        <li class="splide__slide px-2">
+          <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
+              <img src="assets/images/residential.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+            </div>
+            <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
+              Apartment
+            </p>
+            <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
+              <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
+            </div>
+          </a>
+        </li>
+
+        <!-- Card 4 -->
+        <li class="splide__slide px-2">
+          <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
+              <img src="assets/images/condominium.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+            </div>
+            <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
+              Condominium
+            </p>
+            <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
+              <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
+            </div>
+          </a>
+        </li>
+
+        <!-- Card 5 -->
+        <li class="splide__slide px-2">
+          <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
+              <img src="assets/images/house.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+            </div>
+            <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
+              House 
+            </p>
+            <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
+              <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
+            </div>
+          </a>
+        </li>
+
+        <!-- Card 6 -->
+        <li class="splide__slide px-2">
+          <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
+              <img src="assets/images/work-space.png" class="w-10 h-10 object-contain drop-shadow" alt="Office Space">
+            </div>
+            <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
+              Office Space
+            </p>
+            <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
+              <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
+            </div>
+          </a>
+        </li>
+
+         <!-- Card 7 -->
+        <li class="splide__slide px-2">
+          <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
+              <img src="assets/images/boxes.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+            </div>
+            <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
+              Warehouse / Storage
+            </p>
+            <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
+              <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
+            </div>
+          </a>
+        </li>
+
+          <!-- Card 8 -->
+        <li class="splide__slide px-2">
+          <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
+              <img src="assets/images/property.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+            </div>
+            <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
+              Commercial Space 
+            </p>
+            <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
+              <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
+            </div>
+          </a>
+        </li>
+
+
+           <!-- Card 9 -->
+        <li class="splide__slide px-2">
+          <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
+              <img src="assets/images/event.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+            </div>
+            <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
+              Event Space
+            </p>
+            <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
+              <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
+            </div>
+          </a>
+        </li>
+
+
+           <!-- Card 10 -->
+        <li class="splide__slide px-2">
+          <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
+              <img src="assets/images/car.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+            </div>
+            <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
+              Parking Space 
+            </p>
+            <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
+              <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
+            </div>
+          </a>
+        </li>
+
+
+           <!-- Card 11 -->
+        <li class="splide__slide px-2">
+          <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
+              <img src="assets/images/plant.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+            </div>
+            <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
+              Vacant Lot 
+            </p>
+            <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
+              <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
+            </div>
+          </a>
+        </li>
+
+
+      </ul>
+    </div>
+
+    
+
+    <!-- Glassmorphism Custom Arrows -->
+    <div class="splide__arrows">
+      <button class="splide__arrow splide__arrow--prev !-left-4 !bg-white/90 backdrop-blur-md !shadow-lg !border !border-slate-200/80 hover:!bg-white z-20">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <button class="splide__arrow splide__arrow--next !-right-4 !bg-white/90 backdrop-blur-md !shadow-lg !border !border-slate-200/80 hover:!bg-white z-20">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+    </div>
+
+</div>
     </section>
     <section class="my-container py-[100px] px-[10px] lg:px-[0px]" >
       <div class="flex justify-center items-center lg:justify-start lg:items-start flex-col   w-[100%]">
@@ -207,7 +410,6 @@
       </div>
     </section>
   </main>
-
 
   <footer class=" pt-[100px]">
     <div class=" py-[100px]  bg-[#0da88a]">
@@ -301,6 +503,8 @@
   </footer>
 
 
+  <script src="assets/scripts/splide_auto_scroll.js"></script>
+  <script src="assets/scripts/splide.js"></script>
   <script src="assets/scripts/index.js"></script>
 </body>
 </html>
