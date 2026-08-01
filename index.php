@@ -13,6 +13,8 @@
     <script src="assets/scripts/cool_alert.js"></script>
     <script src="assets/scripts/tailwind.js"></script>
     <script src="assets/scripts/daisy_ui.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body >
 
@@ -120,217 +122,507 @@
   </header>
 
   <main>
-    <section class="my-container py-[100px] px-[10px] lg:px-[0px]" id="properties">
-      <div class="flex justify-center items-center flex-col   w-[100%] ">
-        <p class="bg-[#f0fdfa] p-[10px] rounded-xl text-emerald-800 font-bold mb-3">Property Categories</p>
-        <h1 class="font-bold text-[1.5rem] border-b-5 border-b-emerald-800 w-fit mb-4">Find the Perfect Property Type</h1>
-        <p>Whether you need a short-term stay or long-term rental, browse through our diverse range of verified property types.</p>
-      </div>
-      <div class="pt-[80px]">
-      <!-- Section Header -->
-      <!-- Main Carousel Container -->
-   <div class="splide max-w-6xl w-full mx-auto px-10 relative group" aria-label="Accommodations Carousel">
-    
-    <!-- Track Container -->
-    <div class="splide__track py-4 relative">
-      <div class="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-white via-white/80 to-transparent z-10 pointer-events-none"></div>
-      <div class="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white via-white/80 to-transparent z-10 pointer-events-none"></div>
-      <ul class="splide__list">
-      
-        <!-- Card 1 -->
-        <li class="splide__slide px-2">
-          <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
-              <img src="assets/images/king-size.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
-            </div>
-            <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
-              Boarding House / Bed Space
-            </p>
-            <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
-              <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
-            </div>
-          </a>
-        </li>
+    <section class="my-container pt-[120px] pb-[100px] px-[10px] lg:px-[0px]" id="properties">
+        <div class="flex justify-center items-center text-center flex-col   w-[100%] ">
+          <p class="bg-[#f0fdfa] p-[10px] rounded-xl text-emerald-800 font-bold mb-3">Property Categories</p>
+          <h1 class="font-bold text-[1.5rem] border-b-5 border-b-emerald-800 w-fit mb-4">Find the Perfect Property Type</h1>
+          <p>Whether you need a short-term stay or long-term rental, browse through our diverse range of verified property types.</p>
+        </div>
+        <div class="pt-[100px]">
+        <!-- Section Header -->
+        <!-- Main Carousel Container -->
+        <div class="splide max-w-6xl w-full mx-auto px-10 relative group" aria-label="Accommodations Carousel">
+        
+        <!-- Track Container -->
+        <div class="splide__track py-4 relative">
+          <div class="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-white via-white/80 to-transparent z-10 pointer-events-none"></div>
+          <div class="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white via-white/80 to-transparent z-10 pointer-events-none"></div>
+          <ul class="splide__list">
+          
+            <!-- Card 1 -->
+            <li class="splide__slide px-2">
+              <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
+                  <img src="assets/images/king-size.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+                </div>
+                <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
+                  Boarding House / Bed Space
+                </p>
+                <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
+                  <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
+                </div>
+              </a>
+            </li>
 
-        <!-- Card 2 -->
-        <li class="splide__slide px-2">
-          <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
-              <img src="assets/images/living-room.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
-            </div>
-            <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
-              Transient House 
-            </p>
-            <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
-              <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
-            </div>
-          </a>
-        </li>
+            <!-- Card 2 -->
+            <li class="splide__slide px-2">
+              <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
+                  <img src="assets/images/living-room.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+                </div>
+                <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
+                  Transient House 
+                </p>
+                <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
+                  <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
+                </div>
+              </a>
+            </li>
 
-        <!-- Card 3 -->
-        <li class="splide__slide px-2">
-          <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
-              <img src="assets/images/residential.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
-            </div>
-            <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
-              Apartment
-            </p>
-            <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
-              <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
-            </div>
-          </a>
-        </li>
+            <!-- Card 3 -->
+            <li class="splide__slide px-2">
+              <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
+                  <img src="assets/images/residential.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+                </div>
+                <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
+                  Apartment
+                </p>
+                <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
+                  <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
+                </div>
+              </a>
+            </li>
 
-        <!-- Card 4 -->
-        <li class="splide__slide px-2">
-          <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
-              <img src="assets/images/condominium.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
-            </div>
-            <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
-              Condominium
-            </p>
-            <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
-              <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
-            </div>
-          </a>
-        </li>
+            <!-- Card 4 -->
+            <li class="splide__slide px-2">
+              <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
+                  <img src="assets/images/condominium.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+                </div>
+                <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
+                  Condominium
+                </p>
+                <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
+                  <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
+                </div>
+              </a>
+            </li>
 
-        <!-- Card 5 -->
-        <li class="splide__slide px-2">
-          <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
-              <img src="assets/images/house.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
-            </div>
-            <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
-              House 
-            </p>
-            <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
-              <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
-            </div>
-          </a>
-        </li>
+            <!-- Card 5 -->
+            <li class="splide__slide px-2">
+              <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
+                  <img src="assets/images/house.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+                </div>
+                <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
+                  House 
+                </p>
+                <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
+                  <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
+                </div>
+              </a>
+            </li>
 
-        <!-- Card 6 -->
-        <li class="splide__slide px-2">
-          <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
-              <img src="assets/images/work-space.png" class="w-10 h-10 object-contain drop-shadow" alt="Office Space">
-            </div>
-            <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
-              Office Space
-            </p>
-            <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
-              <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
-            </div>
-          </a>
-        </li>
+            <!-- Card 6 -->
+            <li class="splide__slide px-2">
+              <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
+                  <img src="assets/images/work-space.png" class="w-10 h-10 object-contain drop-shadow" alt="Office Space">
+                </div>
+                <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
+                  Office Space
+                </p>
+                <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
+                  <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
+                </div>
+              </a>
+            </li>
 
-         <!-- Card 7 -->
-        <li class="splide__slide px-2">
-          <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
-              <img src="assets/images/boxes.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
-            </div>
-            <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
-              Warehouse / Storage
-            </p>
-            <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
-              <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
-            </div>
-          </a>
-        </li>
+            <!-- Card 7 -->
+            <li class="splide__slide px-2">
+              <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
+                  <img src="assets/images/boxes.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+                </div>
+                <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
+                  Warehouse / Storage
+                </p>
+                <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
+                  <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
+                </div>
+              </a>
+            </li>
 
-          <!-- Card 8 -->
-        <li class="splide__slide px-2">
-          <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
-              <img src="assets/images/property.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
-            </div>
-            <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
-              Commercial Space 
-            </p>
-            <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
-              <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
-            </div>
-          </a>
-        </li>
-
-
-           <!-- Card 9 -->
-        <li class="splide__slide px-2">
-          <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
-              <img src="assets/images/event.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
-            </div>
-            <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
-              Event Space
-            </p>
-            <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
-              <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
-            </div>
-          </a>
-        </li>
+              <!-- Card 8 -->
+            <li class="splide__slide px-2">
+              <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
+                  <img src="assets/images/property.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+                </div>
+                <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
+                  Commercial Space 
+                </p>
+                <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
+                  <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
+                </div>
+              </a>
+            </li>
 
 
-           <!-- Card 10 -->
-        <li class="splide__slide px-2">
-          <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
-              <img src="assets/images/car.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
-            </div>
-            <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
-              Parking Space 
-            </p>
-            <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
-              <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
-            </div>
-          </a>
-        </li>
+              <!-- Card 9 -->
+            <li class="splide__slide px-2">
+              <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
+                  <img src="assets/images/event.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+                </div>
+                <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
+                  Event Space
+                </p>
+                <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
+                  <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
+                </div>
+              </a>
+            </li>
 
 
-           <!-- Card 11 -->
-        <li class="splide__slide px-2">
-          <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
-            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
-              <img src="assets/images/plant.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
-            </div>
-            <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
-              Vacant Lot 
-            </p>
-            <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
-              <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
-            </div>
-          </a>
-        </li>
+              <!-- Card 10 -->
+            <li class="splide__slide px-2">
+              <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
+                  <img src="assets/images/car.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+                </div>
+                <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
+                  Parking Space 
+                </p>
+                <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
+                  <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
+                </div>
+              </a>
+            </li>
 
 
-      </ul>
-    </div>
+              <!-- Card 11 -->
+            <li class="splide__slide px-2">
+              <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
+                  <img src="assets/images/plant.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+                </div>
+                <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
+                  Vacant Lot 
+                </p>
+                <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
+                  <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
+                </div>
+              </a>
+            </li>
 
-    
 
-    <!-- Glassmorphism Custom Arrows -->
-    <div class="splide__arrows">
-      <button class="splide__arrow splide__arrow--prev !-left-4 !bg-white/90 backdrop-blur-md !shadow-lg !border !border-slate-200/80 hover:!bg-white z-20">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"/></svg>
-      </button>
-      <button class="splide__arrow splide__arrow--next !-right-4 !bg-white/90 backdrop-blur-md !shadow-lg !border !border-slate-200/80 hover:!bg-white z-20">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right"><path d="m9 18 6-6-6-6"/></svg>
-      </button>
-    </div>
+          </ul>
+        </div>
 
-</div>
+        
+
+        <!-- Glassmorphism Custom Arrows -->
+        <div class="splide__arrows">
+          <button class="splide__arrow splide__arrow--prev !-left-4 !bg-white/90 backdrop-blur-md !shadow-lg !border !border-slate-200/80 hover:!bg-white z-20">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <button class="splide__arrow splide__arrow--next !-right-4 !bg-white/90 backdrop-blur-md !shadow-lg !border !border-slate-200/80 hover:!bg-white z-20">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </div>
+
+        </div>
     </section>
-    <section class="my-container py-[100px] px-[10px] lg:px-[0px]" >
-      <div class="flex justify-center items-center lg:justify-start lg:items-start flex-col   w-[100%]">
-        <p class="bg-[#f0fdfa] p-[10px] rounded-xl text-emerald-800 font-bold mb-3">Featured Properties</p>
-        <h1 class="font-bold text-[1.5rem]  w-fit mb-4">Hand-Picked Rental Spaces</h1>
-        <p>Top-rated properties curated for quality and comfort</p>
+    <section class="my-container py-[50px] px-[10px] lg:px-[0px]" >
+        <div class="flex justify-center items-center lg:justify-start lg:items-start flex-col   w-[100%] mb-10">
+          <p class="bg-[#f0fdfa] p-[10px] rounded-xl text-emerald-800 font-bold mb-3">Featured Properties</p>
+          <h1 class="font-bold text-[1.5rem]  w-fit mb-4">Hand-Picked Rental Spaces</h1>
+          <p>Top-rated properties curated for quality and comfort</p>
+        </div>
+          <div class="overflow-auto mb-15">
+            <ul class="flex gap-5 p-5" id="filterTabs">
+              <li><button data-filter="all" class="filter-btn p-3 cursor-pointer text-[0.7rem] lg:text-[0.8rem] text-white rounded-[15px] bg-emerald-600">All&nbsp;Spaces</button></li>
+              <li><button data-filter="Boarding House / Bedspace" class="filter-btn p-3 cursor-pointer text-[0.7rem] lg:text-[0.8rem] text-black rounded-[15px] bg-[#f3f2ee]">Boarding&nbsp;House&nbsp;/&nbsp;Bedspace</button></li>
+              <li><button data-filter="Condominium" class="filter-btn p-3 cursor-pointer text-[0.7rem] lg:text-[0.8rem] text-black rounded-[15px] bg-[#f3f2ee]">Condominium</button></li>
+              <li><button data-filter="Apartment" class="filter-btn p-3 cursor-pointer text-[0.7rem] lg:text-[0.8rem] text-black rounded-[15px] bg-[#f3f2ee]">Apartment</button></li>
+              <li><button data-filter="Condominium" class="filter-btn p-3 cursor-pointer text-[0.7rem] lg:text-[0.8rem] text-black rounded-[15px] bg-[#f3f2ee]">Condominium</button></li>
+              <li><button data-filter="House" class="filter-btn p-3 cursor-pointer text-[0.7rem] lg:text-[0.8rem] text-black rounded-[15px] bg-[#f3f2ee]">House</button></li>
+              <li><button data-filter="Commercial Space" class="filter-btn p-3 cursor-pointer text-[0.7rem] lg:text-[0.8rem] text-black rounded-[15px] bg-[#f3f2ee]">Commercial&nbsp;Space</button></li>
+              <li><button data-filter="Office Space" class="filter-btn p-3 cursor-pointer text-[0.7rem] lg:text-[0.8rem] text-black rounded-[15px] bg-[#f3f2ee]">Office&nbsp;Space</button></li>
+              <li><button data-filter="Warehouse / Storage" class="filter-btn p-3 cursor-pointer text-[0.7rem] lg:text-[0.8rem] text-black rounded-[15px] bg-[#f3f2ee]">Warehouse&nbsp;/&nbsp;Storage</button></li>
+              <li><button data-filter="Transient House" class="filter-btn p-3 cursor-pointer text-[0.7rem] lg:text-[0.8rem] text-black rounded-[15px] bg-[#f3f2ee]">Transient&nbsp;House</button></li>
+              <li><button data-filter="Parking Space" class="filter-btn p-3 cursor-pointer text-[0.7rem] lg:text-[0.8rem] text-black rounded-[15px] bg-[#f3f2ee]">Parking&nbsp;Space</button></li>
+              <li><button data-filter="Vacant Lot" class="filter-btn p-3 cursor-pointer text-[0.7rem] lg:text-[0.8rem] text-black rounded-[15px] bg-[#f3f2ee]">Vacant&nbsp;Lot</button></li>
+            </ul>
+          </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-5">
+      <?php
+        $get_rental = $conn->prepare("
+            SELECT r.*, l.province, l.municipality, l.barangay, l.property_name
+            FROM rentspace r
+            LEFT JOIN landlord l ON l.landlord_id = r.landlord_id
+        ");
+        $get_rental->execute();
+        $result_rental = $get_rental->get_result();
+
+        if ($result_rental->num_rows > 0) {
+            while ($row_rentals = $result_rental->fetch_assoc()) {
+                $name        = htmlspecialchars($row_rentals['name'] ?? '');
+                $rent_id     = htmlspecialchars($row_rentals['rent_id'] ?? '');
+                $landlord_id = htmlspecialchars($row_rentals['landlord_id'] ?? '');
+                $type        = htmlspecialchars($row_rentals['type'] ?? '');
+                $image       = htmlspecialchars($row_rentals['image_cover'] ?? '');
+                $price       = $row_rentals['price'] ?? 0;
+
+                $location = trim(
+                    ($row_rentals['barangay'] ?? '') . ', ' .
+                    ($row_rentals['municipality'] ?? '') . ', ' .
+                    ($row_rentals['province'] ?? ''),
+                    ', '
+                );
+                $location = htmlspecialchars($location);
+
+                $image_url = !empty($image)
+                    ? 'assets/uploads/' . $image
+                    : 'assets/images/background_cover.png';
+
+
+                  if($type === "Event Space" || $type === "Transient House" || $type === "Parking Space" ||  $type === "Vacant Lot" ){
+                    $extention = "Hour";
+                  }else{
+                    $extention = "Month";
+                  }
+
+                echo '
+                <div class="rental-card group relative flex flex-col bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+                data-type="' . $type . '">
+
+                    <!-- Image -->
+                    <div class="relative h-48 overflow-hidden">
+                        <div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+                            style="background-image:url(\'' . $image_url . '\');">
+                        </div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+
+                        <span class="absolute top-3 left-3 text-[0.65rem] font-medium tracking-wide uppercase bg-white/90 backdrop-blur-sm text-emerald-700 px-2.5 py-1 rounded-full shadow-sm">
+                            ' . $type . '
+                        </span>
+
+                        <div class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <a href="view_property.php?id=' . $rent_id . '&property_id=' . $landlord_id . '"
+                              class="bg-white text-gray-900 text-xs font-semibold px-4 py-2 rounded-full shadow-md hover:bg-emerald-600 hover:text-white transition-colors">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="flex flex-col flex-1 p-4">
+                        <h2 class="text-sm font-semibold text-gray-900 truncate mb-1">
+                            ' . $name . '
+                        </h2>
+
+                        <div class="flex items-center gap-1 text-xs text-gray-500 mb-3 truncate">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0">
+                                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                                <circle cx="12" cy="10" r="3"/>
+                            </svg>
+                            <span class="truncate">' . ($location !== '' ? $location : 'Location not set') . '</span>
+                        </div>
+
+                        <div class="mt-auto flex items-center justify-between pt-3 border-t border-gray-100">
+                            <p class="text-sm font-bold text-emerald-600">
+                                &#8369;' . number_format((float)$price, 2) . '
+                                <span class="text-xs font-normal text-gray-400">/ ' .$extention.'</span>
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+                ';
+            }
+        } else {
+            echo '
+                <div class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-3">
+                    <path d="M18 21V10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1v11"/>
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 1.132-1.803l7.95-3.974a2 2 0 0 1 1.837 0l7.948 3.974A2 2 0 0 1 22 8z"/>
+                    <path d="M6 13h12"/>
+                    <path d="M6 17h12"/>
+                  </svg>
+                  <p class="text-sm font-medium">No rentals found</p>
+                  <p class="text-xs text-gray-400 mt-1">New listings will appear here once added.</p>
+                </div>
+            ';
+        }
+      ?>
+    </div>
+    <div id="noResultsMsg" class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400" style="display:none;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-3">
+        <circle cx="11" cy="11" r="8"/>
+        <path d="m21 21-4.3-4.3"/>
+      </svg>
+      <p class="text-sm font-medium">No properties found</p>
+      <p class="text-xs text-gray-400 mt-1">Try selecting a different category.</p>
+    </div>
+    </section>
+    <section class="my-container pt-[50px] pb-[100px] px-[10px] lg:px-[0px]">
+      <div class="flex justify-center items-center   flex-col   w-[100%] mb-10">
+        <h1 class="font-bold text-[1.5rem]  w-fit mb-4">Map View of All Rental Spaces</h1>
       </div>
       <div>
-        <h1>sadsada</h1>
+        <div class="relative mb-4">
+        <div id="propertyMap" class="w-full h-[500px] rounded-xl shadow-md  z-0"></div>
+
+        <!-- Search bar floating inside the map -->
+          <div class="absolute top-3 left-1/2 -translate-x-1/2 z-0 w-full max-w-sm px-3 ">
+            <div class="relative">
+              <input 
+                type="text" 
+                id="mapSearchInput" 
+                placeholder="Search property name or location..." 
+                class="w-full text-sm px-4 py-2.5 pl-10 rounded-full shadow-md border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                autocomplete="off"
+              />
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.3-4.3"/>
+              </svg>
+
+              <div id="mapSearchResults" class="absolute mt-1 w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hidden max-h-60 overflow-y-auto"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+        <?php
+        $stat = "Approved";
+        $get_all = $conn->prepare("SELECT * FROM `landlord` WHERE `status` = ?");
+        $get_all->bind_param("s", $stat);
+        $get_all->execute();
+        $result_all = $get_all->get_result();
+
+        $properties = [];
+        if ($result_all->num_rows > 0) {
+            while ($row_ll = mysqli_fetch_assoc($result_all)) {
+                $properties[] = [
+                    'lat'      => !empty($row_ll['latitude']) ? floatval($row_ll['latitude']) : null,
+                    'lng'      => !empty($row_ll['longitude']) ? floatval($row_ll['longitude']) : null,
+                    'name'     => htmlspecialchars($row_ll['property_name'] ?? 'Property Location'),
+                    'province' => htmlspecialchars($row_ll['province'] ?? ''),
+                    'municipality' => htmlspecialchars($row_ll['municipality'] ?? ''),
+                    'barangay' => htmlspecialchars($row_ll['barangay'] ?? ''),
+                ];
+            }
+        }
+        ?>
+
+      <script>
+      document.addEventListener('DOMContentLoaded', () => {
+          const properties = <?php echo json_encode($properties); ?>;
+
+          const defaultLat = 12.703015;
+          const defaultLng = 124.037141;
+
+          let initialLat = defaultLat;
+          let initialLng = defaultLng;
+          for (const p of properties) {
+              if (p.lat !== null && p.lng !== null) {
+                  initialLat = p.lat;
+                  initialLng = p.lng;
+                  break;
+              }
+          }
+
+          const map = L.map('propertyMap').setView([initialLat, initialLng], 16);
+
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              attribution: '&copy; OpenStreetMap contributors'
+          }).addTo(map);
+
+          const customIcon = L.icon({
+              iconUrl: 'assets/images/home.png',
+              iconSize: [30, 30],
+              iconAnchor: [19, 38],
+              popupAnchor: [0, -38]
+          });
+
+          const markers = [];
+
+          properties.forEach(p => {
+              if (p.lat === null || p.lng === null) return;
+
+              const marker = L.marker([p.lat, p.lng], { icon: customIcon })
+                  .addTo(map)
+                  .bindPopup('<b>' + p.name + '</b>');
+
+              marker._propertyData = p;
+              markers.push(marker);
+          });
+
+          if (markers.length > 1) {
+              const group = L.featureGroup(markers);
+              map.fitBounds(group.getBounds().pad(0.2));
+          } else if (markers.length === 1) {
+              markers[0].openPopup();
+          }
+
+          // ---- SEARCH BAR LOGIC ----
+          const searchInput = document.getElementById('mapSearchInput');
+          const resultsBox = document.getElementById('mapSearchResults');
+
+          function buildLocationLabel(p) {
+              return [p.barangay, p.municipality, p.province].filter(Boolean).join(', ');
+          }
+
+          searchInput.addEventListener('input', () => {
+              const query = searchInput.value.trim().toLowerCase();
+
+              if (query === '') {
+                  resultsBox.classList.add('hidden');
+                  resultsBox.innerHTML = '';
+                  return;
+              }
+
+              const matches = properties.filter(p => {
+                  const haystack = (p.name + ' ' + buildLocationLabel(p)).toLowerCase();
+                  return haystack.includes(query) && p.lat !== null && p.lng !== null;
+              });
+
+              if (matches.length === 0) {
+                  resultsBox.innerHTML = '<div class="px-4 py-3 text-sm text-gray-400">No matching properties</div>';
+                  resultsBox.classList.remove('hidden');
+                  return;
+              }
+
+              resultsBox.innerHTML = matches.map((p, i) => `
+                  <div class="map-search-item px-4 py-2.5 text-sm cursor-pointer hover:bg-emerald-50 border-b border-gray-50 last:border-0" data-index="${properties.indexOf(p)}">
+                      <p class="font-medium text-gray-800 truncate">${p.name}</p>
+                      <p class="text-xs text-gray-400 truncate">${buildLocationLabel(p) || 'Location not set'}</p>
+                  </div>
+              `).join('');
+
+              resultsBox.classList.remove('hidden');
+          });
+
+          // click on a suggestion -> fly to marker + open popup
+          resultsBox.addEventListener('click', (e) => {
+              const item = e.target.closest('.map-search-item');
+              if (!item) return;
+
+              const index = parseInt(item.dataset.index, 10);
+              const p = properties[index];
+
+              const targetMarker = markers.find(m => m._propertyData === p);
+
+              if (targetMarker) {
+                  map.flyTo([p.lat, p.lng], 17, { duration: 0.8 });
+                  targetMarker.openPopup();
+              }
+
+              resultsBox.classList.add('hidden');
+              searchInput.value = p.name;
+          });
+
+          // hide dropdown when clicking outside
+          document.addEventListener('click', (e) => {
+              if (!e.target.closest('#mapSearchInput') && !e.target.closest('#mapSearchResults')) {
+                  resultsBox.classList.add('hidden');
+              }
+          });
+      });
+      </script>
       </div>
     </section>
     <section class=" py-[100px] px-[10px] lg:px-[0px] bg-gray-100" id="aboutus" >
@@ -502,10 +794,11 @@
     </div>
   </footer>
 
-
+  <script src="assets/scripts/query_filter.js"></script>
+  <script src="assets/scripts/jquery.js"></script>
+  <script src="assets/scripts/map.js"></script>
   <script src="assets/scripts/splide_auto_scroll.js"></script>
   <script src="assets/scripts/splide.js"></script>
   <script src="assets/scripts/index.js"></script>
 </body>
 </html>
-

@@ -217,3 +217,34 @@ document.addEventListener("DOMContentLoaded", ()=> {
 
   updateEntries();
  });
+
+document.addEventListener("DOMContentLoaded", function () {
+   $(document).ready(function () {
+    $('.filter-btn').on('click', function () {
+        const filter = $(this).data('filter');
+
+        // switch active button style
+        $('.filter-btn').removeClass('bg-emerald-600 text-white').addClass('bg-[#f3f2ee] text-black');
+        $(this).removeClass('bg-[#f3f2ee] text-black').addClass('bg-emerald-600 text-white');
+
+        let visibleCount = 0;
+
+        if (filter === 'all') {
+            $('.rental-card').show();
+            visibleCount = $('.rental-card').length;
+        } else {
+            $('.rental-card').hide();
+            const matched = $('.rental-card[data-type="' + filter + '"]');
+            matched.show();
+            visibleCount = matched.length;
+        }
+
+        // show/hide "no results" message
+        if (visibleCount === 0) {
+            $('#noResultsMsg').show();
+        } else {
+            $('#noResultsMsg').hide();
+        }
+    });
+}); 
+});
