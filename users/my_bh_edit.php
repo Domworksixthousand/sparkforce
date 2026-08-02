@@ -242,7 +242,7 @@ while ($row = $amen_res->fetch_assoc()) {
                                 <label class="text-xs text-gray-500 w-20 flex-shrink-0"><?php echo $deckLabel; ?></label>
                                 <select class="select w-full" name="status[<?php echo $bedIndex; ?>][]" required>
                                     <option value="Available" <?= $currentStatus == 'Available' ? 'selected' : '' ?>>Available</option>
-                                    <option value="Not Available" <?= $currentStatus == 'Not Available' ? 'selected' : '' ?>>Occupied</option>
+                                    <option value="Occupied" <?= $currentStatus == 'Occupied' ? 'selected' : '' ?>>Occupied</option>
                                     <option value="Out of Order" <?= $currentStatus == 'Out of Order' ? 'selected' : '' ?>>Out of Order</option>
                                 </select>
                             </div>

@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
-<body >
+<body>
 
   <!---alert-->
   <?php 
@@ -38,6 +38,7 @@
           <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-3 shadow-xl bg-base-100 rounded-box w-64 gap-2 border border-base-200">
             <li><a href="#properties">Properties</a></li>
             <li><a href="#aboutus">About Us</a></li>
+            <li><a href="#map_rentals">Map</a></li>
             <li><a href="#works">How It Works</a></li>
             <div class="divider my-1"></div>
             <li><a href="signin.php" class="btn btn-ghost btn-sm">Sign In</a></li>
@@ -56,6 +57,7 @@
         <ul class="menu menu-horizontal px-1 gap-1 text-[15px] font-medium text-base-content/80">
           <li><a href="#properties" class="nav_li hover:text-success text-white transition-colors">Properties</a></li>
           <li><a href="#aboutus" class="nav_li hover:text-success transition-colors text-white">About Us</a></li>
+          <li><a href="#map_rentals" class=" nav_li hover:text-success text-white transition-colors">Map</a></li>
           <li><a href="#works" class=" nav_li hover:text-success text-white transition-colors">How It Works</a></li>
         </ul>
       </div>
@@ -81,17 +83,17 @@
             <p class="text-gray-200 text-base md:text-lg max-w-2xl font-light">
               From cozy boarding houses to luxury apartments — browse thousands of verified rental properties tailored to your needs and budget.
             </p>
-            <form method="GET" action="" class="bg-white mt-[20px] rounded-[20px] w-[100%] py-[23px] px-[18px] ">
+            <form method="GET" action="filter.php" class="bg-white mt-[20px] rounded-[20px] w-[100%] py-[23px] px-[18px] ">
               <div class="flex flex-col lg:flex-row mb-3">
                 <div class="text-start w-[100%] lg:me-3 mb-3 lg:mb-0 ">
                     <span class="flex  flex-col lg:flex-row">
                     <input type="text" name="min" class="numbers_only input border-gray-300  mb-3 lg:mb-0 lg:me-3 w-[100%] rounded-[10px]  placeholder:text-black text-black" placeholder="Price Min">
-                    <input type="text" name="min" class="numbers_only input  border-gray-300 w-[100%] placeholder:text-black rounded-[10px] text-black" placeholder="Price Max">
-                    </span>
+                    <input type="text" name="max"  class="numbers_only input  border-gray-300 w-[100%] placeholder:text-black rounded-[10px] text-black" placeholder="Price Max">
+                    </span>x
                 </div>
                 <div class="text-start w-[100%]">
                     <span>
-                    <select class="select w-[100%]  text-black rounded-[10px]" >
+                    <select class="select w-[100%]  text-black rounded-[10px]" name="type" >
                         <option disabled selected>Property Type</option>
                         <option value="Boarding House / Bedspace">Boarding House / Bedspace</option>
                         <option value="Apartment">Apartment</option>
@@ -122,7 +124,7 @@
   </header>
 
   <main>
-    <section class="my-container pt-[120px] pb-[100px] px-[10px] lg:px-[0px]" id="properties">
+    <section class="my-container pt-[130px] pb-[50px] px-[10px] lg:px-[0px] " id="properties">
         <div class="flex justify-center items-center text-center flex-col   w-[100%] ">
           <p class="bg-[#f0fdfa] p-[10px] rounded-xl text-emerald-800 font-bold mb-3">Property Categories</p>
           <h1 class="font-bold text-[1.5rem] border-b-5 border-b-emerald-800 w-fit mb-4">Find the Perfect Property Type</h1>
@@ -316,16 +318,22 @@
         <!-- Glassmorphism Custom Arrows -->
         <div class="splide__arrows">
           <button class="splide__arrow splide__arrow--prev !-left-4 !bg-white/90 backdrop-blur-md !shadow-lg !border !border-slate-200/80 hover:!bg-white z-20">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="rotate-[180deg] origin-center lucide lucide-step-back-icon lucide-step-back">
+              <path d="M13.971 4.285A2 2 0 0 1 17 6v12a2 2 0 0 1-3.029 1.715l-9.997-5.998a2 2 0 0 1-.003-3.432z"/>
+              <path d="M21 20V4"/>
+            </svg>
           </button>
           <button class="splide__arrow splide__arrow--next !-right-4 !bg-white/90 backdrop-blur-md !shadow-lg !border !border-slate-200/80 hover:!bg-white z-20">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right"><path d="m9 18 6-6-6-6"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-step-forward-icon lucide-step-forward">
+              <path d="M10.029 4.285A2 2 0 0 0 7 6v12a2 2 0 0 0 3.029 1.715l9.997-5.998a2 2 0 0 0 .003-3.432z"/>
+              <path d="M3 4v16"/>
+            </svg>
           </button>
         </div>
 
         </div>
     </section>
-    <section class="my-container py-[50px] px-[10px] lg:px-[0px]" >
+    <section class="my-container py-[100px] px-[10px] lg:px-[0px] " >
         <div class="flex justify-center items-center lg:justify-start lg:items-start flex-col   w-[100%] mb-10">
           <p class="bg-[#f0fdfa] p-[10px] rounded-xl text-emerald-800 font-bold mb-3">Featured Properties</p>
           <h1 class="font-bold text-[1.5rem]  w-fit mb-4">Hand-Picked Rental Spaces</h1>
@@ -347,7 +355,7 @@
               <li><button data-filter="Vacant Lot" class="filter-btn p-3 cursor-pointer text-[0.7rem] lg:text-[0.8rem] text-black rounded-[15px] bg-[#f3f2ee]">Vacant&nbsp;Lot</button></li>
             </ul>
           </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-5">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-5">
       <?php
         $get_rental = $conn->prepare("
             SELECT r.*, l.province, l.municipality, l.barangay, l.property_name
@@ -364,6 +372,7 @@
                 $landlord_id = htmlspecialchars($row_rentals['landlord_id'] ?? '');
                 $type        = htmlspecialchars($row_rentals['type'] ?? '');
                 $image       = htmlspecialchars($row_rentals['image_cover'] ?? '');
+                $property_name       = htmlspecialchars($row_rentals['property_name'] ?? '');
                 $price       = $row_rentals['price'] ?? 0;
 
                 $location = trim(
@@ -385,6 +394,12 @@
                     $extention = "Month";
                   }
 
+                if($type === "Boarding House / Bedspace"){
+                  $locate = "boarding_details.php";
+                }elseif($type === "Apartment"){
+                  $locate = "apartment_details.php";
+                }
+
                 echo '
                 <div class="rental-card group relative flex flex-col bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
                 data-type="' . $type . '">
@@ -400,17 +415,21 @@
                             ' . $type . '
                         </span>
 
+
+
                         <div class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <a href="view_property.php?id=' . $rent_id . '&property_id=' . $landlord_id . '"
+                            <a href="'.$locate.'?id=' . $rent_id .'"
                               class="bg-white text-gray-900 text-xs font-semibold px-4 py-2 rounded-full shadow-md hover:bg-emerald-600 hover:text-white transition-colors">
                                 View Details
                             </a>
+                                
                         </div>
                     </div>
 
                     <!-- Content -->
                     <div class="flex flex-col flex-1 p-4">
-                        <h2 class="text-sm font-semibold text-gray-900 truncate mb-1">
+                        <p class="text-sm font-bold text-black truncate mb-1">'.$property_name.'</p>
+                        <h2 class="text-sm  text-gray-500 truncate mb-1">
                             ' . $name . '
                         </h2>
 
@@ -458,7 +477,7 @@
       <p class="text-xs text-gray-400 mt-1">Try selecting a different category.</p>
     </div>
     </section>
-    <section class="my-container pt-[50px] pb-[100px] px-[10px] lg:px-[0px]">
+    <section class="my-container py-[50px] pb-[100px] px-[10px] lg:px-[0px]" id="map_rentals">
       <div class="flex justify-center items-center   flex-col   w-[100%] mb-10">
         <h1 class="font-bold text-[1.5rem]  w-fit mb-4">Map View of All Rental Spaces</h1>
       </div>
@@ -802,3 +821,6 @@
   <script src="assets/scripts/index.js"></script>
 </body>
 </html>
+
+
+

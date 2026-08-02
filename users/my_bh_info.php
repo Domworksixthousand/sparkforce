@@ -70,7 +70,7 @@ while ($row = $amen_res->fetch_assoc()) {
 function bedStatusBadge($status) {
     switch ($status) {
         case 'Available':      return 'badge-success';
-        case 'Not Available':  return 'badge-warning';
+        case 'Occupied':  return 'badge-error';
         case 'Out of Order':   return 'badge-error';
         default:                return 'badge-ghost';
     }

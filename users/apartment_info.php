@@ -87,7 +87,7 @@ function apartmentStatusBadge($status) {
     switch ($status) {
         case 'Available':
             return 'badge-success';
-        case 'Not Available':
+        case 'Occupied':
             return 'badge-error';
         case 'Out of Order':
             return 'badge-warning';
