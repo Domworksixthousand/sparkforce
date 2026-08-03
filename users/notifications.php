@@ -71,7 +71,7 @@
                                 <div class="flex items-start sm:items-center gap-4 w-full sm:w-auto mb-3 sm:mb-0">
                                     <!-- Avatar -->
                                     <div class="relative shrink-0">
-                                        <img src="<?php echo $pic; ?>" alt="<?php echo $sender; ?>" class="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-xs">
+                                        <img src="<?php echo $pic; ?>" alt="<?php echo $sender; ?>" class="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-xs" loading="lazy">
                                         <?php if ($is_unread): ?>
                                             <span class="absolute top-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></span>
                                         <?php endif; ?>

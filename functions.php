@@ -2137,3 +2137,16 @@ if (count($amenities_clean) !== count(array_unique($amenities_clean))) {
     header("location: users/my_property.php?property_id=" . urlencode($landlord_id));
     exit;
 }
+
+if(isset($_POST['add_favorite_btn'])){
+    $rent_id = $_POST['rent_id'];
+    $locate = $_POST['locate'];
+
+    $insert = $conn->prepare("INSERT INTO `favorites` (`rent_id`,`user_id`) VALUES (?,?)");
+    $insert->bind_param("ss", $rent_id, $user_id_login);
+    $insert->execute();
+
+    
+    header("location:users/$locate?id=" . urlencode($rent_id));
+    exit;
+}

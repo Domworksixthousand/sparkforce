@@ -57,7 +57,7 @@
               <!-- Avatar with Floating Camera Button -->
               <div class="relative group mb-4">
                 <img src="<?php echo $final_profileko; ?>" 
-                    class="w-32 h-32 object-cover rounded-full ring-4 ring-white shadow-lg transition duration-300 group-hover:scale-[1.02]" 
+                    class="w-32 h-32 object-cover rounded-full ring-4 ring-white shadow-lg transition duration-300 group-hover:scale-[1.02]"  loading="lazy"
                     alt="User Profile">
                 
                 <button onclick="location.href='change_profile.php'" 

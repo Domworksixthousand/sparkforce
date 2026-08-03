@@ -46,7 +46,7 @@
           </ul>
         </div>
         <a href="#" class="  flex flex-row">
-          <img src="assets/images/logo-icon.png" class="w-[50px] me-2">
+          <img src="assets/images/logo-icon.png" class="w-[50px] me-2" loading="lazy">
           <div class="flex flex-col mt-2">  
             <p class="nav_li cursive-text m-0 p-0 text-sm font-bold text-white">RENTSPACE</p>
             <p class="nav_li m-0 p-0 text-sm text-white">Find Your Places</p>
@@ -112,14 +112,14 @@
               </div>
               <div>
                 <button type="submit" name="" class="btn bg-[#0d9488] w-[100%] rounded-[10px] text-white">
-                    <img src="assets/images/magnifier-icon.png " class="w-[20px]"> 
+                    <img src="assets/images/magnifier-icon.png " class="w-[20px]" loading="lazy"> 
                     Filter
                 </button>
               </div>
             </form>
           </div>
         </div>
-        <img src="assets/images/banner-img.jpg" class="w-full object-cover block m-0 p-0 h-[50rem] ">
+        <img src="assets/images/banner-img.jpg" class="w-full object-cover block m-0 p-0 h-[50rem] " loading="lazy">
     </div>
   </header>
 
@@ -145,7 +145,7 @@
             <li class="splide__slide px-2">
               <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
                 <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
-                  <img src="assets/images/king-size.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+                  <img src="assets/images/king-size.png" class="w-10 h-10 object-contain drop-shadow" loading="lazy" alt="Boarding House">
                 </div>
                 <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
                   Boarding House / Bed Space
@@ -160,7 +160,7 @@
             <li class="splide__slide px-2">
               <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
                 <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
-                  <img src="assets/images/living-room.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+                  <img src="assets/images/living-room.png" class="w-10 h-10 object-contain drop-shadow" loading="lazy" alt="Boarding House">
                 </div>
                 <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
                   Transient House 
@@ -175,7 +175,7 @@
             <li class="splide__slide px-2">
               <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
                 <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
-                  <img src="assets/images/residential.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+                  <img src="assets/images/residential.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House" loading="lazy">
                 </div>
                 <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
                   Apartment
@@ -190,7 +190,7 @@
             <li class="splide__slide px-2">
               <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
                 <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
-                  <img src="assets/images/condominium.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+                  <img src="assets/images/condominium.png" loading="lazy" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
                 </div>
                 <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
                   Condominium
@@ -220,7 +220,7 @@
             <li class="splide__slide px-2">
               <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
                 <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
-                  <img src="assets/images/work-space.png" class="w-10 h-10 object-contain drop-shadow" alt="Office Space">
+                  <img src="assets/images/work-space.png" class="w-10 h-10 object-contain drop-shadow" loading="lazy" alt="Office Space">
                 </div>
                 <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
                   Office Space
@@ -235,7 +235,7 @@
             <li class="splide__slide px-2">
               <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
                 <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
-                  <img src="assets/images/boxes.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+                  <img src="assets/images/boxes.png" class="w-10 h-10 object-contain drop-shadow" loading="lazy" alt="Boarding House">
                 </div>
                 <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
                   Warehouse / Storage
@@ -250,7 +250,7 @@
             <li class="splide__slide px-2">
               <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
                 <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
-                  <img src="assets/images/property.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+                  <img src="assets/images/property.png" class="w-10 h-10 object-contain drop-shadow" loading="lazy" alt="Boarding House">
                 </div>
                 <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
                   Commercial Space 
@@ -266,7 +266,7 @@
             <li class="splide__slide px-2">
               <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
                 <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
-                  <img src="assets/images/event.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+                  <img src="assets/images/event.png" class="w-10 h-10 object-contain drop-shadow" loading="lazy" alt="Boarding House">
                 </div>
                 <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
                   Event Space
@@ -282,7 +282,7 @@
             <li class="splide__slide px-2">
               <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
                 <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
-                  <img src="assets/images/car.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+                  <img src="assets/images/car.png" class="w-10 h-10 object-contain drop-shadow" loading="lazy" alt="Boarding House">
                 </div>
                 <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
                   Parking Space 
@@ -298,7 +298,7 @@
             <li class="splide__slide px-2">
               <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
                 <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
-                  <img src="assets/images/plant.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+                  <img src="assets/images/plant.png" class="w-10 h-10 object-contain drop-shadow" loading="lazy" alt="Boarding House">
                 </div>
                 <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
                   Vacant Lot 
@@ -407,7 +407,7 @@
                     <!-- Image -->
                     <div class="relative h-48 overflow-hidden">
                         <div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-                            style="background-image:url(\'' . $image_url . '\');">
+                            style="background-image:url(\'' . $image_url . '\');" loading="lazy">
                         </div>
                         <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
 
@@ -651,14 +651,14 @@
           <div class="flex flex-col lg:flex-row">
             <div class="w-[100%] p-[50px] lg:p-[100px] bg-[#0d9488] rounded-[20px]">
               <div class="flex items-center justify-center  lg:justify-start mb-5 flex-col lg:flex-row">
-                <img src="assets/images/security.png" class=" mb-2 lg:mb-0 rounded-[10px] h-fit me-0 lg:me-5 bg-emerald-800 p-3">
+                <img src="assets/images/security.png" class=" mb-2 lg:mb-0 rounded-[10px] h-fit me-0 lg:me-5 bg-emerald-800 p-3" loading="lazy">
                 <span class="text-center lg:text-start">
                   <p class="font-bold text-white  mb-2 lg:mb-0">Verified Listings</p>
                   <p class=" text-white">Every property is personally inspected before going live.</p>
                 </span>
               </div>
               <div class="flex items-center justify-center lg:justify-start  mb-5 flex-col lg:flex-row">
-                <img src="assets/images/check.png" class=" mb-2 lg:mb-0 rounded-[10px] h-fit me-0 lg:me-5 bg-emerald-800 p-3">
+                <img src="assets/images/check.png" class=" mb-2 lg:mb-0 rounded-[10px] h-fit me-0 lg:me-5 bg-emerald-800 p-3" loading="lazy">
                 <span class="text-center lg:text-start">
                   <p class="font-bold text-white  mb-2 lg:mb-0">User Friendly</p>
                   <p class=" text-white">Easy Navigation and Filtering</p>
@@ -672,7 +672,7 @@
                 </span>
               </div>
               <div class="flex items-center justify-center lg:justify-start  mb-5 flex-col lg:flex-row">
-                <img src="assets/images/laugh.png" class=" mb-2 lg:mb-0 rounded-[10px] h-fit me-0 lg:me-5 bg-emerald-800 p-3">
+                <img src="assets/images/laugh.png" class=" mb-2 lg:mb-0 rounded-[10px] h-fit me-0 lg:me-5 bg-emerald-800 p-3" loading="lazy">
                 <span class="text-center lg:text-start">
                   <p class="font-bold text-white  mb-2 lg:mb-0">Happy</p>
                   <p class=" text-white">Tenants and Owners are satisfied</p>
@@ -704,7 +704,7 @@
       <div class="flex gap-[20px] flex-col lg:flex-row">
         <div class="bg-emerald-100 p-[50px] lg:p-[100px] rounded-[20px] flex flex-col justify-center items-center text-center">
           <h3 class="text-gray-400 text-[5rem]">01</h3>
-          <img src="assets/images/ai-technology.png" class="bg-white p-[20px] mb-[20px] rounded-[20px]">
+          <img src="assets/images/ai-technology.png" class="bg-white p-[20px] mb-[20px] rounded-[20px]" loading="lazy">
           <h4 class="text-black font-bold text-[2rem] mb-[10px]">Search &amp; Filter</h4>
           <p>
             Browse through our extensive catalog of verified rental properties. Filter by type, location, budget, and amenities to find your perfect match.
@@ -712,7 +712,7 @@
         </div>
          <div class="bg-blue-100 p-[50px] lg:p-[100px] rounded-[20px] flex flex-col justify-center items-center text-center">
           <h3  class="text-gray-400 text-[5rem]">02</h3>
-          <img src="assets/images/check-mark.png" class="bg-white p-[20px] mb-[20px] rounded-[20px]">
+          <img src="assets/images/check-mark.png" class="bg-white p-[20px] mb-[20px] rounded-[20px]" loading="lazy">
           <h4 class="text-black font-bold text-[2rem] mb-[10px]">Check Availability</h4>
           <p>
             View real-time availability calendars, read detailed descriptions, check amenities, and see high-quality photos before making a decision.
@@ -758,17 +758,17 @@
           <ul class="flex gap-3">
             <li>
               <a href="#">
-                <img src="assets/images/facebook.png" class="w-[25px]" >
+                <img src="assets/images/facebook.png" class="w-[25px]" loading="lazy">
               </a>
             </li>
             <li>
               <a href="#">
-                <img src="assets/images/instagram.png" class="w-[25px]" >
+                <img src="assets/images/instagram.png" class="w-[25px]" loading="lazy">
               </a>
             </li>
             <li>
               <a href="#">
-                <img src="assets/images/twitter.png" class="w-[25px]" >
+                <img src="assets/images/twitter.png" class="w-[25px]" loading="lazy">
               </a>
             </li>
           </ul>
@@ -800,11 +800,11 @@
           <p class="text-white font-bold mb-3">Contact</p>
           <ul>
             <li class="flex gap-3 mb-3">
-              <img src="assets/images/phone-call.png" class="me-2">
+              <img src="assets/images/phone-call.png" class="me-2" loading="lazy">
               <p class="text-white">(639) 09095416200</p>
             </li>
             <li class="flex gap-3 mb-3">
-              <img src="assets/images/email.png" class="me-2">
+              <img src="assets/images/email.png" class="me-2" loading="lazy">
               <p class="text-white">sample@gmail.com</p>
             </li>
           </ul>

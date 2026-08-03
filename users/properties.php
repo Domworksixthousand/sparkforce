@@ -39,17 +39,28 @@
 
       <!-- MAIN CONTENT WRAPPER -->
       <main class="flex-1 flex flex-col overflow-hidden">
+
+        <!-- UPPER HEADER BUTTONS (MOBILE & TABLET ONLY) -->
+        <div class="flex justify-end p-4 gap-2 lg:hidden bg-white border-b border-slate-200">
+            <button type="button" id="openMobileMapBtn" class="btn bg-[#009966] hover:bg-[#007a52] text-white btn-sm rounded-lg flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+                View Map
+            </button>
+            <button type="button" id="openMobileFilterBtn" class="btn bg-[#009966] hover:bg-[#007a52] text-white btn-sm rounded-lg flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sliders-horizontal"><path d="M10 5H3"/><path d="M12 19H3"/><path d="M14 3v4"/><path d="M16 17v4"/><path d="M21 12h-9"/><path d="M21 19h-5"/><path d="M21 5h-7"/><path d="M8 10v4"/><path d="M8 12H3"/></svg>
+                Filter
+            </button>
+        </div>
         
-        <!-- HEADER SEARCH & FILTER BAR -->
-        <header class="bg-white border-b border-slate-200 z-30 shadow-sm shrink-0">
+        <!-- HEADER SEARCH & FILTER BAR (DESKTOP ONLY) -->
+        <header class="bg-white border-b border-slate-200 z-30 shadow-sm shrink-0 hidden lg:block">
             <form action="" method="GET" id="headerFilterForm" class="max-w-7xl mx-auto px-4 py-3">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-center">
                     
-                    <!-- Location Input (Gagamitin na rin bilang Search filter) -->
                     <div class="relative">
                         <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Location / Keyword</label>
                         <div class="relative">
-                            <input type="text" name="location" id="headerSearchInput" value="<?php echo htmlspecialchars($_GET['location'] ?? ''); ?>" class="w-full bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:border-emerald-500 focus:bg-white transition-all pl-8" placeholder="Enter Location, Barangay, or Name">
+                            <input type="text" name="location" value="<?php echo htmlspecialchars($_GET['location'] ?? ''); ?>" class="w-full bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:border-emerald-500 focus:bg-white transition-all pl-8" placeholder="Enter Location, Barangay, or Name">
                             <svg class="w-4 h-4 absolute left-2.5 top-2.5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -76,13 +87,13 @@
                     <!-- Min Price -->
                     <div>
                         <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Min Price</label>
-                        <input type="number" name="min_price" value="<?php echo htmlspecialchars($_GET['min_price'] ?? ''); ?>" class="w-full bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:border-emerald-500 focus:bg-white transition-all" placeholder="₱ Min Price">
+                        <input type="text" name="min_price" value="<?php echo htmlspecialchars($_GET['min_price'] ?? ''); ?>" class="numbers_only w-full bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:border-emerald-500 focus:bg-white transition-all" placeholder="₱ Min Price">
                     </div>
 
                     <!-- Max Price -->
                     <div>
                         <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Max Price</label>
-                        <input type="number" name="max_price" value="<?php echo htmlspecialchars($_GET['max_price'] ?? ''); ?>" class="w-full bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:border-emerald-500 focus:bg-white transition-all" placeholder="₱ Max Price">
+                        <input type="text" name="max_price" value="<?php echo htmlspecialchars($_GET['max_price'] ?? ''); ?>" class="numbers_only w-full bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:border-emerald-500 focus:bg-white transition-all" placeholder="₱ Max Price">
                     </div>
 
                     <!-- Submit Action -->
@@ -110,15 +121,11 @@
                         <h1 class="text-lg font-bold text-slate-800">Available Rental Spaces</h1>
                         <p class="text-xs text-slate-500">Explore properties matching your search</p>
                     </div>
-                    <span class="text-xs font-semibold bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full flex items-center gap-1">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        Leaflet Interactive Map
-                    </span>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="rentalCardsContainer">
                     <?php
-                        // PHP Filters galing sa Header Form
+                      
                         $loc_filter  = isset($_GET['location']) ? trim($_GET['location']) : '';
                         $type_filter = isset($_GET['property_type']) ? trim($_GET['property_type']) : '';
                         $min_p       = isset($_GET['min_price']) && is_numeric($_GET['min_price']) ? floatval($_GET['min_price']) : 0;
@@ -211,10 +218,14 @@
                                     'province'     => htmlspecialchars($row_rentals['province'] ?? '')
                                 ];
 
+                                if($type == "Boarding House / Bedspace"){
+                                    $locate = "boarding_details.php";
+                                }
+
                                 echo '
                                 <div class="rental-card group bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col hover:-translate-y-1 cursor-pointer" data-id="' . $rent_id . '">
                                     <div class="relative h-44 overflow-hidden bg-slate-100">
-                                        <img src="' . $image_url . '" alt="' . $property_name . '" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                                        <img src="' . $image_url . '" alt="' . $property_name . '" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy">
                                         <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
                                         <span class="absolute top-2.5 left-2.5 text-[10px] font-bold tracking-wider uppercase bg-white/90 backdrop-blur-md text-emerald-800 px-2 py-0.5 rounded shadow-sm">
                                             ' . $type . '
@@ -243,7 +254,7 @@
                                                     <span class="text-[10px] text-slate-400 font-normal">/ ' . $extention . '</span>
                                                 </p>
                                             </div>
-                                            <a href="'.$locate.'?id=' . $rent_id .'" class="text-xs font-semibold text-emerald-600 hover:text-emerald-800 flex items-center gap-0.5">
+                                            <a href="'.$locate.'?id=' . $rent_id .'" class="lg:hidden text-xs font-semibold text-emerald-600 hover:text-emerald-800 flex items-center gap-0.5">
                                                 More
                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                                             </a>
@@ -262,7 +273,7 @@
                 </div>
             </section>
 
-            <!-- RIGHT SIDE: STICKY LEAFLET MAP (Wala nang floating search bar) -->
+            <!-- RIGHT SIDE: STICKY LEAFLET MAP (DESKTOP ONLY) -->
             <section class="hidden lg:block lg:w-[42%] xl:w-[50%] h-full p-4 relative bg-slate-100 border-l border-slate-200">
                 <div id="propertyMap" class="w-full h-full rounded-xl shadow-md z-0"></div>
             </section>
@@ -277,6 +288,80 @@
     </div>
   </div>
 
+  <!-- ========================================== -->
+  <!-- MOBILE FILTER MODAL / DRAWER -->
+  <!-- ========================================== -->
+  <dialog id="mobileFilterModal" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box bg-white p-6">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
+        <h3 class="font-bold text-base text-slate-800">Filter Properties</h3>
+        <form method="dialog">
+          <button class="btn btn-sm btn-circle btn-ghost">✕</button>
+        </form>
+      </div>
+      
+      <form action="" method="GET" class="space-y-4">
+        <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Location / Keyword</label>
+            <input type="text" name="location" value="<?php echo htmlspecialchars($_GET['location'] ?? ''); ?>" class="w-full bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:border-emerald-500" placeholder="Enter Location, Barangay, or Name">
+        </div>
+
+        <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Property Type</label>
+            <select name="property_type" class="w-full bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:border-emerald-500">
+                <option value="">All Property Types</option>
+                <?php 
+                  foreach($types as $t) {
+                      $sel = ($selected_type === $t) ? 'selected' : '';
+                      echo "<option value=\"$t\" $sel>$t</option>";
+                  }
+                ?>
+            </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+            <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">Min Price</label>
+                <input type="text" name="min_price" value="<?php echo htmlspecialchars($_GET['min_price'] ?? ''); ?>" class="numbers_only w-full bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:border-emerald-500" placeholder="₱ Min Price">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">Max Price</label>
+                <input type="text" name="max_price" value="<?php echo htmlspecialchars($_GET['max_price'] ?? ''); ?>" class="numbers_only w-full bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:border-emerald-500" placeholder="₱ Max Price">
+            </div>
+        </div>
+
+        <div class="pt-4 flex items-center gap-2">
+            <a href="?" class="btn btn-outline border-slate-300 btn-sm flex-1">Reset</a>
+            <button type="submit" class="btn bg-emerald-600 hover:bg-emerald-700 text-white btn-sm flex-1">Apply Filter</button>
+        </div>
+      </form>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+      <button>close</button>
+    </form>
+  </dialog>
+
+  <!-- ========================================== -->
+  <!-- MOBILE MAP MODAL -->
+  <!-- ========================================== -->
+  <dialog id="mobileMapModal" class="modal p-0">
+    <div class="modal-box w-full max-w-none h-full max-h-none rounded-none p-0 flex flex-col bg-white">
+      <div class="p-4 bg-[#0fab9e] text-white flex items-center justify-between shrink-0 shadow-md">
+        <h3 class="font-bold text-sm flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+          Interactive Rental Map
+        </h3>
+        <form method="dialog">
+          <button class="btn btn-sm btn-circle btn-ghost text-white">✕</button>
+        </form>
+      </div>
+      <div class="flex-1 w-full h-full relative">
+        <div id="mobilePropertyMap" class="w-full h-full"></div>
+      </div>
+    </div>
+  </dialog>
+
+
   <script src="../assets/scripts/map.js"></script>
   <script src="./../assets/scripts/index.js"></script>
   <script src="./../assets/scripts/query_filter.js"></script>
@@ -285,18 +370,8 @@
   <script>
   document.addEventListener('DOMContentLoaded', () => {
       const properties = <?php echo json_encode($map_locations, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
-
       const defaultLat = 12.703015;
       const defaultLng = 124.037141;
-
-      const map = L.map('propertyMap').setView([defaultLat, defaultLng], 13);
-
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(map);
-
-      // Regulate map size rendering
-      setTimeout(() => { map.invalidateSize(); }, 300);
 
       const customIcon = L.icon({
           iconUrl: '../assets/images/home.png',
@@ -305,52 +380,133 @@
           popupAnchor: [0, -30]
       });
 
+      // =====================================
+      // 1. DESKTOP MAP INITIALIZATION
+      // =====================================
+      let map = null;
+      const desktopMapEl = document.getElementById('propertyMap');
+
+      if (desktopMapEl) {
+          map = L.map('propertyMap').setView([defaultLat, defaultLng], 13);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              attribution: '&copy; OpenStreetMap contributors'
+          }).addTo(map);
+
+          setTimeout(() => { map.invalidateSize(); }, 300);
+      }
+
       const markers = [];
 
-      // Maglagay ng markers para lang sa mga filtered properties
       properties.forEach(p => {
           if (!p.lat || !p.lng) return;
 
           const popupContent = `
               <div class="p-1 font-sans">
-                  <img src="${p.image}" class="w-full h-20 object-cover rounded mb-2" alt="${p.title}">
+                  <img src="${p.image}" class="w-full h-20 object-cover rounded mb-2" loading="lazy" alt="${p.title}">
                   <h4 class="font-bold text-xs truncate">${p.title}</h4>
                   <p class="text-[11px] text-emerald-600 font-extrabold">&#8369;${p.price} / ${p.ext}</p>
-                  <a href="${p.url}" class="block text-center bg-emerald-600 text-white text-[10px] font-bold py-1 rounded mt-2">View Details</a>
+                  <a href="${p.url}" class="block text-center bg-emerald-600 !text-white text-[10px] font-bold py-1 rounded mt-2">View Details</a>
               </div>
           `;
 
-          const marker = L.marker([p.lat, p.lng], { icon: customIcon })
-              .addTo(map)
-              .bindPopup(popupContent);
+          if (map) {
+              const marker = L.marker([p.lat, p.lng], { icon: customIcon })
+                  .addTo(map)
+                  .bindPopup(popupContent);
 
-          marker._propertyData = p;
-          markers.push(marker);
+              marker._propertyData = p;
+              markers.push(marker);
+          }
       });
 
-      // Automatic zoom adjustment depende sa nahanap na resulta
-      if (markers.length > 1) {
-          const group = L.featureGroup(markers);
-          map.fitBounds(group.getBounds().pad(0.2));
-      } else if (markers.length === 1) {
-          map.setView([properties[0].lat, properties[0].lng], 16);
-          markers[0].openPopup();
+      if (map) {
+          if (markers.length > 1) {
+              const group = L.featureGroup(markers);
+              map.fitBounds(group.getBounds().pad(0.2));
+          } else if (markers.length === 1) {
+              map.setView([properties[0].lat, properties[0].lng], 16);
+              markers[0].openPopup();
+          }
       }
 
-      // Kapag clinic ang card sa kaliwa -> flyTo marker sa mapa
+      // Card click handling for Desktop FlyTo
       document.querySelectorAll('.rental-card').forEach(card => {
           card.addEventListener('click', (e) => {
-              if (e.target.closest('a')) return; // Hayaan ang link kung 'View Details' o 'More' ang na-click
+              if (e.target.closest('a')) return;
 
               const cardId = card.getAttribute('data-id');
-              const targetMarker = markers.find(m => m._propertyData.id == cardId);
-
-              if (targetMarker) {
-                  map.flyTo([targetMarker._propertyData.lat, targetMarker._propertyData.lng], 16, { duration: 0.8 });
-                  targetMarker.openPopup();
+              if (map) {
+                  const targetMarker = markers.find(m => m._propertyData.id == cardId);
+                  if (targetMarker) {
+                      map.flyTo([targetMarker._propertyData.lat, targetMarker._propertyData.lng], 16, { duration: 0.8 });
+                      targetMarker.openPopup();
+                  }
               }
           });
       });
+
+      // =====================================
+      // 2. MOBILE FILTER & MAP MODAL LOGIC
+      // =====================================
+      const openFilterBtn = document.getElementById('openMobileFilterBtn');
+      const filterModal = document.getElementById('mobileFilterModal');
+
+      const openMapBtn = document.getElementById('openMobileMapBtn');
+      const mapModal = document.getElementById('mobileMapModal');
+
+      if (openFilterBtn && filterModal) {
+          openFilterBtn.addEventListener('click', () => {
+              filterModal.showModal();
+          });
+      }
+
+      let mobileMap = null;
+      if (openMapBtn && mapModal) {
+          openMapBtn.addEventListener('click', () => {
+              mapModal.showModal();
+
+              // Initialize mobile map once modal is visible
+              if (!mobileMap) {
+                  mobileMap = L.map('mobilePropertyMap').setView([defaultLat, defaultLng], 13);
+                  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                      attribution: '&copy; OpenStreetMap contributors'
+                  }).addTo(mobileMap);
+
+                  const mobileMarkers = [];
+                  properties.forEach(p => {
+                      if (!p.lat || !p.lng) return;
+
+                      const popupContent = `
+                          <div class="p-1 font-sans">
+                              <img src="${p.image}" class="w-full h-20 object-cover rounded mb-2" loading="lazy" alt="${p.title}">
+                              <h4 class="font-bold text-xs truncate">${p.title}</h4>
+                              <p class="text-[11px] text-emerald-600 font-extrabold">&#8369;${p.price} / ${p.ext}</p>
+                              <a href="${p.url}" class="block text-center bg-emerald-600 !text-white text-[10px] font-bold py-1 rounded mt-2">View Details</a>
+                          </div>
+                      `;
+
+                      const mMarker = L.marker([p.lat, p.lng], { icon: customIcon })
+                          .addTo(mobileMap)
+                          .bindPopup(popupContent);
+
+                      mobileMarkers.push(mMarker);
+                  });
+
+                  if (mobileMarkers.length > 1) {
+                      const group = L.featureGroup(mobileMarkers);
+                      mobileMap.fitBounds(group.getBounds().pad(0.2));
+                  } else if (mobileMarkers.length === 1) {
+                      mobileMap.setView([properties[0].lat, properties[0].lng], 16);
+                      mobileMarkers[0].openPopup();
+                  }
+              }
+
+              // Invalidate size to ensure proper tiles rendering inside modal
+              setTimeout(() => {
+                  mobileMap.invalidateSize();
+              }, 200);
+          });
+      }
   });
   </script>
 </body>
