@@ -1,14 +1,14 @@
 <?php
-
 include 'config.php';
-
-//connection sa email
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\SMTP;
 
-require 'PHPMailer-master/src/Exception.php';
-require 'PHPMailer-master/src/PHPMailer.php';
-require 'PHPMailer-master/src/SMTP.php';
+// Isa lang na require line ang kailangan para sa buong project!
+require __DIR__ . '/vendor/autoload.php';
+
+// Pwede mo nang gamitin ang PHPMailer dito:
+$mail = new PHPMailer(true);
 
 if(isset($_GET['noti_id'])){
     $noti_id = $_GET['noti_id'];
@@ -2139,11 +2139,31 @@ if (count($amenities_clean) !== count(array_unique($amenities_clean))) {
 }
 
 if(isset($_POST['add_favorite_btn'])){
-    $rent_id = $_POST['rent_id'];
-    $locate = $_POST['locate'];
 
-    $insert = $conn->prepare("INSERT INTO `favorites` (`rent_id`,`user_id`) VALUES (?,?)");
-    $insert->bind_param("ss", $rent_id, $user_id_login);
+    $locate = $_POST['locate'];
+    $type = $_POST['type'];
+    $rent_id = $_POST['rent_id'];
+
+    $check = $conn->prepare("SELECT * FROM `favorites` WHERE `user_id` = ? AND `rent_id` = ?");
+    $check->bind_param("ss",$user_id_login,$rent_id);
+    $check->execute();
+    $result_data = $check->get_result();
+    if($result_data->num_rows>0){
+        while($data_fav = mysqli_fetch_assoc($result_data)){
+            $fav_id = $data_fav['fav_id'];
+            
+            $delete= $conn->prepare("DELETE FROM favorites WHERE `fav_id` =?");
+            $delete->bind_param("i",$fav_id);
+            $delete->execute();
+
+            header("location:users/$locate?id=" . urlencode($rent_id));
+            exit;
+
+        }
+    }
+
+    $insert = $conn->prepare("INSERT INTO `favorites` (`rent_id`,`user_id`,`type`) VALUES (?,?,?)");
+    $insert->bind_param("sss", $rent_id, $user_id_login,$type);
     $insert->execute();
 
     

@@ -205,7 +205,7 @@
             <li class="splide__slide px-2">
               <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
                 <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
-                  <img src="assets/images/house.png" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
+                  <img src="assets/images/house.png" loading="lazy" class="w-10 h-10 object-contain drop-shadow" alt="Boarding House">
                 </div>
                 <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
                   House 

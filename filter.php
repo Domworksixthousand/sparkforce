@@ -41,7 +41,7 @@
                <h3 class="text-lg text-white font-bold"> FILTERED RESULTS</h3>
                 <p class="text-white">Showing spaces matching your selected criteria</p>
             </div>
-            <a href="index.php" class="flex justify-end items-end"><img src="assets/images/back.png" class="bg-white p-2 border-3 border-green-800 rounded-lg  hover:border-white"></a>
+            <a href="index.php" class="flex justify-end items-end"><img src="assets/images/back.png" loading="lazy" class="bg-white p-2 border-3 border-green-800 rounded-lg  hover:border-white"></a>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-5">
       <?php
