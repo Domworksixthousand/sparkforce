@@ -89,14 +89,14 @@ while ($row = $amen_res->fetch_assoc()) {
 <dialog id="my_modal_3" class="modal" open>
   <div class="modal-box w-11/12 max-w-2xl">
     <form method="dialog">
-      <button 
-        type="button" 
-        onclick="window.location.href='my_property.php?property_id=<?php echo $landlord_id; ?>';" 
-        class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
-        ✕
-      </button>
+        <a 
+            href="my_property.php?property_id=<?php echo urlencode($landlord_id); ?>" 
+            class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+            ✕
+        </a>
     </form>
     <form action="../functions.php" method="POST" enctype="multipart/form-data">
+
         <input type="hidden" name="landlord_id" value="<?php echo $landlord_id; ?>">
         <input type="hidden" name="rent_id" value="<?php echo $rent_id; ?>">
         <p class="mb-3 font-bold text-lg">Room Information</p>

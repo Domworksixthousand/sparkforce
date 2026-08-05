@@ -38,7 +38,7 @@
             </label>
             <div class="flex-1 font-bold text-white">Request Accounts</div>
         </nav>
-        <div class="p-6">
+        <div class="py-6">
             <!--main content-->
             <main>
                 <section class="my-container">

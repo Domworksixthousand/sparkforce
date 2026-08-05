@@ -10,7 +10,7 @@ if(isset($_GET['id']) && isset($_GET['property_id'])){
 
 //RENTSPACE DETAILS
 $get_rent = $conn->prepare("
-    SELECT name, price, image_cover, other_info 
+    SELECT name, price, image_cover, other_info,type
     FROM rentspace 
     WHERE rent_id = ?
 ");
@@ -84,12 +84,12 @@ $availableBeds = count(array_filter($boarding_houses, fn($b) => $b['status'] ===
   <div class="modal-box w-11/12 max-w-4xl p-0 overflow-hidden">
 
     <!-- Close button -->
-    <button 
-      type="button" 
-      onclick="window.location.href='my_property.php?property_id=<?php echo htmlspecialchars($landlord_id); ?>';" 
-      class="btn btn-sm btn-circle bg-white/90 hover:bg-white border-none shadow-md absolute right-3 top-3 z-20">
-      ✕
-    </button>
+      <a 
+        href="my_property.php?property_id=<?php echo urlencode($landlord_id); ?>" 
+          class="btn btn-sm btn-circle bg-white/90 hover:bg-white border-none shadow-md absolute right-3 top-3 z-20">
+        ✕
+    </a>
+
 
     <!-- HERO -->
     <div class="relative w-full h-56 sm:h-64">

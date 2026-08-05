@@ -218,6 +218,8 @@
                                     'province'     => htmlspecialchars($row_rentals['province'] ?? '')
                                 ];
 
+                           
+
                                 if($type == "Boarding House / Bedspace"){
                                     $locate = "boarding_details.php";
                                 }

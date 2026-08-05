@@ -12,14 +12,11 @@ if(isset($_GET['property_id'])){
 
 <dialog id="my_modal_3" class="modal">
   <div class="modal-box w-11/12 max-w-1xl">
-    <form method="dialog">
-      <button 
-        type="button" 
-        onclick="window.location.href='my_property.php?property_id=<?php echo $landlord_id; ?>';" 
+    <a 
+        href="my_property.php?property_id=<?php echo urlencode($landlord_id); ?>" 
         class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
         ✕
-      </button>
-    </form>
+        </a>
     <form action="../functions.php" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="landlord_id" value="<?php echo $landlord_id; ?>">
         <p class="mb-3">Room Information </p>

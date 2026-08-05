@@ -179,31 +179,31 @@ $availableBeds = count(array_filter($boarding_houses, fn($b) => $b['status'] ===
               <i class="fa-solid fa-house"></i> Boarding House / Bed Space
             </span>
           </div>
-<form action="../functions.php" method="POST" class="tooltip tooltip-left absolute top-4 right-4" data-tip="<?php echo ($switch == 'on') ? 'Remove from Favorites' : 'Add to my Favorites'; ?>">
+          <form action="../functions.php" method="POST" class="tooltip tooltip-left absolute top-4 right-4" data-tip="<?php echo ($switch == 'on') ? 'Remove from Favorites' : 'Add to my Favorites'; ?>">
 
-    <input type="hidden" name="type" value="<?php echo $type; ?>">
-    <input type="hidden" name="locate" value="boarding_details.php">
-    <input type="hidden" name="rent_id" value="<?php echo $rent_id; ?>">
-    <input type="hidden" name="current_status" value="<?php echo $switch; ?>">
+              <input type="hidden" name="type" value="<?php echo $type; ?>">
+              <input type="hidden" name="locate" value="boarding_details.php">
+              <input type="hidden" name="rent_id" value="<?php echo $rent_id; ?>">
+              <input type="hidden" name="current_status" value="<?php echo $switch; ?>">
 
-    <button type="submit" name="add_favorite_btn" value="1" class="bg-green-300 hover:bg-red-200 active:bg-red-400 rounded-lg p-1 flex items-center justify-center transition-all cursor-pointer border-none outline-none">
-        
-        <!-- Babaguhin ang fill at stroke depende sa status ng $switch -->
-        <svg xmlns="http://www.w3.org/2000/svg" 
-            width="28" 
-            height="28" 
-            viewBox="0 0 24 24" 
-            fill="<?php echo ($switch == 'on') ? '#dc2626' : 'none'; ?>" 
-            stroke="<?php echo ($switch == 'on') ? '#dc2626' : 'currentColor'; ?>" 
-            stroke-width="2" 
-            stroke-linecap="round" 
-            stroke-linejoin="round" 
-            class="<?php echo ($switch == 'on') ? 'text-red-600' : 'text-red-800 hover:fill-red-600 hover:text-red-600'; ?> transition-colors">
-          <path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/>
-        </svg>
+              <button type="submit" name="add_favorite_btn" value="1" class="bg-green-300 hover:bg-red-200 active:bg-red-400 rounded-lg p-1 flex items-center justify-center transition-all cursor-pointer border-none outline-none">
+                  
 
-    </button>
-</form>
+                  <svg xmlns="http://www.w3.org/2000/svg" 
+                      width="28" 
+                      height="28" 
+                      viewBox="0 0 24 24" 
+                      fill="<?php echo ($switch == 'on') ? '#dc2626' : 'none'; ?>" 
+                      stroke="<?php echo ($switch == 'on') ? '#dc2626' : 'currentColor'; ?>" 
+                      stroke-width="2" 
+                      stroke-linecap="round" 
+                      stroke-linejoin="round" 
+                      class="<?php echo ($switch == 'on') ? 'text-red-600' : 'text-red-800 hover:fill-red-600 hover:text-red-600'; ?> transition-colors">
+                    <path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/>
+                  </svg>
+
+              </button>
+          </form>
         </div>
 
         <!-- Quick Summary & Pricing Side Panel -->

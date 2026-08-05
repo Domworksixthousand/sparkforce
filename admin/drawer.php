@@ -74,7 +74,7 @@
                 <!-- Dropdown Menu -->
                 <ul id="dropdownMenu2" class="hidden mt-2 ml-6 space-y-1 rounded-md p-2">
                     <li>
-                        <a href="accounts.php" class="block text-sm text-white hover:text-white py-1 px-2">
+                        <a href="verified_properties.php" class="block text-sm text-white hover:text-white py-1 px-2">
                             Verified Properties
                         </a>
                     </li>

@@ -679,7 +679,7 @@
                 </span>
               </div>
             </div>
-            <div class="w-[100%] p-[30px]">
+            <div class="w-[100%] flex flex-col items-center justify-center px-[0px] pt-[100px]  lg:p-[30px]">
               <p class="leading-relaxed mb-3">
                   RentSpace was born from a simple yet powerful idea — finding a rental property should not feel like a gamble. In a market often clouded by unverified listings, hidden fees, and unreliable arrangements, we recognized a critical need for change. We envisioned and built a modern platform where security meets convenience; a space where every listing is strictly verified, every price point is fully transparent, and every single renter feels absolute confidence and peace of mind before they even step foot inside their future home.
               </p>
