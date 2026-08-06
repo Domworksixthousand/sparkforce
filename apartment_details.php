@@ -340,9 +340,9 @@ if($result_account->num_rows > 0){
       </div>
 
       <!-- MASONRY GALLERY SECTION (LOWER PART) -->
-      <div class="bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300">
-        <div class="flex items-center justify-between mb-6 pb-3 border-b border-base-200">
-          <div>
+       <div class="bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300">
+        <div class="flex  justify-between mb-6 pb-3 border-b border-base-200 flex-col lg:flex-row ">
+          <div class="mb-3 lg:mb-0">
             <h2 class="text-xl font-bold flex items-center gap-2 text-base-content">
               <i class="fa-solid fa-images text-success"></i> Photo Gallery
             </h2>

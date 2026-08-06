@@ -9,11 +9,10 @@
     if(isset($_GET['id'])){
         $landlord_id = $_GET['id'] ?? '';
     }
-    
-    if($location_back === "verified_properties.php"){
-        $style_none = "d-none";
-    }
 
+    
+
+  
     $get = $conn->prepare("SELECT 
             l.user_id,
             l.landlord_id,
@@ -80,6 +79,8 @@
         }
     }
  
+    
+
 ?>
 
 
@@ -168,10 +169,16 @@
                 <p class="text-sm text-gray-400 italic col-span-1 lg:col-span-3">No gallery images uploaded.</p>
             <?php endif; ?>
         </div>
-        <div class="flex justify-center gap-3 w-[100%] flex-col md:flex-row <?php echo $style_non; ?>">
-            <a href="pending_request_info_approved.php?id=<?php echo $landlord_id; ?>&location_back=<?php echo $location_back; ?>"  class="btn btn-success text-white ">Approved</a>
-            <a href="pending_request_info_disapproved.php?id=<?php echo $landlord_id; ?>&location_back=<?php echo $location_back; ?>"   class="btn bg-gray-400 text-white">Disapproved</a>
-        </div>
+       <?php if ($location_back !== "verified_properties.php"): ?>
+            <div class="flex justify-center gap-3 w-full flex-col md:flex-row">
+                <a href="pending_request_info_approved.php?id=<?php echo urlencode($landlord_id); ?>&location_back=<?php echo urlencode($location_back); ?>" class="btn btn-success text-white">
+                    Approved
+                </a>
+                <a href="pending_request_info_disapproved.php?id=<?php echo urlencode($landlord_id); ?>&location_back=<?php echo urlencode($location_back); ?>" class="btn bg-gray-400 text-white">
+                    Disapproved
+                </a>
+            </div>
+        <?php endif; ?>
     </div>
   </div>
 </dialog>

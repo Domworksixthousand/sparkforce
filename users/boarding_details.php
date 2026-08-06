@@ -295,7 +295,7 @@ $availableBeds = count(array_filter($boarding_houses, fn($b) => $b['status'] ===
               <h2 class="text-lg font-bold flex items-center gap-2">
                 <i class="fa-solid fa-bed text-success"></i> Available Beds / Units
               </h2>
-              <span class="text-xs text-base-content/60"><?= count($boarding_houses); ?> Units Listed <?php echo $boarding_houses; ?></span>
+              <span class="text-xs text-base-content/60"><?= count($boarding_houses); ?> </span>
             </div>
 
             <?php if (!empty($boarding_houses)): ?>

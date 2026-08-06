@@ -76,9 +76,9 @@
                         $locate = "boarding_details.php";
                         
                     } elseif ($type === "Apartment") {
-                        $locate = "apartment_info.php";
-                    } else {
-                        $locate = "details.php"; 
+                        $locate = "apartment_details.php";
+                    } else{
+                        $locate = "apartment_details.php"; 
                     }
 
                    

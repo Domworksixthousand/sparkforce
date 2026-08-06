@@ -220,8 +220,11 @@
 
                            
 
+                               
                                 if($type == "Boarding House / Bedspace"){
                                     $locate = "boarding_details.php";
+                                }elseif($type == "Apartment"){
+                                     $locate = "apartment_details.php";
                                 }
 
                                 echo '
