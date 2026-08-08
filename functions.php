@@ -2170,3 +2170,116 @@ if(isset($_POST['add_favorite_btn'])){
     header("location:users/$locate?id=" . urlencode($rent_id));
     exit;
 }
+
+
+if (isset($_POST['send_message'])) {
+
+
+    $sender_id   = $user_id_login; 
+    $receiver_id = trim($_POST['receiver_id'] ?? '');
+    $message     = trim($_POST['message'] ?? '');
+
+    // DEBUG CHECK: Tinitingnan kung may kulang na ID
+    if (empty($sender_id) || empty($receiver_id)) {
+        die("<h3 style='color:red;'>ERROR: Empty Sender ID or Receiver ID!</h3>" . 
+            "Sender ID: '" . htmlspecialchars($sender_id) . "'<br>" . 
+            "Receiver ID: '" . htmlspecialchars($receiver_id) . "'<br>" . 
+            "<i>Paki-check kung tama ang \$_SESSION variable name ng logged in user.</i>");
+    }
+
+    $has_files = false;
+    $valid_files = [];
+
+    if (isset($_FILES['chat_attachments']) && !empty($_FILES['chat_attachments']['name'][0])) {
+        $files = $_FILES['chat_attachments'];
+        $file_count = count($files['name']);
+
+        for ($i = 0; $i < $file_count; $i++) {
+            if ($files['error'][$i] === UPLOAD_ERR_OK) {
+                $has_files = true;
+                $valid_files[] = [
+                    'name'     => $files['name'][$i],
+                    'tmp_name' => $files['tmp_name'][$i],
+                    'size'     => $files['size'][$i]
+                ];
+            }
+        }
+    }
+
+    $has_text = !empty($message);
+
+    if (!$has_text && !$has_files) {
+        die("<h3 style='color:orange;'>WARNING: Walang mensahe o file na ipinadala!</h3>");
+    }
+
+    // Determine Message Type
+    if ($has_text && $has_files) {
+        $message_type = 'text_and_files';
+    } else if ($has_text && !$has_files) {
+        $message_type = 'text_only';
+    } else {
+        $message_type = 'files_only';
+    }
+
+    $status    = 'unseen';
+    $time_sent = date('H:i:s'); 
+    $date_sent = date('Y-m-d'); 
+    
+    // Gawa ng unique message ID (VARCHAR)
+    $message_id = 'MSG-' . uniqid(); 
+
+    // INSERT QUERY
+    $sql = "INSERT INTO `messages` (`message_id`, `sender_id`, `receiver_id`, `message`, `status`, `time_sent`, `date_sent`, `message_type`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    
+    $stmt = $conn->prepare($sql);
+    
+    if (!$stmt) {
+        die("<h3 style='color:red;'>SQL Prepare Error sa 'messages' table:</h3> " . $conn->error);
+    }
+
+    $stmt->bind_param("ssssssss", $message_id, $sender_id, $receiver_id, $message, $status, $time_sent, $date_sent, $message_type);
+
+    if ($stmt->execute()) {
+        $stmt->close();
+
+        // FILE UPLOAD PROCESS
+        if ($has_files) {
+            $upload_dir = "assets/uploads/";
+
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0777, true);
+            }
+
+            $stmt_file = $conn->prepare("INSERT INTO `messages_uploaded` (`message_id`, `file_name`) VALUES (?, ?)");
+            
+            if (!$stmt_file) {
+                die("<h3 style='color:red;'>SQL Prepare Error sa 'messages_uploaded' table:</h3> " . $conn->error);
+            }
+
+            foreach ($valid_files as $file) {
+                $file_extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+                $unique_file_name = time() . '_' . uniqid() . '.' . $file_extension;
+                $target_path = $upload_dir . $unique_file_name;
+
+                if (move_uploaded_file($file['tmp_name'], $target_path)) {
+                    $stmt_file->bind_param("ss", $message_id, $unique_file_name);
+                    if (!$stmt_file->execute()) {
+                        echo "<p style='color:red;'>Failed to insert file record: " . $stmt_file->error . "</p>";
+                    }
+                } else {
+                    echo "<p style='color:red;'>Failed to move uploaded file to target path!</p>";
+                }
+            }
+            $stmt_file->close();
+        }
+
+
+       header("Location: users/chat_portal.php?id=" . urlencode($receiver_id));
+        exit;
+
+    } else {
+        die("<h3 style='color:red;'>Database Execute Error:</h3> " . $stmt->error);
+    }
+} else {
+    echo "Walang POST request (send_message button not detected).";
+}

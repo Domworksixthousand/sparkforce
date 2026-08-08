@@ -1,6 +1,7 @@
 
       <?php  
         $current_page = basename($_SERVER['SCRIPT_NAME']);
+    
     ?>
       <div class="menu p-4 w-64 min-h-full bg-base-200 text-base-content flex flex-col justify-between bg-[#0d9488] ">
         <ul class="space-y-2 mt-5">
@@ -25,7 +26,12 @@
             <li>
                 <a href="messages.php" class="flex items-center gap-3 active">                           
                     <svg xmlns="http://www.w3.org/2000/svg" width="25" class="text-white" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-square-check-icon lucide-message-square-check"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.7.7 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/><path d="m9 11 2 2 4-4"/></svg>
-                <span class="text-white">Messages</span>
+                <span class="text-white flex ">
+                    Messages
+                    <div id="get_mess">
+                        <!--get messages-->
+                    </div>
+                </span>
                 </a>
             </li>
             <li>
@@ -110,3 +116,19 @@
         </ul>
       </div>
 
+<script>
+    async function pollData() {
+        try {
+            let response = await fetch('noti_messages.php'); 
+            let result = await response.text();
+            
+            document.getElementById('get_mess').innerHTML = result;
+        } catch (error) {
+            console.error('Polling Error:', error);
+        }
+    }
+
+  
+    pollData();
+    setInterval(pollData, 3000);
+</script>

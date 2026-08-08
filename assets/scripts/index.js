@@ -589,3 +589,32 @@ document.addEventListener('DOMContentLoaded', function () {
     // Mount using global extension object
     splide.mount(window.splide.Extensions);
 });
+
+
+document.addEventListener("DOMContentLoaded",function(){
+    $(document).ready(function() {
+    $('#userSearchInput').on('keyup input', function() {
+        var searchValue = $(this).val().toLowerCase().trim();
+        var visibleCount = 0;
+
+        $('.user-item').each(function() {
+            var userName = $(this).find('.user-name').text().toLowerCase();
+            
+ 
+            if (userName.indexOf(searchValue) !== -1) {
+                $(this).removeClass('hidden');
+                visibleCount++;
+            } else {
+                $(this).addClass('hidden');
+            }
+        });
+
+      
+        if (visibleCount === 0 && $('.user-item').length > 0) {
+            $('#noSearchResults').removeClass('hidden').addClass('flex');
+        } else {
+            $('#noSearchResults').addClass('hidden').removeClass('flex');
+        }
+    });
+});
+});
