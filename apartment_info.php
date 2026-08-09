@@ -101,11 +101,12 @@ function apartmentStatusBadge($status) {
   <div class="modal-box w-11/12 max-w-4xl p-0 overflow-hidden">
 
     <!-- Close button -->
-    <a 
-        href="my_property.php?property_id=<?php echo urlencode($landlord_id); ?>" 
-          class="btn btn-sm btn-circle bg-white/90 hover:bg-white border-none shadow-md absolute right-3 top-3 z-20">
-        ✕
-    </a>
+    <button 
+      type="button" 
+      onclick="window.location.href='my_property.php?property_id=<?php echo htmlspecialchars($landlord_id); ?>';" 
+      class="btn btn-sm btn-circle bg-white/90 hover:bg-white border-none shadow-md absolute right-3 top-3 z-20">
+      ✕
+    </button>
 
     <!-- HERO -->
     <div class="relative w-full h-56 sm:h-64">

@@ -32,6 +32,7 @@
     $year = date("Y");
     #get time today
     $timetoday = date("h:i:s a");
+    $timetoday1 = date("H:i:s");
     $timetoday_24_hourformat = date("H:i:s");
 
 

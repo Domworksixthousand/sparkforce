@@ -119,8 +119,34 @@ if($result_fav->num_rows>0){
   $switch = "off";
 }
 
+$hidden = ($user_id_login === $user_id) ? 'hidden' : '';
 $totalBeds     = count($boarding_houses);
 $availableBeds = count(array_filter($boarding_houses, fn($b) => $b['status'] === 'Available'));
+
+
+
+
+//auto save viewed
+
+$check = $conn->prepare(
+    "SELECT COUNT(*) AS already_viewed
+     FROM `rent_views`
+     WHERE `rent_id` = ?
+       AND `user_id` = ?
+       AND `date_viewed` = ?"
+);
+$check->bind_param("sss", $rent_id, $user_id_login, $datetoday);
+$check->execute();
+$already_viewed = $check->get_result()->fetch_assoc()['already_viewed'] ?? 0;
+
+if ($already_viewed == 0) {
+    $insert_viewed = $conn->prepare(
+        "INSERT INTO `rent_views` (`landlord_id`, `user_id`, `date_viewed`, `time_viewed`, `rent_id`)
+         VALUES (?, ?, ?, ?, ?)"
+    );
+    $insert_viewed->bind_param("sssss", $landlord_id, $user_id_login, $datetoday, $timetoday1, $rent_id);
+    $insert_viewed->execute();
+}
 ?>
 
 <!DOCTYPE html>
@@ -179,7 +205,7 @@ $availableBeds = count(array_filter($boarding_houses, fn($b) => $b['status'] ===
               <i class="fa-solid fa-house"></i> Boarding House / Bed Space
             </span>
           </div>
-          <a href="chat_portal.php?id=<?php echo urlencode($user_id);  ?>" class="tooltip tooltip-left absolute bottom-4 right-15 lg:top-4 h-fit text-blue-900 bg-green-300 hover:bg-blue-200 active:bg-red-400 rounded-lg p-1.5 flex items-center justify-center transition-all cursor-pointer border-none outline-none" data-tip="Message Landlord">
+          <a href="chat_portal.php?id=<?php echo urlencode($user_id); ?>" class="<?php echo $hidden; ?> tooltip tooltip-left absolute bottom-4 right-15 lg:top-4 h-fit text-blue-900 bg-green-300 hover:bg-blue-200 active:bg-red-400 rounded-lg p-1.5 flex items-center justify-center transition-all cursor-pointer border-none outline-none" data-tip="Message Landlord">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-square-text-icon lucide-message-square-text"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/><path d="M7 11h10"/><path d="M7 15h6"/><path d="M7 7h8"/></svg>
           </a>
           <form action="../functions.php" method="POST" class="tooltip tooltip-left absolute bottom-4 right-4 h-fit lg:top-4 " data-tip="<?php echo ($switch == 'on') ? 'Remove from Favorites' : 'Add to my Favorites'; ?>">
