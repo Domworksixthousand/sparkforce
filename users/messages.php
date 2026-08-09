@@ -3,9 +3,11 @@
   if(!isset($_SESSION['user_login'])){
     echo "<script>location.href='../index.php';</script>";
   }
+    
     $data_stat = 'viewed';
-    $update = $conn->prepare("UPDATE messages SET `status` = ? WHERE  `receiver_id` = ? ");
-    $update->bind_param("ss", $data_stat, $user_id_login);
+    $data_seen = 'seen';
+    $update = $conn->prepare("UPDATE messages SET `status` = ? WHERE  `receiver_id` = ? AND `status` != ? ");
+    $update->bind_param("sss", $data_stat, $user_id_login,$data_seen);
     $update->execute();
 ?>
 

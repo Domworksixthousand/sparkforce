@@ -618,3 +618,181 @@ document.addEventListener("DOMContentLoaded",function(){
     });
 });
 });
+
+
+// chat portal.php
+document.addEventListener("DOMContentLoaded", function(){
+  const messageForm = document.getElementById('messageForm');
+  const messageTextInput = document.getElementById('messageText');
+  const sendBtn = document.getElementById('sendBtn');
+
+  // Status indicator elements
+  const sendStatus = document.getElementById('sendStatus');
+  const sendStatusSpinner = document.getElementById('sendStatusSpinner');
+  const sendStatusCheck = document.getElementById('sendStatusCheck');
+  const sendStatusText = document.getElementById('sendStatusText');
+  let sendStatusHideTimer = null;
+
+  function setSendStatus(state) {
+    // state: 'sending' | 'sent' | 'error' | 'hidden'
+    clearTimeout(sendStatusHideTimer);
+
+    if (state === 'hidden') {
+      sendStatus.classList.add('hidden');
+      sendStatus.classList.remove('flex');
+      return;
+    }
+
+    sendStatus.classList.remove('hidden');
+    sendStatus.classList.add('flex');
+
+    if (state === 'sending') {
+      sendStatusSpinner.classList.remove('hidden');
+      sendStatusCheck.classList.add('hidden');
+      sendStatusText.textContent = 'Sending...';
+      sendStatusText.className = 'text-base-content/60';
+    } else if (state === 'sent') {
+      sendStatusSpinner.classList.add('hidden');
+      sendStatusCheck.classList.remove('hidden');
+      sendStatusText.textContent = 'Sent';
+      sendStatusText.className = 'text-success';
+      sendStatusCheck.classList.add('text-success');
+      // Auto-hide the "Sent" indicator after a couple seconds
+      sendStatusHideTimer = setTimeout(() => setSendStatus('hidden'), 2000);
+    } else if (state === 'error') {
+      sendStatusSpinner.classList.add('hidden');
+      sendStatusCheck.classList.add('hidden');
+      sendStatusText.textContent = 'Failed to send';
+      sendStatusText.className = 'text-error';
+      sendStatusHideTimer = setTimeout(() => setSendStatus('hidden'), 3000);
+    }
+  }
+
+  messageForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(messageForm);
+    formData.append('send_message', '1');
+
+    try {
+      sendBtn.disabled = true;
+      sendBtn.classList.add('loading');
+      setSendStatus('sending');
+
+      const response = await fetch('../functions.php', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (response.ok) {
+
+        messageTextInput.value = '';
+
+        window.fileListStore = new DataTransfer();
+        window.fileInput.files = window.fileListStore.files;
+        window.renderFilePreviews();
+
+        setSendStatus('sent');
+
+        await window.pollMessages();
+      } else {
+        setSendStatus('error');
+      }
+    } catch (error) {
+      console.error('Send Error:', error);
+      setSendStatus('error');
+    } finally {
+      sendBtn.disabled = false;
+      sendBtn.classList.remove('loading');
+    }
+  });
+});
+
+
+//badge files images chat portal
+document.addEventListener("DOMContentLoaded", function(){
+
+  window.fileInput = document.getElementById('chatFileInput');
+  const previewContainer = document.getElementById('filePreviewContainer');
+  window.fileListStore = new DataTransfer();
+
+  window.fileInput.addEventListener('change', function (e) {
+    // Append newly selected files to the DataTransfer store
+    Array.from(e.target.files).forEach(file => {
+      window.fileListStore.items.add(file);
+    });
+
+    // Sync state back to standard input element
+    window.fileInput.files = window.fileListStore.files;
+    renderFilePreviews();
+  });
+
+  function renderFilePreviews() {
+    previewContainer.innerHTML = '';
+
+    if (window.fileListStore.files.length === 0) {
+      previewContainer.classList.add('hidden');
+      return;
+    }
+
+    previewContainer.classList.remove('hidden');
+
+    Array.from(window.fileListStore.files).forEach((file, index) => {
+      const fileSize = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+
+      const badge = document.createElement('div');
+      badge.className = 'flex items-center gap-1.5 bg-base-100 px-2.5 py-1 rounded-lg border border-base-200 text-xs shadow-xs';
+
+      badge.innerHTML = `
+        <span class="badge badge-success badge-xs truncate max-w-[120px]">${file.name}</span>
+        <span class="text-[10px] text-base-content/60">${fileSize}</span>
+        <button type="button" onclick="removeSelectedFile(${index})" class="btn btn-ghost btn-xs btn-circle h-4 w-4 min-h-0 text-base-content/60 hover:text-error">✕</button>
+      `;
+
+      previewContainer.appendChild(badge);
+    });
+  }
+
+  window.renderFilePreviews = renderFilePreviews;
+
+  function removeSelectedFile(index) {
+    const updatedStore = new DataTransfer();
+
+    Array.from(window.fileListStore.files).forEach((file, i) => {
+      if (i !== index) {
+        updatedStore.items.add(file);
+      }
+    });
+
+    window.fileListStore = updatedStore;
+    window.fileInput.files = window.fileListStore.files;
+    renderFilePreviews();
+  }
+  window.removeSelectedFile = removeSelectedFile;
+});
+
+
+//real time messages
+document.addEventListener("DOMContentLoaded", function(){
+  const chatUserId = window.chatUserId;
+
+  async function pollMessages() {
+    try {
+      let res = await fetch(`fetch_chat.php?id=${chatUserId}`);
+      let html = await res.text();
+
+      const messageBody = document.getElementById('message_body');
+      messageBody.innerHTML = html;
+
+      // Auto scroll to bottom on new message
+      messageBody.scrollTop = messageBody.scrollHeight;
+    } catch (e) {
+      console.error('Polling Error:', e);
+    }
+  }
+
+  window.pollMessages = pollMessages;
+
+  pollMessages();
+  setInterval(pollMessages, 3000);
+});

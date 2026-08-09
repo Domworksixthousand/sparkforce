@@ -10,6 +10,18 @@ require __DIR__ . '/vendor/autoload.php';
 // Pwede mo nang gamitin ang PHPMailer dito:
 $mail = new PHPMailer(true);
 
+
+if(isset($_GET['update_messages'])){
+    $update_messages = $_GET['update_messages'];
+    $seen_status = "seen";
+    $update = $conn->prepare("UPDATE messages SET `status` = ? WHERE `sender_id` = ? AND `receiver_id` = ? AND `status` != ?");
+    $update->bind_param("ssss", $seen_status, $update_messages, $user_id_login, $seen_status);
+    $update->execute();
+
+    header("location:users/chat_portal.php");
+    exit;
+}
+
 if(isset($_GET['noti_id'])){
     $noti_id = $_GET['noti_id'];
     $link = $_GET['link'];
@@ -410,6 +422,9 @@ if (isset($_POST['signin'])) {
     $user_type_limit = 3; 
     $status = 'Approved';
 
+    $_SESSION['username'] = $username;
+    $_SESSION['password'] = $password;
+
 
     $get_user = $conn->prepare("SELECT `user_id`, `username`, `password`, `user_type` FROM `accounts` WHERE `username` = ? AND `user_type` <= ? AND `status` = ?");
     $get_user->bind_param("sss", $username, $user_type_limit,$status);
@@ -434,7 +449,9 @@ if (isset($_POST['signin'])) {
                 $update_token->execute();
 
                 // Set Cookie
-                setcookie("remember_token", $token, time() + (7 * 24 * 60 * 60), "/", "", false, true); 
+                setcookie("remember_token", $token, time() + (7 * 24 * 60 * 60), "/", "", false, true);
+
+                unset($_SESSION['username'], $_SESSION['password']);
 
                 // Redirect logic
                 if ($user_type == "1") {
@@ -2179,7 +2196,6 @@ if (isset($_POST['send_message'])) {
     $receiver_id = trim($_POST['receiver_id'] ?? '');
     $message     = trim($_POST['message'] ?? '');
 
-    // DEBUG CHECK: Tinitingnan kung may kulang na ID
     if (empty($sender_id) || empty($receiver_id)) {
         die("<h3 style='color:red;'>ERROR: Empty Sender ID or Receiver ID!</h3>" . 
             "Sender ID: '" . htmlspecialchars($sender_id) . "'<br>" . 
@@ -2281,5 +2297,8 @@ if (isset($_POST['send_message'])) {
         die("<h3 style='color:red;'>Database Execute Error:</h3> " . $stmt->error);
     }
 } else {
-    echo "Walang POST request (send_message button not detected).";
+    $_SESSION['error'] = "Walang POST request (send_message button not detected).";
+    header("Location: users/chat_portal.php?id=" . urlencode($receiver_id));
+    exit;
 }
+
