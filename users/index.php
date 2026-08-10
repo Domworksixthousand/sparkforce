@@ -178,7 +178,7 @@
     <script src="./../assets/scripts/daisy_ui.js"></script>
     <script src="../assets/scripts/cool_alert.js"></script>
     <script src="./../assets/scripts/jquery.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script src="../assets/scripts/apex_chart.js"></script>
 </head>
 <body class="bg-base-100">
   <div class="drawer lg:drawer-open ">
@@ -285,10 +285,10 @@
           <p class="text-sm text-base-content/60">Total views tracked for your properties.</p>
 
           <div class="flex flex-wrap gap-2 my-4">
-            <button data-range="daily" class="filter-btn px-4 py-2 text-sm rounded-lg border transition-colors bg-blue-600 text-white border-blue-600">Daily</button>
-            <button data-range="weekly" class="filter-btn px-4 py-2 text-sm rounded-lg border transition-colors bg-gray-100 border-gray-300 hover:bg-gray-200">Weekly</button>
-            <button data-range="monthly" class="filter-btn px-4 py-2 text-sm rounded-lg border transition-colors bg-gray-100 border-gray-300 hover:bg-gray-200">Monthly</button>
-            <button data-range="yearly" class="filter-btn px-4 py-2 text-sm rounded-lg border transition-colors bg-gray-100 border-gray-300 hover:bg-gray-200">Yearly</button>
+            <button data-range="daily" class="filter-btn px-4 py-2 text-sm rounded-lg cursor-pointer  transition-colors bg-blue-600 text-white border-blue-600">Daily</button>
+            <button data-range="weekly" class="filter-btn px-4 py-2 text-sm rounded-lg   cursor-pointer transition-colors bg-gray-100 border-gray-300 hover:bg-gray-200">Weekly</button>
+            <button data-range="monthly" class="filter-btn px-4 py-2 text-sm rounded-lg  cursor-pointer transition-colors bg-gray-100 border-gray-300 hover:bg-gray-200">Monthly</button>
+            <button data-range="yearly" class="filter-btn px-4 py-2 text-sm rounded-lg  cursor-pointer transition-colors bg-gray-100 border-gray-300 hover:bg-gray-200">Yearly</button>
           </div>
 
           <div class="relative h-[400px]">
