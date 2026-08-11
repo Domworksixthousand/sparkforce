@@ -27,42 +27,99 @@
             fetchAddressDetails(lat, lng);
         }
 
-      
-        function fetchAddressDetails(lat, lng) {
+    // Philippines ZIP to Municipality lookup — dagdagan mo na lang
+const zipToMunicipality = {
+    "4707": "Irosin",
+    "4700": "Sorsogon City",
+    "4701": "Bacon",      // Sorsogon
+    "4702": "Casiguran",  // Sorsogon
+    "4703": "Castilla",   // Sorsogon
+    "4704": "Donsol",     // Sorsogon
+    "4705": "Gubat",      // Sorsogon
+    "4706": "Juban",      // Sorsogon
+    "4708": "Magallanes", // Sorsogon
+    "4709": "Matnog",     // Sorsogon
+    "4710": "Pilar",      // Sorsogon
+    "4711": "Prieto Diaz",// Sorsogon
+    "4712": "Santa Magdalena", // Sorsogon
+    "4713": "Bulusan",    // Sorsogon
+    "4714": "Barcelona",  // Sorsogon
+    "4715": "Bulan",      // Sorsogon
+  
+};
 
-            document.getElementById('barangay').value = "Fetching...";
-            document.getElementById('municipality').value = "Fetching...";
-            document.getElementById('province').value = "Fetching...";
+function fetchAddressDetails(lat, lng) {
+    document.getElementById('barangay').value = "Fetching...";
+    document.getElementById('municipality').value = "Fetching...";
+    document.getElementById('province').value = "Fetching...";
 
-            const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
 
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    if (data && data.address) {
-                        const addr = data.address;
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.address) {
+                const addr = data.address;
 
-                    
-                        const barangay = addr.neighbourhood || addr.suburb || addr.village || addr.quarter || addr.brgy || "";
-                        const municipality = addr.city || addr.town || addr.municipality || "";
-                        const province = addr.province || addr.state || "";
+                // ---  Barangay ---
+                const barangay = addr.neighbourhood 
+                    || addr.suburb 
+                    || addr.village 
+                    || addr.quarter 
+                    || addr.hamlet 
+                    || "";
 
-                        document.getElementById('barangay').value = barangay;
-                        document.getElementById('municipality').value = municipality;
-                        document.getElementById('province').value = province;
-                        
-         
-                        activeMarker.setPopupContent(`<b>${barangay || 'Selected Location'}</b><br>${municipality}, ${province}`);
+                // ---  Municipality (multi-layer fallback) ---
+                let municipality = addr.city 
+                    || addr.town 
+                    || addr.municipality 
+                    || addr.county 
+                    || addr.district 
+                    || "";
+
+                // ---  Province ---
+                const province = addr.province 
+                    || addr.state 
+                    || addr.region 
+                    || "";
+
+                // ---  ZIP Code lookup fallback ---
+                const postcode = addr.postcode || "";
+                if (!municipality && postcode && zipToMunicipality[postcode]) {
+                    municipality = zipToMunicipality[postcode];
+                }
+
+            
+                // Format: "Barangay, Municipality, Province, Region, Country"
+                if (!municipality && data.display_name) {
+                    const parts = data.display_name.split(',').map(p => p.trim());
+                    // Sa Pilipinas: index 1 = municipality/city
+                    if (parts.length >= 3) {
+                        municipality = parts[1];
                     }
-                })
-                .catch(error => {
-                    console.error('Error fetching address:', error);
-                    document.getElementById('barangay').value = "Error loading";
-                    document.getElementById('municipality').value = "Error loading";
-                    document.getElementById('province').value = "Error loading";
-                });
-        }
+                }
 
+                document.getElementById('barangay').value = barangay;
+                document.getElementById('municipality').value = municipality;
+                document.getElementById('province').value = province;
+
+                activeMarker.setPopupContent(
+                    `<b>${barangay || 'Selected Location'}</b><br>${municipality}${municipality && province ? ', ' : ''}${province}`
+                );
+
+                // Debug: tingnan mo sa browser console (F12)
+                console.log('Address:', addr);
+                console.log('Postcode:', postcode);
+                console.log('Display:', data.display_name);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('barangay').value = "Error loading";
+            document.getElementById('municipality').value = "Error loading";
+            document.getElementById('province').value = "Error loading";
+        });
+}
         // --- MAP CLICK EVENT ---
         map.on('click', function(e) {
             updateSelectedLocation(e.latlng.lat, e.latlng.lng);

@@ -4,8 +4,7 @@
     echo "<script>location.href='../index.php';</script>";
   }
 
-  // Turn on exceptions for mysqli so a bad query/table/column name throws
-  // a clear error instead of silently returning false and breaking the page.
+
   mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
   $se = "seen";
@@ -179,6 +178,7 @@
     <script src="../assets/scripts/cool_alert.js"></script>
     <script src="./../assets/scripts/jquery.js"></script>
     <script src="../assets/scripts/apex_chart.js"></script>
+    
 </head>
 <body class="bg-base-100">
   <div class="drawer lg:drawer-open ">
@@ -285,26 +285,25 @@
           <p class="text-sm text-base-content/60">Total views tracked for your properties.</p>
 
           <div class="flex flex-wrap gap-2 my-4">
-            <button data-range="daily" class="filter-btn px-4 py-2 text-sm rounded-lg cursor-pointer  transition-colors bg-blue-600 text-white border-blue-600">Daily</button>
-            <button data-range="weekly" class="filter-btn px-4 py-2 text-sm rounded-lg   cursor-pointer transition-colors bg-gray-100 border-gray-300 hover:bg-gray-200">Weekly</button>
-            <button data-range="monthly" class="filter-btn px-4 py-2 text-sm rounded-lg  cursor-pointer transition-colors bg-gray-100 border-gray-300 hover:bg-gray-200">Monthly</button>
-            <button data-range="yearly" class="filter-btn px-4 py-2 text-sm rounded-lg  cursor-pointer transition-colors bg-gray-100 border-gray-300 hover:bg-gray-200">Yearly</button>
+            <button data-range="daily" class="filter-btn px-4 py-2 text-sm rounded-lg cursor-pointer transition-colors bg-blue-600 text-white border border-blue-600">Daily</button>
+            <button data-range="weekly" class="filter-btn px-4 py-2 text-sm rounded-lg cursor-pointer transition-colors bg-gray-100 border border-gray-300 hover:bg-gray-200">Weekly</button>
+            <button data-range="monthly" class="filter-btn px-4 py-2 text-sm rounded-lg cursor-pointer transition-colors bg-gray-100 border border-gray-300 hover:bg-gray-200">Monthly</button>
+            <button data-range="yearly" class="filter-btn px-4 py-2 text-sm rounded-lg cursor-pointer transition-colors bg-gray-100 border border-gray-300 hover:bg-gray-200">Yearly</button>
           </div>
 
           <div class="relative h-[400px]">
-            <canvas id="viewsChart"></canvas>
+            <div id="viewsChart"></div>
           </div>
 
           <?php if (empty($landlord_ids)): ?>
             <p class="text-gray-500 italic mt-3">No properties found for this account.</p>
           <?php elseif (array_sum($chartData['daily']['data']) === 0
-                     && array_sum($chartData['weekly']['data']) === 0
-                     && array_sum($chartData['monthly']['data']) === 0
-                     && array_sum($chartData['yearly']['data']) === 0): ?>
+                    && array_sum($chartData['weekly']['data']) === 0
+                    && array_sum($chartData['monthly']['data']) === 0
+                    && array_sum($chartData['yearly']['data']) === 0): ?>
             <p class="text-gray-500 italic mt-3">No views recorded yet for your properties.</p>
           <?php endif; ?>
         </section>
-
         <section class="mb-6">
           <div class="flex items-end justify-between mb-4">
             <div>
@@ -379,45 +378,27 @@
     </div>
   </div>
 
-  <script>
+
+
+  <script src="./../assets/scripts/index.js"></script>
+  <script src="./../assets/scripts/query_filter.js"></script>
+</body>
+</html>
+
+
+<script>
     const chartData = <?php echo json_encode($chartData); ?>;
-    const canvasEl = document.getElementById('viewsChart');
 
-    if (canvasEl && typeof Chart !== 'undefined') {
-      const ctx = canvasEl.getContext('2d');
+    let viewsChart = null;
 
-      let viewsChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: chartData.daily.labels,
-          datasets: [{
-            label: 'Views',
-            data: chartData.daily.data,
-            backgroundColor: 'rgba(45, 108, 223, 0.15)',
-            borderColor: 'rgba(45, 108, 223, 1)',
-            borderWidth: 2,
-            pointBackgroundColor: 'rgba(45, 108, 223, 1)',
-            pointRadius: 3,
-            pointHoverRadius: 5,
-            tension: 0.3,
-            fill: true,
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            title: { display: true, text: 'Daily Views' }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: { precision: 0 }
-            }
-          }
-        }
-      });
+    function renderViewsChart(range) {
+      const container = document.querySelector("#viewsChart");
+      const dataset = chartData[range];
+
+      if (viewsChart) {
+        viewsChart.destroy();
+      }
+      container.innerHTML = '';
 
       const titles = {
         daily: 'Daily Views',
@@ -426,49 +407,97 @@
         yearly: 'Yearly Views'
       };
 
-      const activeClasses = ['bg-blue-600', 'text-white', 'border-blue-600'];
-      const inactiveClasses = ['bg-gray-100', 'border-gray-300', 'hover:bg-gray-200'];
+      viewsChart = new ApexCharts(container, {
+        series: [{
+          name: 'Views',
+          data: dataset.data
+        }],
+        chart: {
+          type: 'area',
+          height: 400,
+          toolbar: { show: false },
+          fontFamily: 'Inter, sans-serif',
+          animations: { enabled: true }
+        },
+        colors: ['#2d6cdf'],
+        fill: {
+          type: 'gradient',
+          gradient: {
+            shadeIntensity: 1,
+            opacityFrom: 0.4,
+            opacityTo: 0.05,
+            stops: [0, 100]
+          }
+        },
+        stroke: {
+          curve: 'smooth',
+          width: 2
+        },
+        dataLabels: { enabled: false },
+        xaxis: {
+          categories: dataset.labels,
+          labels: {
+            style: { colors: '#64748b', fontSize: '12px' }
+          },
+          axisBorder: { show: false },
+          axisTicks: { show: false }
+        },
+        yaxis: {
+          labels: {
+            style: { colors: '#64748b' },
+            formatter: (val) => Math.floor(val)
+          }
+        },
+        grid: {
+          borderColor: '#f1f5f9',
+          strokeDashArray: 4
+        },
+        markers: {
+          size: 4,
+          colors: ['#2d6cdf'],
+          strokeColors: '#fff',
+          strokeWidth: 2,
+          hover: { size: 6 }
+        },
+        tooltip: {
+          theme: 'light',
+          y: {
+            formatter: (val) => val + ' views'
+          }
+        },
+        title: {
+          text: titles[range],
+          align: 'left',
+          style: {
+            fontSize: '16px',
+            fontWeight: '600',
+            color: '#1e293b'
+          }
+        }
+      });
 
-      document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const range = btn.dataset.range;
+      viewsChart.render();
+    }
 
-          document.querySelectorAll('.filter-btn').forEach(b => {
-            b.classList.remove(...activeClasses);
-            b.classList.add(...inactiveClasses);
-          });
-          btn.classList.remove(...inactiveClasses);
-          btn.classList.add(...activeClasses);
+    // Initial render
+    renderViewsChart('daily');
 
-          viewsChart.data.labels = chartData[range].labels;
-          viewsChart.data.datasets[0].data = chartData[range].data;
-          viewsChart.options.plugins.title.text = titles[range];
-          viewsChart.update();
+    // Button toggle logic
+    const activeClasses = ['bg-blue-600', 'text-white', 'border-blue-600'];
+    const inactiveClasses = ['bg-gray-100', 'border-gray-300', 'hover:bg-gray-200'];
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const range = btn.dataset.range;
+
+        document.querySelectorAll('.filter-btn').forEach(b => {
+          b.classList.remove(...activeClasses);
+          b.classList.add(...inactiveClasses);
         });
-      });
-    } else {
-      console.error('Chart.js failed to load, or #viewsChart canvas is missing from the DOM.');
-    }
+        btn.classList.remove(...inactiveClasses);
+        btn.classList.add(...activeClasses);
 
-  
-    const toggleBtn = document.getElementById('toggleVisitedBtn');
-    if (toggleBtn) {
-      const label = document.getElementById('toggleVisitedLabel');
-      const icon = document.getElementById('toggleVisitedIcon');
-      const hiddenRows = document.querySelectorAll('#visitedList .visited-row.hidden');
-      const totalCount = document.querySelectorAll('#visitedList .visited-row').length;
-      let expanded = false;
-
-      toggleBtn.addEventListener('click', () => {
-        expanded = !expanded;
-        hiddenRows.forEach(row => row.classList.toggle('hidden', !expanded));
-        label.textContent = expanded ? 'Show less' : `Show all ${totalCount}`;
-        icon.classList.toggle('rotate-180', expanded);
+        renderViewsChart(range);
       });
-    }
+    });
   </script>
-
-  <script src="./../assets/scripts/index.js"></script>
-  <script src="./../assets/scripts/query_filter.js"></script>
-</body>
-</html>

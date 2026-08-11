@@ -1469,6 +1469,11 @@ if(isset($_POST['approved_pending_property'])){
     $insert_notifications->bind_param("sssssss",$text, $status, $datetoday, $timetoday_24_hourformat, $sender, $user_id, $link);
     $insert_notifications->execute();
 
+    $user_status = "2";
+    $update_account_status = $conn->prepare("UPDATE `accounts` SET `status` = ? WHERE `user_id` = ?");
+    $update_account_status->bind_param("ss", $user_status, $user_id);
+    $update_account_status->execute();
+
     $_SESSION['success'] = "Successfully Approved";
     header("location:admin/pending_properties.php");
     exit;
@@ -2189,6 +2194,7 @@ if(isset($_POST['add_favorite_btn'])){
 }
 
 
+
 if (isset($_POST['send_message'])) {
 
 
@@ -2296,9 +2302,172 @@ if (isset($_POST['send_message'])) {
     } else {
         die("<h3 style='color:red;'>Database Execute Error:</h3> " . $stmt->error);
     }
-} else {
-    $_SESSION['error'] = "Walang POST request (send_message button not detected).";
-    header("Location: users/chat_portal.php?id=" . urlencode($receiver_id));
+}
+if(isset($_POST['save_condo'])){
+    
+    $landlord_id    = $_POST['landlord_id'] ?? '';
+    $condo_name     = trim($_POST['condo_name'] ?? '');
+    $condo_price    = trim($_POST['condo_price'] ?? '');
+    $square_area    = trim($_POST['square_area'] ?? '');
+    $bedroom_type   = $_POST['type'] ?? '';
+    $bathrooms      = $_POST['bathrooms'] ?? '';
+    $condition      = $_POST['condition'] ?? '';
+    $flooring       = $_POST['flooring'] ?? '';
+    $other_info     = trim($_POST['apartment_other_info'] ?? '');
+    $raw_amenities  = $_POST['apartment_amenity'] ?? [];
+
+    $status       = "Available";
+    $rent_id      = $condo_name . rand(1000, 9999);
+    $type         = "Condominium";
+    $condo_id     = $condo_name . rand();
+
+    $uploadDir = 'assets/uploads/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+
+    // Validate amenities — no duplicates
+    $selected_amenities = [];
+    foreach ($raw_amenities as $amenity_id) {
+        $amenity_id = trim($amenity_id);
+        if ($amenity_id === '') continue;
+
+        if (in_array($amenity_id, $selected_amenities)) {
+            $_SESSION['error'] = "Amenities Selected Must Not Be The Same";
+            header("Location: users/apartment_add.php?property_id=" . urlencode($landlord_id));
+            exit;
+        }
+        $selected_amenities[] = $amenity_id;
+    }
+
+    // Store in session para ma-retain pag may error
+    $_SESSION['condo_name']           = $condo_name;
+    $_SESSION['condo_price']          = $condo_price;
+    $_SESSION['square_area']          = $square_area;
+    $_SESSION['type']                 = $bedroom_type;
+    $_SESSION['bathrooms']            = $bathrooms;
+    $_SESSION['condition']            = $condition;
+    $_SESSION['flooring']             = $flooring;
+    $_SESSION['apartment_other_info'] = $other_info;
+    $_SESSION['amenities']            = $raw_amenities ?? [];
+
+    // --- COVER PHOTO ---
+    if (isset($_FILES['apartment_cover']) && $_FILES['apartment_cover']['error'] === UPLOAD_ERR_OK) {
+        $fileTmpPath   = $_FILES['apartment_cover']['tmp_name'];
+        $fileExtension = strtolower(pathinfo($_FILES['apartment_cover']['name'], PATHINFO_EXTENSION));
+        $new_cover     = time() . '_condo_cover.' . $fileExtension;
+
+        if (move_uploaded_file($fileTmpPath, $uploadDir . $new_cover)) {
+            $_SESSION['condo_cover'] = $new_cover;
+        }
+    } elseif (!empty($_POST['old_cover'])) {
+        // Retain old cover if walang bagong upload
+        $_SESSION['condo_cover'] = $_POST['old_cover'];
+    }
+
+    $cover_photo = $_SESSION['condo_cover'] ?? '';
+
+    if (empty($cover_photo)) {
+        $_SESSION['error'] = "Cover photo is required";
+        header("Location: users/apartment_add.php?property_id=" . urlencode($landlord_id));
+        exit;
+    }
+
+    // --- GALLERY PHOTOS ---
+    if (!empty($_FILES['gallery']['name'][0])) {
+        $new_gallery = [];
+        foreach ($_FILES['gallery']['name'] as $i => $img_name) {
+            if ($_FILES['gallery']['error'][$i] !== UPLOAD_ERR_OK) continue;
+            $ext      = strtolower(pathinfo($img_name, PATHINFO_EXTENSION));
+            $new_name = uniqid() . '_condo_' . $i . '.' . $ext;
+            if (move_uploaded_file($_FILES['gallery']['tmp_name'][$i], $uploadDir . $new_name)) {
+                $new_gallery[] = $new_name;
+            }
+        }
+        if (!empty($new_gallery)) {
+            $_SESSION['gallery'] = $new_gallery;
+        }
+    }
+    $gallery_images = $_SESSION['gallery'] ?? [];
+
+    if (count($gallery_images) < 3 || count($gallery_images) > 10) {
+        $_SESSION['error'] = "Please upload 3 to 10 photos for the gallery";
+        header("Location: users/apartment_add.php?property_id=" . urlencode($landlord_id));
+        exit;
+    }
+
+    // --- CHECK DUPLICATE ---
+    $check_condo = $conn->prepare("SELECT 1 FROM `rentspace` WHERE `landlord_id` = ? AND `name` = ?");
+    $check_condo->bind_param("ss", $landlord_id, $condo_name);
+    $check_condo->execute();
+    $result_condo_name = $check_condo->get_result();
+
+    if ($result_condo_name->num_rows > 0) {
+        $_SESSION['error'] = "$condo_name Already Exists";
+        header("Location: users/apartment_add.php?property_id=" . urlencode($landlord_id));
+        exit;
+    }
+
+    // --- INSERT MAIN TABLE ---
+    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $insert->bind_param("ssssssss", $rent_id, $condo_name, $landlord_id, $user_id_login, $type, $condo_price, $cover_photo, $other_info);
+    $insert->execute();
+
+    // --- INSERT AMENITIES ---
+    if (!empty($selected_amenities)) {
+        $insert_amen = $conn->prepare("INSERT INTO `rentspace_amenities` (`rent_id`, `amen_id`) VALUES (?, ?)");
+        foreach ($selected_amenities as $amenity_id) {
+            $insert_amen->bind_param("si", $rent_id, $amenity_id);
+            $insert_amen->execute();
+        }
+    }
+
+    // --- INSERT GALLERY ---
+    if (!empty($gallery_images)) {
+        $insert_gallery = $conn->prepare("INSERT INTO `gallery2` (`image`, `rent_id`) VALUES (?, ?)");
+        foreach ($gallery_images as $img) {
+            $insert_gallery->bind_param("ss", $img, $rent_id);
+            $insert_gallery->execute();
+        }
+    }
+
+    // --- INSERT CONDO SPECS ---
+    // Gawin mo muna itong table sa database:
+    /*
+    CREATE TABLE IF NOT EXISTS `condo` (
+        `condo_id` VARCHAR(255) PRIMARY KEY,
+        `rent_id` VARCHAR(255) NOT NULL,
+        `square_area` VARCHAR(50),
+        `bedroom_type` VARCHAR(50),
+        `bathrooms` VARCHAR(50),
+        `cond_condition` VARCHAR(50),
+        `flooring` VARCHAR(50),
+        `status` VARCHAR(50),
+        FOREIGN KEY (`rent_id`) REFERENCES `rentspace`(`rent_id`)
+    );
+    */
+    if (!empty($bedroom_type)) {
+        $insert_condo = $conn->prepare("INSERT INTO `condo` (`condo_id`, `rent_id`, `square_area`, `bedroom_type`, `bathrooms`, `cond_condition`, `flooring`, `status`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $insert_condo->bind_param("ssssssss", $condo_id, $rent_id, $square_area, $bedroom_type, $bathrooms, $condition, $flooring, $status);
+        $insert_condo->execute();
+    }
+
+    // --- CLEAR SESSION ---
+    unset(
+        $_SESSION['condo_name'],
+        $_SESSION['condo_price'],
+        $_SESSION['square_area'],
+        $_SESSION['type'],
+        $_SESSION['bathrooms'],
+        $_SESSION['condition'],
+        $_SESSION['flooring'],
+        $_SESSION['apartment_other_info'],
+        $_SESSION['condo_cover'],
+        $_SESSION['gallery'],
+        $_SESSION['amenities']
+    );
+
+    $_SESSION['success'] = "Condominium Successfully Inserted";
+    header("Location: users/my_property.php?property_id=" . urlencode($landlord_id));
     exit;
 }
-

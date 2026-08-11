@@ -34,6 +34,11 @@
     $location_edit = "apartment_edit.php";
     $location_info = "apartment_info.php";
     $placeholder = "Search Apartment Name / Number";
+  }elseif($type === "Condominium (Condo)"){
+    $location_add = "condo_add.php";
+    $location_edit = "condo_edit.php";
+    $location_info = "condo_info.php";
+    $placeholder = "Search Condo Name / Number";
   }
 
 
