@@ -34,7 +34,7 @@
     $location_edit = "apartment_edit.php";
     $location_info = "apartment_info.php";
     $placeholder = "Search Apartment Name / Number";
-  }elseif($type === "Condominium (Condo)"){
+  }elseif($type === "Condominium"){
     $location_add = "condo_add.php";
     $location_edit = "condo_edit.php";
     $location_info = "condo_info.php";
@@ -173,6 +173,14 @@
                             </div>';
                     }
                   ?>
+                    <div class="no-data-shown hidden col-span-full flex items-center justify-center py-20 text-center">
+                    <div class="flex flex-col items-center gap-3 text-gray-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bed-icon lucide-bed">
+                        <path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/>
+                      </svg>
+                      <p class="text-sm font-medium">No Data Found</p>
+                    </div>
+                  </div>
                 </div> 
             </section>
         </main>

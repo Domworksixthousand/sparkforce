@@ -15,7 +15,7 @@ if(isset($_GET['property_id'])){
     <form method="dialog">
       <button 
         type="button" 
-        onclick="window.location.href='my_property.php?property_id=<?php echo $landlord_id; ?>';" 
+        onclick="window.location.href='my_property.php?property_id=<?php echo urlencode($landlord_id); ?>';" 
         class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
         ✕
       </button>
@@ -47,7 +47,7 @@ if(isset($_GET['property_id'])){
             </span>
             <span class="w-[100%]">
                 <p class="mb-2 text-sm"> Cover Photo * </p>
-                <?php if (!empty($_SESSION['apartment_cover'])): ?>
+                <?php if (!empty($_SESSION['condo_cover'])): ?>
                     <input type="hidden" name="old_cover" value="<?php echo htmlspecialchars($_SESSION['condo_cover']); ?>">
                     <div class="alert alert-success bg-success/10 text-success border border-success/20 p-2 mb-2 text-xs flex items-center justify-between rounded-lg">
                         <div class="flex items-center gap-2">

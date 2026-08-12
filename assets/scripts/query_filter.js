@@ -180,43 +180,45 @@ document.addEventListener("DOMContentLoaded", ()=> {
 
 });
 
+document.addEventListener("DOMContentLoaded", function () {
+  function updateEntries() {
+    let limit = $("#entries_limit1").val();
+    let cards = $(".data-container .main-data");
 
+   
+    cards.show();
 
- document.addEventListener("DOMContentLoaded", function(){
-    function updateEntries() {
+   
+    let value = $(".search_data_property").val().toLowerCase().trim();
 
-      let limit = $("#entries_limit1").val();
-
-      let cards = $(".data-container .main-data");
-
-
-      cards.show();
-
-    
-      let value = $(".search_data_property").val().toLowerCase();
-
-      cards.each(function () {
-          if ($(this).text().toLowerCase().indexOf(value) === -1) {
-              $(this).hide();
-          }
-      });
-
-      if (limit !== "All") {
-          cards.filter(":visible").slice(parseInt(limit)).hide();
+    cards.each(function () {
+      if ($(this).text().toLowerCase().indexOf(value) === -1) {
+        $(this).hide();
       }
+    });
 
+   
+    let visibleCards = cards.filter(":visible");
+
+
+    if (visibleCards.length === 0) {
+      $(".no-data-shown").removeClass("hidden d-none").css("display", "flex");
+    } else {
+      $(".no-data-shown").addClass("hidden").hide();
+    }
+
+    if (limit !== "All") {
+      visibleCards.slice(parseInt(limit)).hide();
+    }
   }
 
-  $("#entries_limit1").on("change", function () {
-      updateEntries();
-  });
+  // Event Listeners
+  $("#entries_limit1").on("change", updateEntries);
+  $(".search_data_property").on("keyup", updateEntries);
 
-  $(".search_data_property").on("keyup", function () {
-      updateEntries();
-  });
-
+ 
   updateEntries();
- });
+});
 
 document.addEventListener("DOMContentLoaded", function () {
    $(document).ready(function () {
