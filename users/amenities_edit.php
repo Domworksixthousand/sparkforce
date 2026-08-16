@@ -18,7 +18,7 @@
 
 
 
-<dialog id="my_modal_3" class="modal">
+<dialog id="my_modal_3" class="modal" open>
   <div class="modal-box ">
     <form method="dialog" class="mb-5">
       <button type="button" onclick="location.href='amenities.php'" class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>

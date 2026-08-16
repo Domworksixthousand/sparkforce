@@ -88,7 +88,7 @@ if (empty($saved_amenities)) {
 }
 ?>
 
-<dialog id="my_modal_3" class="modal">
+<dialog id="my_modal_3" class="modal" open>
   <div class="modal-box w-11/12 max-w-1xl">
     <form method="dialog">
       <button 
@@ -200,7 +200,23 @@ if (empty($saved_amenities)) {
                     />
                 </label>
                 <p class="text-xs text-gray-400 mt-1">Please select 3–10 photos.</p>
-            </div>               
+            </div>   
+             <div class="w-[100%] mb-3">
+                <p class="mb-2 text-sm">Status *</p>
+                <label class="input w-[100%]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 16v-4" />
+                        <path d="M12 8h.01" />
+                    </svg>
+                    <select class="select w-[100%]" name="status" required>
+                        <option value="" disabled <?= empty($status) ? 'selected' : '' ?>>Select Status</option>
+                        <option value="Occupied" <?= ($status ?? '') === 'Occupied' ? 'selected' : '' ?>>Occupied</option>
+                        <option value="Available" <?= ($status ?? '') === 'Available' ? 'selected' : '' ?>>Available</option>
+                        <option value="Out of Order" <?= ($status ?? '') === 'Out of Order' ? 'selected' : '' ?>>Out of Order</option>
+                    </select>
+                </label>
+            </div>            
         </div>           
          <p class="mb-3">Room Amenities</p>
          <div class="mb-3">

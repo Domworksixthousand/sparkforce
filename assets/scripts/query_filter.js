@@ -181,14 +181,15 @@ document.addEventListener("DOMContentLoaded", ()=> {
 });
 
 document.addEventListener("DOMContentLoaded", function () {
+
+  $(".data-container > div").not(".main-data").not(".no-data-shown").hide();
+
   function updateEntries() {
     let limit = $("#entries_limit1").val();
     let cards = $(".data-container .main-data");
 
-   
     cards.show();
 
-   
     let value = $(".search_data_property").val().toLowerCase().trim();
 
     cards.each(function () {
@@ -197,9 +198,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
 
-   
     let visibleCards = cards.filter(":visible");
-
 
     if (visibleCards.length === 0) {
       $(".no-data-shown").removeClass("hidden d-none").css("display", "flex");
@@ -216,9 +215,9 @@ document.addEventListener("DOMContentLoaded", function () {
   $("#entries_limit1").on("change", updateEntries);
   $(".search_data_property").on("keyup", updateEntries);
 
- 
   updateEntries();
 });
+
 
 document.addEventListener("DOMContentLoaded", function () {
    $(document).ready(function () {

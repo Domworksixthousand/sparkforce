@@ -92,7 +92,7 @@ if (empty($saved_amenities)) {
 
 ?>
 
-<dialog id="my_modal_3" class="modal">
+<dialog id="my_modal_3" class="modal" open>
   <div class="modal-box w-11/12 max-w-1xl">
     <form method="dialog">
       <button 

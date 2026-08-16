@@ -39,6 +39,16 @@
     $location_edit = "condo_edit.php";
     $location_info = "condo_info.php";
     $placeholder = "Search Condo Name / Number";
+  }elseif($type === "House"){
+    $location_add = "house_add.php";
+    $location_edit = "house_edit.php";
+    $location_info = "house_info.php";
+    $placeholder = "Search House Name / Number";
+  }elseif($type === "Commercial Space"){
+    $location_add = "cs_add.php";
+    $location_edit = "cs_edit.php";
+    $location_info = "cs_info.php";
+    $placeholder = "Search Commercial Space Name / Number";
   }
 
 
@@ -87,7 +97,7 @@
                 <div class="flex justify-start items-start mb-5  w-[100%]">
                     <label class="input validator  w-[100%] rounded-[5px]">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search-icon lucide-search"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
-                        <input type="text"  class="autoInput search_data_property input w-[100%] " placeholder="<?php echo $placeholder; ?>"  />
+                        <input type="text"  class="autoInput search_data_property input w-[100%]" placeholder="<?php echo $placeholder; ?>"  />
                     </label>
                 </div>
                 <div class="flex items-center gap-2 mb-10">

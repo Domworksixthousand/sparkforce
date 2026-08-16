@@ -1470,7 +1470,7 @@ if(isset($_POST['approved_pending_property'])){
     $insert_notifications->execute();
 
     $user_status = "2";
-    $update_account_status = $conn->prepare("UPDATE `accounts` SET `status` = ? WHERE `user_id` = ?");
+    $update_account_status = $conn->prepare("UPDATE `accounts` SET `user_type` = ? WHERE `user_id` = ?");
     $update_account_status->bind_param("ss", $user_status, $user_id);
     $update_account_status->execute();
 
@@ -2049,6 +2049,7 @@ if (isset($_POST['edit_apartment'])) {
     $apartment_type    = trim($_POST['type'] ?? '');
     $old_cover         = $_POST['old_cover'] ?? '';
     $amenities         = $_POST['apartment_amenity'] ?? [];
+    $status         = $_POST['status'] ?? '';
 
     if ($rent_id === '' || $apartment_id === '') {
         header("location: users/index.php");
@@ -2096,10 +2097,10 @@ if (isset($_POST['edit_apartment'])) {
 
     $update_apartment = $conn->prepare("
         UPDATE apartment
-        SET apartment_type = ?
+        SET apartment_type = ?, status = ?
         WHERE apartment_id = ? AND rent_id = ?
     ");
-    $update_apartment->bind_param("sss", $apartment_type, $apartment_id, $rent_id);
+    $update_apartment->bind_param("ssss", $apartment_type,$status,$apartment_id, $rent_id);
     $update_apartment->execute();
 
  
@@ -2596,6 +2597,586 @@ if (isset($_POST['edit_condo'])) {
 
 
     $_SESSION['success'] = "Successfully Updated Condominium details!";
+    header("Location: users/my_property.php?property_id=" . urlencode($landlord_id));
+    exit;
+}
+
+if (isset($_POST['save_house'])) {
+    
+    // Core details
+    $landlord_id    = $_POST['landlord_id'] ?? '';
+    $house_name     = trim($_POST['house_name'] ?? '');
+    $house_price    = trim($_POST['house_price'] ?? '');
+    $square_area    = trim($_POST['square_area'] ?? '');
+    $house_type     = $_POST['type'] ?? '';
+    $bedroom        = $_POST['bedroom'] ?? '';
+    $bathrooms      = $_POST['bathrooms'] ?? '';
+    $flooring       = $_POST['flooring'] ?? '';
+    $parking        = $_POST['parking'] ?? '';
+    $other_info     = trim($_POST['apartment_other_info'] ?? '');
+    $raw_amenities  = $_POST['apartment_amenity'] ?? [];
+
+    $uploadDir = 'assets/uploads/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+
+    
+    // --- COVER PHOTO ---
+    if (isset($_FILES['house_cover']) && $_FILES['house_cover']['error'] === UPLOAD_ERR_OK) {
+        $fileTmpPath   = $_FILES['house_cover']['tmp_name'];
+        $fileExtension = strtolower(pathinfo($_FILES['house_cover']['name'], PATHINFO_EXTENSION));
+        $new_cover     = time() . '_house_cover.' . $fileExtension;
+
+        if (move_uploaded_file($fileTmpPath, $uploadDir . $new_cover)) {
+            $_SESSION['house_cover'] = $new_cover;
+        }
+    } elseif (!empty($_POST['old_cover'])) {
+        $_SESSION['house_cover'] = $_POST['old_cover'];
+    }
+
+    $cover_photo = $_SESSION['house_cover'] ?? '';
+
+    if (empty($cover_photo)) {
+        $_SESSION['error'] = "Cover photo is required";
+        header("Location: users/house_add.php?property_id=" . urlencode($landlord_id));
+        exit;
+    }
+
+    
+    // --- GALLERY PHOTOS ---
+    if (!empty($_FILES['gallery']['name'][0])) {
+        $new_gallery = [];
+        foreach ($_FILES['gallery']['name'] as $i => $img_name) {
+            if ($_FILES['gallery']['error'][$i] !== UPLOAD_ERR_OK) continue;
+            $ext      = strtolower(pathinfo($img_name, PATHINFO_EXTENSION));
+            $new_name = uniqid() . '_house_' . $i . '.' . $ext;
+            if (move_uploaded_file($_FILES['gallery']['tmp_name'][$i], $uploadDir . $new_name)) {
+                $new_gallery[] = $new_name;
+            }
+        }
+        if (!empty($new_gallery)) {
+            $_SESSION['gallery'] = $new_gallery;
+        }
+    }
+    $gallery_images = $_SESSION['gallery'] ?? [];
+
+    if (count($gallery_images) < 3 || count($gallery_images) > 10) {
+        $_SESSION['error'] = "Please upload 3 to 10 photos for the gallery";
+        header("Location: users/house_add.php?property_id=" . urlencode($landlord_id));
+        exit;
+    }
+ 
+    // --- STORE IN SESSION FOR FORM RE-POPULATION ---
+    $_SESSION['house_name']           = $house_name;
+    $_SESSION['house_price']          = $house_price;
+    $_SESSION['square_area']          = $square_area;
+    $_SESSION['type']                 = $house_type;
+    $_SESSION['bedroom']              = $bedroom;
+    $_SESSION['bathrooms']            = $bathrooms;
+    $_SESSION['flooring']             = $flooring;
+    $_SESSION['parking']              = $parking;
+    $_SESSION['apartment_other_info'] = $other_info;
+    $_SESSION['amenities']            = $raw_amenities;
+    $_SESSION['house_cover']            = $cover_photo;
+
+    
+    $status   = "Available";
+    $rent_id  = "HS" . rand(1000, 9999);
+    $type     = "House";
+    $house_id = "HOU" . rand(10000, 99999);
+
+
+
+       // --- VALIDATE AMENITIES (No duplicates) ---
+    $selected_amenities = [];
+    foreach ($raw_amenities as $amenity_id) {
+        $amenity_id = trim($amenity_id);
+        if ($amenity_id === '') continue;
+
+        if (in_array($amenity_id, $selected_amenities)) {
+            $_SESSION['error'] = "Amenities Selected Must Not Be The Same";
+            header("Location: users/house_add.php?property_id=" . urlencode($landlord_id));
+            exit;
+        }
+        $selected_amenities[] = $amenity_id;
+    }
+
+
+
+
+    // --- CHECK DUPLICATE ---
+    $check_house = $conn->prepare("SELECT 1 FROM `rentspace` WHERE `landlord_id` = ? AND `name` = ?");
+    $check_house->bind_param("ss", $landlord_id, $house_name);
+    $check_house->execute();
+    $result_house_name = $check_house->get_result();
+
+    if ($result_house_name->num_rows > 0) {
+        $_SESSION['error'] = "$house_name Already Exists";
+        header("Location: users/house_add.php?property_id=" . urlencode($landlord_id));
+        exit;
+    }
+
+    // --- INSERT MAIN RENTSPACE TABLE ---
+    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $insert->bind_param("ssssssss", $rent_id, $house_name, $landlord_id, $user_id_login, $type, $house_price, $cover_photo, $other_info);
+    $insert->execute();
+    $status = "Available";
+    // --- INSERT HOUSE TABLE ---
+    $insert_house = $conn->prepare("INSERT INTO `house` (`house_id`, `rent_id`, `area`, `type`, `bedroom`, `bathrooms`, `flooring`, `parking`,`status`) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)");
+    $insert_house->bind_param("sssssssss", $house_id, $rent_id, $square_area, $house_type, $bedroom, $bathrooms, $flooring, $parking,$status);
+    $insert_house->execute();
+
+    // --- INSERT AMENITIES ---
+    if (!empty($selected_amenities)) {
+        $insert_amen = $conn->prepare("INSERT INTO `rentspace_amenities` (`rent_id`, `amen_id`) VALUES (?, ?)");
+        foreach ($selected_amenities as $amenity_id) {
+            $insert_amen->bind_param("si", $rent_id, $amenity_id);
+            $insert_amen->execute();
+        }
+    }
+
+    // --- INSERT GALLERY ---
+    if (!empty($gallery_images)) {
+        $insert_gallery = $conn->prepare("INSERT INTO `gallery2` (`image`, `rent_id`) VALUES (?, ?)");
+        foreach ($gallery_images as $img) {
+            $insert_gallery->bind_param("ss", $img, $rent_id);
+            $insert_gallery->execute();
+        }
+    }
+
+    // --- CLEAR SESSION FORM DATA ---
+    unset(
+        $_SESSION['house_name'],
+        $_SESSION['house_price'],
+        $_SESSION['square_area'],
+        $_SESSION['type'],
+        $_SESSION['bedroom'],
+        $_SESSION['bathrooms'],
+        $_SESSION['flooring'],
+        $_SESSION['parking'],
+        $_SESSION['apartment_other_info'],
+        $_SESSION['house_cover'],
+        $_SESSION['gallery'],
+        $_SESSION['amenities']
+    );
+
+    $_SESSION['success'] = "House Successfully Inserted";
+    header("Location: users/my_property.php?property_id=" . urlencode($landlord_id));
+    exit;
+}
+
+if (isset($_POST['edit_house'])) {
+
+    $rent_id        = $_POST['rent_id'] ?? '';
+    $landlord_id    = $_POST['landlord_id'] ?? '';
+    $house_name     = trim($_POST['house_name'] ?? '');
+    $house_price    = trim($_POST['house_price'] ?? '');
+    $square_area    = trim($_POST['square_area'] ?? '');
+    $house_type     = $_POST['type'] ?? '';
+    $bedroom        = $_POST['bedroom'] ?? '';
+    $bathrooms      = $_POST['bathrooms'] ?? '';
+    $flooring       = $_POST['flooring'] ?? '';
+    $parking        = $_POST['parking'] ?? '';
+    $status        = $_POST['status'] ?? '';
+    $other_info     = trim($_POST['apartment_other_info'] ?? '');
+    $raw_amenities  = $_POST['apartment_amenity'] ?? [];
+    $uploadDir = 'assets/uploads/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+
+    // --- COVER PHOTO PROCESSING ---
+    $cover_photo = $_POST['old_cover'] ?? '';
+
+    if (isset($_FILES['house_cover']) && $_FILES['house_cover']['error'] === UPLOAD_ERR_OK) {
+        $fileTmpPath   = $_FILES['house_cover']['tmp_name'];
+        $fileExtension = strtolower(pathinfo($_FILES['house_cover']['name'], PATHINFO_EXTENSION));
+        $new_cover     = time() . '_house_cover.' . $fileExtension;
+
+        if (move_uploaded_file($fileTmpPath, $uploadDir . $new_cover)) {
+            $cover_photo = $new_cover;
+        }
+    }
+
+    if (empty($cover_photo)) {
+        $_SESSION['error'] = "Cover photo is required";
+        header("Location: users/house_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
+        exit;
+    }
+
+    // --- AMENITIES VALIDATION ---
+    $selected_amenities = [];
+    foreach ($raw_amenities as $amenity_id) {
+        $amenity_id = trim($amenity_id);
+        if ($amenity_id === '') continue;
+
+        if (in_array($amenity_id, $selected_amenities)) {
+            $_SESSION['error'] = "Amenities Selected Must Not Be The Same";
+            header("Location: users/house_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
+            exit;
+        }
+        $selected_amenities[] = $amenity_id;
+    }
+
+    // --- CHECK DUPLICATE NAME ---
+    $check_house = $conn->prepare("SELECT 1 FROM `rentspace` WHERE `landlord_id` = ? AND `name` = ? AND `rent_id` != ?");
+    $check_house->bind_param("sss", $landlord_id, $house_name, $rent_id);
+    $check_house->execute();
+    $result_house_name = $check_house->get_result();
+
+    if ($result_house_name->num_rows > 0) {
+        $_SESSION['error'] = "$house_name Already Exists";
+        header("Location: users/house_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
+        exit;
+    }
+
+    // --- UPDATE MAIN RENTSPACE TABLE ---
+    $update_rentspace = $conn->prepare("UPDATE `rentspace` SET `name` = ?, `price` = ?, `image_cover` = ?, `other_info` = ? WHERE `rent_id` = ? AND `landlord_id` = ?");
+    $update_rentspace->bind_param("ssssss", $house_name, $house_price, $cover_photo, $other_info, $rent_id, $landlord_id);
+    $update_rentspace->execute();
+
+    // --- UPDATE HOUSE SPECIFICATIONS TABLE ---
+    $update_house = $conn->prepare("UPDATE `house` SET `area` = ?, `type` = ?, `bedroom` = ?, `bathrooms` = ?, `flooring` = ?, `parking` = ?, `status` = ? WHERE `rent_id` = ?");
+    $update_house->bind_param("ssssssss", $square_area, $house_type, $bedroom, $bathrooms, $flooring, $parking, $rent_id,$status);
+    $update_house->execute();
+
+    // --- UPDATE AMENITIES ---
+    $del_amen = $conn->prepare("DELETE FROM `rentspace_amenities` WHERE `rent_id` = ?");
+    $del_amen->bind_param("s", $rent_id);
+    $del_amen->execute();
+
+    if (!empty($selected_amenities)) {
+        $insert_amen = $conn->prepare("INSERT INTO `rentspace_amenities` (`rent_id`, `amen_id`) VALUES (?, ?)");
+        foreach ($selected_amenities as $amenity_id) {
+            $insert_amen->bind_param("si", $rent_id, $amenity_id);
+            $insert_amen->execute();
+        }
+    }
+
+    // --- GALLERY PROCESSING (UPDATES ONLY WHEN NEW FILES ARE SELECTED) ---
+    if (isset($_FILES['gallery']) && !empty($_FILES['gallery']['name'][0])) {
+
+        $total_files = count($_FILES['gallery']['name']);
+
+        // Optional: Validate 3 to 10 photos only when user uploads new ones
+        if ($total_files < 3 || $total_files > 10) {
+            $_SESSION['error'] = "Please upload 3 to 10 photos for the gallery";
+            header("Location: users/house_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
+            exit;
+        }
+
+        // 1. Delete old gallery entries from database
+        $del_gallery = $conn->prepare("DELETE FROM gallery2 WHERE rent_id = ?");
+        $del_gallery->bind_param("s", $rent_id);
+        $del_gallery->execute();
+
+        // 2. Upload and insert new gallery images
+        for ($i = 0; $i < $total_files; $i++) {
+            if ($_FILES['gallery']['error'][$i] === UPLOAD_ERR_OK) {
+                $g_tmp  = $_FILES['gallery']['tmp_name'][$i];
+                $g_name = $_FILES['gallery']['name'][$i];
+                $g_ext  = strtolower(pathinfo($g_name, PATHINFO_EXTENSION));
+
+                if (in_array($g_ext, ['jpg', 'jpeg', 'png', 'webp'])) {
+                    $new_gallery_name = time() . '_gallery_' . $i . '_' . uniqid() . '.' . $g_ext;
+                    $g_upload_path    = $uploadDir . $new_gallery_name;
+
+                    if (move_uploaded_file($g_tmp, $g_upload_path)) {
+                        $ins_gallery = $conn->prepare("INSERT INTO gallery2 (rent_id, image) VALUES (?, ?)");
+                        $ins_gallery->bind_param("ss", $rent_id, $new_gallery_name);
+                        $ins_gallery->execute();
+                    }
+                }
+            }
+        }
+    }
+
+    $_SESSION['success'] = "House Details Successfully Updated";
+    header("Location: users/my_property.php?property_id=" . urlencode($landlord_id));
+    exit;
+}
+
+
+
+if (isset($_POST['save_cs'])) {
+    
+    // Core details
+    $landlord_id   = $_POST['landlord_id'] ?? '';
+    $cs_name       = trim($_POST['cs_name'] ?? '');
+    $cs_price      = trim($_POST['cs_price'] ?? '');
+    $square_area   = trim($_POST['square_area'] ?? '');
+    $cs_type       = $_POST['type'] ?? '';
+    $other_info    = trim($_POST['cs_other_info'] ?? '');
+    $raw_amenities = $_POST['cs_amenity'] ?? [];
+
+    $uploadDir = 'assets/uploads/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+
+    foreach($raw_amenities as $amen){
+        echo "$amen <br>";
+    }
+
+    // --- COVER PHOTO ---
+
+    if (isset($_FILES['cs_cover']) && $_FILES['cs_cover']['error'] === UPLOAD_ERR_OK) {
+        $fileTmpPath   = $_FILES['cs_cover']['tmp_name'];
+        $fileExtension = strtolower(pathinfo($_FILES['cs_cover']['name'], PATHINFO_EXTENSION));
+        $new_cover     = time() . '_cs_cover.' . $fileExtension;
+
+        if (move_uploaded_file($fileTmpPath, $uploadDir . $new_cover)) {
+            $_SESSION['cs_cover'] = $new_cover;
+        }
+    } elseif (!empty($_POST['old_cover'])) {
+        $_SESSION['cs_cover'] = $_POST['old_cover'];
+    }
+
+    $cover_photo = $_SESSION['cs_cover'] ?? '';
+
+    if (empty($cover_photo)) {
+        $_SESSION['error'] = "Cover photo is required";
+        header("Location: users/cs_add.php?property_id=" . urlencode($landlord_id));
+        exit;
+    }
+
+    // --- GALLERY PHOTOS ---
+    if (!empty($_FILES['gallery']['name'][0])) {
+        $new_gallery = [];
+        foreach ($_FILES['gallery']['name'] as $i => $img_name) {
+            if ($_FILES['gallery']['error'][$i] !== UPLOAD_ERR_OK) continue;
+            $ext      = strtolower(pathinfo($img_name, PATHINFO_EXTENSION));
+            $new_name = uniqid() . '_cs_' . $i . '.' . $ext;
+            if (move_uploaded_file($_FILES['gallery']['tmp_name'][$i], $uploadDir . $new_name)) {
+                $new_gallery[] = $new_name;
+            }
+        }
+        if (!empty($new_gallery)) {
+            $_SESSION['gallery'] = $new_gallery;
+        }
+    }
+    $gallery_images = $_SESSION['gallery'] ?? [];
+
+    if (count($gallery_images) < 3 || count($gallery_images) > 10) {
+        $_SESSION['error'] = "Please upload 3 to 10 photos for the gallery";
+        header("Location: users/cs_add.php?property_id=" . urlencode($landlord_id));
+        exit;
+    }
+
+    // --- STORE IN SESSION FOR FORM RE-POPULATION ---
+    $_SESSION['cs_name']       = $cs_name;
+    $_SESSION['cs_price']      = $cs_price;
+    $_SESSION['square_area']   = $square_area;
+    $_SESSION['type']          = $cs_type;
+    $_SESSION['cs_other_info'] = $other_info;
+    $_SESSION['amenities']     = $raw_amenities;
+    $_SESSION['cs_cover']      = $cover_photo;
+
+    $status = "Available";
+    $rent_id = "CS" . rand(1000, 9999);
+    $type = "Commercial Space";
+    $cs_id = "COM" . rand(10000, 99999);
+
+    // --- VALIDATE AMENITIES (No duplicates) ---
+    $selected_amenities = [];
+    foreach ($raw_amenities as $amenity_id) {
+        $amenity_id = trim($amenity_id);
+        if ($amenity_id === '') continue;
+
+        if (in_array($amenity_id, $selected_amenities)) {
+            $_SESSION['error'] = "Amenities Selected Must Not Be The Same";
+            header("Location: users/cs_add.php?property_id=" . urlencode($landlord_id));
+            exit;
+        }
+        $selected_amenities[] = $amenity_id;
+    }
+
+    // --- CHECK DUPLICATE ---
+    $check_cs = $conn->prepare("SELECT 1 FROM `rentspace` WHERE `landlord_id` = ? AND `name` = ?");
+    $check_cs->bind_param("ss", $landlord_id, $cs_name);
+    $check_cs->execute();
+    $result_cs_name = $check_cs->get_result();
+
+    if ($result_cs_name->num_rows > 0) {
+        $_SESSION['error'] = "$cs_name Already Exists";
+        header("Location: users/cs_add.php?property_id=" . urlencode($landlord_id));
+        exit;
+    }
+
+    // --- INSERT MAIN RENTSPACE TABLE ---
+    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $insert->bind_param("ssssssss", $rent_id, $cs_name, $landlord_id, $user_id_login, $type, $cs_price, $cover_photo, $other_info);
+    $insert->execute();
+
+    // --- INSERT COMMERCIAL_SPACE TABLE ---
+    $insert_cs = $conn->prepare("INSERT INTO `commercial_space` (`cs_id`, `rent_id`, `area`, `type`, `status`) VALUES (?, ?, ?, ?, ?)");
+    $insert_cs->bind_param("sssss", $cs_id, $rent_id, $square_area, $cs_type, $status);
+    $insert_cs->execute();
+
+    // --- INSERT AMENITIES ---
+    if (!empty($selected_amenities)) {
+        $insert_amen = $conn->prepare("INSERT INTO `rentspace_amenities` (`rent_id`, `amen_id`) VALUES (?, ?)");
+        foreach ($selected_amenities as $amenity_id) {
+            $insert_amen->bind_param("si", $rent_id, $amenity_id);
+            $insert_amen->execute();
+        }
+    }
+
+    // --- INSERT GALLERY ---
+    if (!empty($gallery_images)) {
+        $insert_gallery = $conn->prepare("INSERT INTO `gallery2` (`image`, `rent_id`) VALUES (?, ?)");
+        foreach ($gallery_images as $img) {
+            $insert_gallery->bind_param("ss", $img, $rent_id);
+            $insert_gallery->execute();
+        }
+    }
+
+    // --- CLEAR SESSION FORM DATA ---
+    unset(
+        $_SESSION['cs_name'],
+        $_SESSION['cs_price'],
+        $_SESSION['square_area'],
+        $_SESSION['type'],
+        $_SESSION['cs_other_info'],
+        $_SESSION['cs_cover'],
+        $_SESSION['gallery'],
+        $_SESSION['amenities']
+    );
+
+    $_SESSION['success'] = "Commercial Space Successfully Inserted";
+    header("Location: users/my_property.php?property_id=" . urlencode($landlord_id));
+    exit;
+}
+
+
+if (isset($_POST['update_cs'])) {
+
+    $rent_id        = $_POST['rent_id'] ?? '';
+    $landlord_id    = $_POST['landlord_id'] ?? '';
+    $cs_name        = trim($_POST['cs_name'] ?? '');
+    $cs_price       = trim($_POST['cs_price'] ?? '');
+    $square_area    = trim($_POST['square_area'] ?? '');
+    $house_type     = $_POST['type'] ?? '';
+    $other_info     = trim($_POST['cs_other_info'] ?? '');
+    $raw_amenities  = $_POST['cs_amenity'] ?? [];
+    $status     = $_POST['status'] ?? '';
+
+    $uploadDir = 'assets/uploads/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+
+    // --- COVER PHOTO PROCESSING ---
+    $cover_photo = $_POST['old_cover'] ?? '';
+
+    if (isset($_FILES['cs_cover']) && $_FILES['cs_cover']['error'] === UPLOAD_ERR_OK) {
+        $fileTmpPath   = $_FILES['cs_cover']['tmp_name'];
+        $fileExtension = strtolower(pathinfo($_FILES['cs_cover']['name'], PATHINFO_EXTENSION));
+        $new_cover     = time() . '_cs_cover.' . $fileExtension;
+
+        if (move_uploaded_file($fileTmpPath, $uploadDir . $new_cover)) {
+            $cover_photo = $new_cover;
+        }
+    }
+
+    if (empty($cover_photo)) {
+        $_SESSION['error'] = "Cover photo is required";
+        header("Location: users/house_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
+        exit;
+    }
+
+    // --- AMENITIES VALIDATION (PREVENT DUPLICATES & SAVE STOP) ---
+    $selected_amenities = [];
+    foreach ($raw_amenities as $amenity_id) {
+        $amenity_id = trim($amenity_id);
+        if ($amenity_id === '') continue;
+
+        if (in_array($amenity_id, $selected_amenities)) {
+            $_SESSION['error'] = "Duplicate amenities selected. Please choose unique amenities.";
+            header("Location: users/house_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
+            exit; 
+        }
+        $selected_amenities[] = $amenity_id;
+    }
+
+    // --- CHECK DUPLICATE NAME ---
+    $check_house = $conn->prepare("SELECT 1 FROM `rentspace` WHERE `landlord_id` = ? AND `name` = ? AND `rent_id` != ?");
+    $check_house->bind_param("sss", $landlord_id, $cs_name, $rent_id);
+    $check_house->execute();
+    $result_house_name = $check_house->get_result();
+
+    if ($result_house_name->num_rows > 0) {
+        $_SESSION['error'] = "$cs_name Already Exists";
+        header("Location: users/house_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
+        exit;
+    }
+
+    // --- GALLERY VALIDATION (CHECK COUNT BEFORE DB UPDATES) ---
+    $has_new_gallery = isset($_FILES['gallery']) && !empty($_FILES['gallery']['name'][0]);
+    if ($has_new_gallery) {
+        $total_files = count($_FILES['gallery']['name']);
+        if ($total_files < 3 || $total_files > 10) {
+            $_SESSION['error'] = "Please upload 3 to 10 photos for the gallery";
+            header("Location: users/house_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
+            exit;
+        }
+    }
+
+    // --- UPDATE MAIN RENTSPACE TABLE ---
+    $update_rentspace = $conn->prepare("UPDATE `rentspace` SET `name` = ?, `price` = ?, `image_cover` = ?, `other_info` = ? WHERE `rent_id` = ? AND `landlord_id` = ?");
+    $update_rentspace->bind_param("ssssss", $cs_name, $cs_price, $cover_photo, $other_info, $rent_id, $landlord_id);
+    $update_rentspace->execute();
+
+    // --- UPDATE COMMERCIAL SPACE TABLE ---
+    $update_cs = $conn->prepare("UPDATE `commercial_space` SET `area` = ?, `type` = ?, `status` =? WHERE `rent_id` = ?");
+    $update_cs->bind_param("ssss", $square_area, $house_type, $rent_id,$status);
+    $update_cs->execute();
+
+    // --- UPDATE AMENITIES ---
+    $del_amen = $conn->prepare("DELETE FROM `rentspace_amenities` WHERE `rent_id` = ?");
+    $del_amen->bind_param("s", $rent_id);
+    $del_amen->execute();
+
+    // Secondary safety check using array_unique
+    $unique_amenities = array_unique($selected_amenities);
+    if (!empty($unique_amenities)) {
+        $insert_amen = $conn->prepare("INSERT INTO `rentspace_amenities` (`rent_id`, `amen_id`) VALUES (?, ?)");
+        foreach ($unique_amenities as $amenity_id) {
+            $insert_amen->bind_param("si", $rent_id, $amenity_id);
+            $insert_amen->execute();
+        }
+    }
+
+    // --- GALLERY PROCESSING ---
+    if ($has_new_gallery) {
+        // 1. Delete old gallery entries from database
+        $del_gallery = $conn->prepare("DELETE FROM gallery2 WHERE rent_id = ?");
+        $del_gallery->bind_param("s", $rent_id);
+        $del_gallery->execute();
+
+        // 2. Upload and insert new gallery images
+        for ($i = 0; $i < $total_files; $i++) {
+            if ($_FILES['gallery']['error'][$i] === UPLOAD_ERR_OK) {
+                $g_tmp  = $_FILES['gallery']['tmp_name'][$i];
+                $g_name = $_FILES['gallery']['name'][$i];
+                $g_ext  = strtolower(pathinfo($g_name, PATHINFO_EXTENSION));
+
+                if (in_array($g_ext, ['jpg', 'jpeg', 'png', 'webp'])) {
+                    $new_gallery_name = time() . '_gallery_' . $i . '_' . uniqid() . '.' . $g_ext;
+                    $g_upload_path    = $uploadDir . $new_gallery_name;
+
+                    if (move_uploaded_file($g_tmp, $g_upload_path)) {
+                        $ins_gallery = $conn->prepare("INSERT INTO gallery2 (rent_id, image) VALUES (?, ?)");
+                        $ins_gallery->bind_param("ss", $rent_id, $new_gallery_name);
+                        $ins_gallery->execute();
+                    }
+                }
+            }
+        }
+    }
+
+    $_SESSION['success'] = "Commercial Space Details Successfully Updated";
     header("Location: users/my_property.php?property_id=" . urlencode($landlord_id));
     exit;
 }

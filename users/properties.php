@@ -74,7 +74,7 @@
                         <select name="property_type" class="w-full bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:border-emerald-500 focus:bg-white transition-all cursor-pointer">
                             <option value="">All Property Types</option>
                             <?php 
-                              $types = ["Boarding House / Bedspace", "Apartment", "Condominium (Condo)", "House", "Commercial Space", "Office Space", "Warehouse / Storage", "Event Space", "Transient House", "Parking Space", "Vacant Lot"];
+                              $types = ["Boarding House / Bedspace", "Apartment", "Condominium", "House", "Commercial Space", "Office Space", "Warehouse / Storage", "Event Space", "Transient House", "Parking Space", "Vacant Lot"];
                               $selected_type = $_GET['property_type'] ?? '';
                               foreach($types as $t) {
                                   $sel = ($selected_type === $t) ? 'selected' : '';
@@ -225,6 +225,12 @@
                                     $locate = "boarding_details.php";
                                 }elseif($type == "Apartment"){
                                      $locate = "apartment_details.php";
+                                }elseif($type == "Condominium"){
+                                     $locate = "condo_details.php";
+                                }elseif($type == "House"){
+                                     $locate = "house_details.php";
+                                }elseif($type == "Commercial Space"){
+                                     $locate = "cs_details.php";
                                 }
 
                                 echo '
@@ -385,9 +391,7 @@
           popupAnchor: [0, -30]
       });
 
-      // =====================================
-      // 1. DESKTOP MAP INITIALIZATION
-      // =====================================
+
       let map = null;
       const desktopMapEl = document.getElementById('propertyMap');
 

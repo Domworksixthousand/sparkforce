@@ -10,7 +10,10 @@ if(isset($_SESSION['success'])){
             text: ' . json_encode($_SESSION['success']) . ',
             position: "top-right",
             timer: 8000,                
-            timerProgressBar: true    
+            timerProgressBar: true,
+            customClass: {
+                container: "z-[9999]"
+            }  
         });
     </script>';
     unset($_SESSION['success']);
@@ -26,7 +29,10 @@ if(isset($_SESSION['error'])){
             text: ' . json_encode($_SESSION['error']) . ',
             position: "top-right",
             timer: 8000,                
-            timerProgressBar: true        
+            timerProgressBar: true  ,
+            customClass: {
+                container: "z-[9999]"
+            }       
         });
     </script>';
     unset($_SESSION['error']);

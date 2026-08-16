@@ -97,7 +97,7 @@
                         <option disabled selected>Property Type</option>
                         <option value="Boarding House / Bedspace">Boarding House / Bedspace</option>
                         <option value="Apartment">Apartment</option>
-                        <option value="Condominium (Condo)">Condominium (Condo)</option>
+                        <option value="Condominium">Condominium (Condo)</option>
                         <option value="House">House (Single-Family, Townhouse, Duplex)</option>
                         <option value="Commercial Space">Commercial Space (Retail, Shophouse, Cloud Kitchen)</option>
                         <option value="Office Space">Office Space (Private Office, Coworking)</option>
@@ -398,6 +398,10 @@
                   $locate = "boarding_details.php";
                 }elseif($type === "Apartment"){
                   $locate = "apartment_details.php";
+                }elseif($type === "Condominium"){
+                  $locate = "condo_details.php";
+                }elseif($type === "House"){
+                  $locate = "house_details.php";
                 }
 
                 echo '
