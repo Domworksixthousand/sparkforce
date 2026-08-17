@@ -184,7 +184,7 @@ if(isset($_GET['property_id'])){
                 Add Amenities
             </button>
         </div>
-      <div id="amenities-container1">
+        <div id="amenities-container1">
 
             <?php
             $active = "yes";
@@ -259,7 +259,7 @@ if(isset($_GET['property_id'])){
             }
             ?>
 
-            </div>
+        </div>
         <div class="text-end mt-4">
             <button type="submit" name="save_condo" class="btn btn-success text-white">Save</button>
         </div>

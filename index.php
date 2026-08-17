@@ -100,8 +100,6 @@
                         <option value="Condominium">Condominium (Condo)</option>
                         <option value="House">House (Single-Family, Townhouse, Duplex)</option>
                         <option value="Commercial Space">Commercial Space (Retail, Shophouse, Cloud Kitchen)</option>
-                        <option value="Office Space">Office Space (Private Office, Coworking)</option>
-                        <option value="Warehouse / Storage">Warehouse / Storage (Industrial Space, Storage Unit)</option>
                         <option value="Event Space">Event Space (Function Hall, Venue)</option>
                         <option value="Transient House">Transient House (Vacation Rental, Airbnb)</option>
                         <option value="Parking Space">Parking Space (Garage, Carport)</option>
@@ -216,35 +214,6 @@
               </a>
             </li>
 
-            <!-- Card 6 -->
-            <li class="splide__slide px-2">
-              <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
-                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
-                  <img src="assets/images/work-space.png" class="w-10 h-10 object-contain drop-shadow" loading="lazy" alt="Office Space">
-                </div>
-                <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
-                  Office Space
-                </p>
-                <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
-                  <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
-                </div>
-              </a>
-            </li>
-
-            <!-- Card 7 -->
-            <li class="splide__slide px-2">
-              <a href="#" class="flex flex-col items-center bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group/card relative overflow-hidden">
-                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center mb-4 group-hover/card:scale-110 transition-transform duration-300 shadow-inner">
-                  <img src="assets/images/boxes.png" class="w-10 h-10 object-contain drop-shadow" loading="lazy" alt="Boarding House">
-                </div>
-                <p class="text-slate-700 group-hover/card:text-green-700 font-semibold text-sm text-center leading-snug mb-3 transition-colors">
-                  Warehouse / Storage
-                </p>
-                <div class="bg-slate-100 group-hover/card:bg-green-100/80 h-1.5 w-16 rounded-full overflow-hidden transition-colors">
-                  <div class="bg-green-500 h-full w-2/3 rounded-full transition-all duration-300 group-hover/card:w-full"></div>
-                </div>
-              </a>
-            </li>
 
               <!-- Card 8 -->
             <li class="splide__slide px-2">
@@ -348,8 +317,6 @@
               <li><button data-filter="Condominium" class="filter-btn p-3 cursor-pointer text-[0.7rem] lg:text-[0.8rem] text-black rounded-[15px] bg-[#f3f2ee]">Condominium</button></li>
               <li><button data-filter="House" class="filter-btn p-3 cursor-pointer text-[0.7rem] lg:text-[0.8rem] text-black rounded-[15px] bg-[#f3f2ee]">House</button></li>
               <li><button data-filter="Commercial Space" class="filter-btn p-3 cursor-pointer text-[0.7rem] lg:text-[0.8rem] text-black rounded-[15px] bg-[#f3f2ee]">Commercial&nbsp;Space</button></li>
-              <li><button data-filter="Office Space" class="filter-btn p-3 cursor-pointer text-[0.7rem] lg:text-[0.8rem] text-black rounded-[15px] bg-[#f3f2ee]">Office&nbsp;Space</button></li>
-              <li><button data-filter="Warehouse / Storage" class="filter-btn p-3 cursor-pointer text-[0.7rem] lg:text-[0.8rem] text-black rounded-[15px] bg-[#f3f2ee]">Warehouse&nbsp;/&nbsp;Storage</button></li>
               <li><button data-filter="Transient House" class="filter-btn p-3 cursor-pointer text-[0.7rem] lg:text-[0.8rem] text-black rounded-[15px] bg-[#f3f2ee]">Transient&nbsp;House</button></li>
               <li><button data-filter="Parking Space" class="filter-btn p-3 cursor-pointer text-[0.7rem] lg:text-[0.8rem] text-black rounded-[15px] bg-[#f3f2ee]">Parking&nbsp;Space</button></li>
               <li><button data-filter="Vacant Lot" class="filter-btn p-3 cursor-pointer text-[0.7rem] lg:text-[0.8rem] text-black rounded-[15px] bg-[#f3f2ee]">Vacant&nbsp;Lot</button></li>

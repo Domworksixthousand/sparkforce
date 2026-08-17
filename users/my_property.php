@@ -49,6 +49,11 @@
     $location_edit = "cs_edit.php";
     $location_info = "cs_info.php";
     $placeholder = "Search Commercial Space Name / Number";
+  }elseif($type === "Event Space"){
+    $location_add = "es_add.php";
+    $location_edit = "es_edit.php";
+    $location_info = "es_info.php";
+    $placeholder = "Search Event Space Name / Number";
   }
 
 
@@ -123,6 +128,13 @@
 
                   if($result_data->num_rows > 0){
                       while($row = $result_data->fetch_assoc()){
+                      $type = $row['type'];
+                        if($type === "Event Space" || $type === "Transient House" || $type === "Parking Space" ||  $type === "Vacant Lot" ){
+                          $extention = "Hour";
+                        }else{
+                          $extention = "Month";
+                        }
+
 
                          echo '
                         <div class="main-data group relative h-80 overflow-hidden rounded-2xl shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
@@ -161,7 +173,7 @@
                                     <div class="flex flex-col">
                                         <div>
                                             <p class="font-bold text-emerald-300 text-sm">
-                                                &#8369; '.number_format($row['price'],2).' / Month
+                                                &#8369; '.number_format($row['price'],2).' / '.$extention.'
                                             </p>
                                         </div>
                                      

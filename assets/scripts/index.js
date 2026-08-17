@@ -861,3 +861,71 @@ document.addEventListener('DOMContentLoaded', function () {
         container.appendChild(newDiv);
     });
 });
+
+
+
+//event space amenities
+ 
+
+document.addEventListener('DOMContentLoaded', function () {
+    const addBtn = document.getElementById('addamenBtn3');
+    const container = document.getElementById('amenities-container3');
+
+    if (!addBtn || !container) return;
+
+    // Handle removing an amenity row
+    container.addEventListener('click', function (e) {
+        const removeBtn = e.target.closest('.remove-amen-btn');
+        if (removeBtn) {
+            const item = removeBtn.closest('.amen-item');
+            if (item) {
+                item.remove();
+            }
+        }
+    });
+
+    // Add new amenity dropdown dynamically
+    addBtn.addEventListener('click', function () {
+        const firstSelect = container.querySelector('select[name="es_amenity[]"]');
+        if (!firstSelect) return;
+
+        // Create container wrapper
+        const newDiv = document.createElement('div');
+        newDiv.className = 'amen-item flex items-center gap-2 border border-gray-300 rounded-md p-1 mb-2';
+
+        // SVG Icon
+        const iconSvg = `
+            <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-gray-500 ms-2 flex-shrink-0"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10 22a2 2 0 0 1-2-2"/><path d="M14 2a2 2 0 0 1 2 2"/><path d="M16 22h-2"/><path d="M2 10V8"/><path d="M2 4a2 2 0 0 1 2-2"/><path d="M20 8a2 2 0 0 1 2 2"/><path d="M22 14v2"/><path d="M22 20a2 2 0 0 1-2 2"/><path d="M4 16a2 2 0 0 1-2-2"/><path d="M8 10a2 2 0 0 1 2-2h5a1 1 0 0 1 1 1v5a2 2 0 0 1-2 2H9a1 1 0 0 1-1-1z"/><path d="M8 2h2"/>
+            </svg>`;
+
+        // Clone select element options correctly
+        const newSelect = firstSelect.cloneNode(true);
+        newSelect.value = ""; // Reset selected value
+
+        // Ensure default placeholder option is selected
+        const defaultOption = newSelect.querySelector('option[value=""]');
+        if (defaultOption) {
+            defaultOption.selected = true;
+        }
+
+        // Delete button
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'remove-amen-btn btn btn-error btn-sm text-white me-1 px-2 py-1';
+        deleteBtn.title = 'Remove';
+        deleteBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+            </svg>`;
+
+        // Append components
+        newDiv.innerHTML = iconSvg;
+        newDiv.appendChild(newSelect);
+        newDiv.appendChild(deleteBtn);
+
+        container.appendChild(newDiv);
+    });
+});

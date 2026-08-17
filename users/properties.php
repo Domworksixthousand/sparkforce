@@ -74,7 +74,7 @@
                         <select name="property_type" class="w-full bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:border-emerald-500 focus:bg-white transition-all cursor-pointer">
                             <option value="">All Property Types</option>
                             <?php 
-                              $types = ["Boarding House / Bedspace", "Apartment", "Condominium", "House", "Commercial Space", "Office Space", "Warehouse / Storage", "Event Space", "Transient House", "Parking Space", "Vacant Lot"];
+                              $types = ["Boarding House / Bedspace", "Apartment", "Condominium", "House", "Commercial Space", "Event Space", "Transient House", "Parking Space", "Vacant Lot"];
                               $selected_type = $_GET['property_type'] ?? '';
                               foreach($types as $t) {
                                   $sel = ($selected_type === $t) ? 'selected' : '';
@@ -299,9 +299,7 @@
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- MOBILE FILTER MODAL / DRAWER -->
-  <!-- ========================================== -->
+ <!--drawer-->
   <dialog id="mobileFilterModal" class="modal modal-bottom sm:modal-middle">
     <div class="modal-box bg-white p-6">
       <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">

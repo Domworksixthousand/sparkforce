@@ -159,8 +159,6 @@
                               <option value="Condominium">Condominium (Condo)</option>
                               <option value="House">House (Single-Family, Townhouse, Duplex)</option>
                               <option value="Commercial Space">Commercial Space (Retail, Shophouse, Cloud Kitchen)</option>
-                              <option value="Office Space">Office Space (Private Office, Coworking)</option>
-                              <option value="Warehouse / Storage">Warehouse / Storage (Industrial Space, Storage Unit)</option>
                               <option value="Event Space">Event Space (Function Hall, Venue)</option>
                               <option value="Transient House">Transient House (Vacation Rental, Airbnb)</option>
                               <option value="Parking Space">Parking Space (Garage, Carport)</option>
