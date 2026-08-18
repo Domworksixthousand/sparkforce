@@ -3343,7 +3343,7 @@ if (isset($_POST['update_es'])) {
 
     $landlord_id = $_POST['landlord_id'] ?? '';
     $rent_id     = $_POST['rent_id'] ?? '';
-    $es_id       = $_POST['cs_id'] ?? ''; // From input name="cs_id"
+    $es_id       = $_POST['es_id'] ?? ''; 
 
     $es_name     = trim($_POST['es_name'] ?? '');
     $es_price    = trim($_POST['es_price'] ?? '');

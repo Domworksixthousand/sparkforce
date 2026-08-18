@@ -302,7 +302,7 @@
 
         </div>
     </section>
-    <section class="my-container py-[100px] px-[10px] lg:px-[0px] " >
+    <section class="my-container py-[100px] px-[10px] lg:px-[0px] " id="featured_properties" >
         <div class="flex justify-center items-center lg:justify-start lg:items-start flex-col   w-[100%] mb-10">
           <p class="bg-[#f0fdfa] p-[10px] rounded-xl text-emerald-800 font-bold mb-3">Featured Properties</p>
           <h1 class="font-bold text-[1.5rem]  w-fit mb-4">Hand-Picked Rental Spaces</h1>
@@ -320,122 +320,196 @@
               <li><button data-filter="Transient House" class="filter-btn p-3 cursor-pointer text-[0.7rem] lg:text-[0.8rem] text-black rounded-[15px] bg-[#f3f2ee]">Transient&nbsp;House</button></li>
               <li><button data-filter="Parking Space" class="filter-btn p-3 cursor-pointer text-[0.7rem] lg:text-[0.8rem] text-black rounded-[15px] bg-[#f3f2ee]">Parking&nbsp;Space</button></li>
               <li><button data-filter="Vacant Lot" class="filter-btn p-3 cursor-pointer text-[0.7rem] lg:text-[0.8rem] text-black rounded-[15px] bg-[#f3f2ee]">Vacant&nbsp;Lot</button></li>
+              <li><button data-filter="Event Space" class="filter-btn p-3 cursor-pointer text-[0.7rem] lg:text-[0.8rem] text-black rounded-[15px] bg-[#f3f2ee]">Event&nbsp;Space</button></li>
             </ul>
           </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-5">
-      <?php
-        $get_rental = $conn->prepare("
-            SELECT r.*, l.province, l.municipality, l.barangay, l.property_name
-            FROM rentspace r
-            LEFT JOIN landlord l ON l.landlord_id = r.landlord_id
-        ");
-        $get_rental->execute();
-        $result_rental = $get_rental->get_result();
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-5">
+          <?php
 
-        if ($result_rental->num_rows > 0) {
-            while ($row_rentals = $result_rental->fetch_assoc()) {
-                $name        = htmlspecialchars($row_rentals['name'] ?? '');
-                $rent_id     = htmlspecialchars($row_rentals['rent_id'] ?? '');
-                $landlord_id = htmlspecialchars($row_rentals['landlord_id'] ?? '');
-                $type        = htmlspecialchars($row_rentals['type'] ?? '');
-                $image       = htmlspecialchars($row_rentals['image_cover'] ?? '');
-                $property_name       = htmlspecialchars($row_rentals['property_name'] ?? '');
-                $price       = $row_rentals['price'] ?? 0;
+          $limit = 12;
+          $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
+          if ($page < 1) { $page = 1; }
+          $offset = ($page - 1) * $limit;
 
-                $location = trim(
-                    ($row_rentals['barangay'] ?? '') . ', ' .
-                    ($row_rentals['municipality'] ?? '') . ', ' .
-                    ($row_rentals['province'] ?? ''),
-                    ', '
-                );
-                $location = htmlspecialchars($location);
+        
+          $total_query = $conn->query("SELECT COUNT(*) AS total FROM rentspace");
+          $total_row = $total_query->fetch_assoc();
+          $total_rentals = $total_row['total'];
+          $total_pages = ceil($total_rentals / $limit);
 
-                $image_url = !empty($image)
-                    ? 'assets/uploads/' . $image
-                    : 'assets/images/background_cover.png';
+        
+          $get_rental = $conn->prepare("
+              SELECT r.*, l.province, l.municipality, l.barangay, l.property_name
+              FROM rentspace r
+              LEFT JOIN landlord l ON l.landlord_id = r.landlord_id
+              LIMIT ? OFFSET ?
+          ");
+          $get_rental->bind_param("ii", $limit, $offset);
+          $get_rental->execute();
+          $result_rental = $get_rental->get_result();
 
+          if ($result_rental->num_rows > 0) {
+              while ($row_rentals = $result_rental->fetch_assoc()) {
+                  $name         = htmlspecialchars($row_rentals['name'] ?? '');
+                  $rent_id      = htmlspecialchars($row_rentals['rent_id'] ?? '');
+                  $landlord_id  = htmlspecialchars($row_rentals['landlord_id'] ?? '');
+                  $type         = htmlspecialchars($row_rentals['type'] ?? '');
+                  $image        = htmlspecialchars($row_rentals['image_cover'] ?? '');
+                  $property_name = htmlspecialchars($row_rentals['property_name'] ?? '');
+                  $price        = $row_rentals['price'] ?? 0;
 
-                  if($type === "Event Space" || $type === "Transient House" || $type === "Parking Space" ||  $type === "Vacant Lot" ){
-                    $extention = "Hour";
-                  }else{
-                    $extention = "Month";
+                  $location = trim(
+                      ($row_rentals['barangay'] ?? '') . ', ' .
+                      ($row_rentals['municipality'] ?? '') . ', ' .
+                      ($row_rentals['province'] ?? ''),
+                      ', '
+                  );
+                  $location = htmlspecialchars($location);
+
+                  $image_url = !empty($image)
+                      ? 'assets/uploads/' . $image
+                      : 'assets/images/background_cover.png';
+
+                  if ($type === "Event Space" || $type === "Transient House" || $type === "Parking Space" || $type === "Vacant Lot") {
+                      $extention = "Hour";
+                  } else {
+                      $extention = "Month";
                   }
 
-                if($type === "Boarding House / Bedspace"){
-                  $locate = "boarding_details.php";
-                }elseif($type === "Apartment"){
-                  $locate = "apartment_details.php";
-                }elseif($type === "Condominium"){
-                  $locate = "condo_details.php";
-                }elseif($type === "House"){
-                  $locate = "house_details.php";
-                }
+                  $locate = "house_details.php"; // Default fallback
+                  if ($type === "Boarding House / Bedspace") {
+                      $locate = "boarding_details.php";
+                  } elseif ($type === "Apartment") {
+                      $locate = "apartment_details.php";
+                  } elseif ($type === "Condominium") {
+                      $locate = "condo_details.php";
+                  } elseif ($type === "House") {
+                      $locate = "house_details.php";
+                  }elseif($type === "Event Space"){
+                       $locate = "es_details.php";
+                  }
 
-                echo '
-                <div class="rental-card group relative flex flex-col bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
-                data-type="' . $type . '">
+                  echo '
+                  <div class="rental-card group relative flex flex-col bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+                  data-type="' . $type . '">
 
-                    <!-- Image -->
-                    <div class="relative h-48 overflow-hidden">
-                        <div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-                            style="background-image:url(\'' . $image_url . '\');" loading="lazy">
-                        </div>
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+                      <!-- Image -->
+                      <div class="relative h-48 overflow-hidden">
+                          <div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+                              style="background-image:url(\'' . $image_url . '\');" loading="lazy">
+                          </div>
+                          <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
 
-                        <span class="absolute top-3 left-3 text-[0.65rem] font-medium tracking-wide uppercase bg-white/90 backdrop-blur-sm text-emerald-700 px-2.5 py-1 rounded-full shadow-sm">
-                            ' . $type . '
-                        </span>
-                        <div class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <a href="'.$locate.'?id=' . $rent_id .'"
-                              class="bg-white text-gray-900 text-xs font-semibold px-4 py-2 rounded-full shadow-md hover:bg-emerald-600 hover:text-white transition-colors">
-                                View Details
-                            </a>
-                                
-                        </div>
-                    </div>
+                          <span class="absolute top-3 left-3 text-[0.65rem] font-medium tracking-wide uppercase bg-white/90 backdrop-blur-sm text-emerald-700 px-2.5 py-1 rounded-full shadow-sm">
+                              ' . $type . '
+                          </span>
+                          <div class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              <a href="' . $locate . '?id=' . $rent_id . '"
+                                class="bg-white text-gray-900 text-xs font-semibold px-4 py-2 rounded-full shadow-md hover:bg-emerald-600 hover:text-white transition-colors">
+                                  View Details
+                              </a>
+                          </div>
+                      </div>
 
-                    <!-- Content -->
-                    <div class="flex flex-col flex-1 p-4">
-                        <p class="text-sm font-bold text-black truncate mb-1">'.$property_name.'</p>
-                        <h2 class="text-sm  text-gray-500 truncate mb-1">
-                            ' . $name . '
-                        </h2>
+                      <!-- Content -->
+                      <div class="flex flex-col flex-1 p-4">
+                          <p class="text-sm font-bold text-black truncate mb-1">' . $property_name . '</p>
+                          <h2 class="text-sm text-gray-500 truncate mb-1">
+                              ' . $name . '
+                          </h2>
 
-                        <div class="flex items-center gap-1 text-xs text-gray-500 mb-3 truncate">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0">
-                                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
-                                <circle cx="12" cy="10" r="3"/>
-                            </svg>
-                            <span class="truncate">' . ($location !== '' ? $location : 'Location not set') . '</span>
-                        </div>
+                          <div class="flex items-center gap-1 text-xs text-gray-500 mb-3 truncate">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0">
+                                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                                  <circle cx="12" cy="10" r="3"/>
+                              </svg>
+                              <span class="truncate">' . ($location !== '' ? $location : 'Location not set') . '</span>
+                          </div>
 
-                        <div class="mt-auto flex items-center justify-between pt-3 border-t border-gray-100">
-                            <p class="text-sm font-bold text-emerald-600">
-                                &#8369;' . number_format((float)$price, 2) . '
-                                <span class="text-xs font-normal text-gray-400">/ ' .$extention.'</span>
-                            </p>
-                        </div>
-                    </div>
+                          <div class="mt-auto flex items-center justify-between pt-3 border-t border-gray-100">
+                              <p class="text-sm font-bold text-emerald-600">
+                                  &#8369;' . number_format((float)$price, 2) . '
+                                  <span class="text-xs font-normal text-gray-400">/ ' . $extention . '</span>
+                              </p>
+                          </div>
+                      </div>
 
-                </div>
-                ';
-            }
-        } else {
-            echo '
-                <div class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-3">
-                    <path d="M18 21V10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1v11"/>
-                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 1.132-1.803l7.95-3.974a2 2 0 0 1 1.837 0l7.948 3.974A2 2 0 0 1 22 8z"/>
-                    <path d="M6 13h12"/>
-                    <path d="M6 17h12"/>
-                  </svg>
-                  <p class="text-sm font-medium">No rentals found</p>
-                  <p class="text-xs text-gray-400 mt-1">New listings will appear here once added.</p>
-                </div>
-            ';
-        }
-      ?>
-    </div>
+                  </div>
+                  ';
+              }
+          } else {
+              echo '
+              <div class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-3">
+                  <path d="M18 21V10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1v11"/>
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 1.132-1.803l7.95-3.974a2 2 0 0 1 1.837 0l7.948 3.974A2 2 0 0 1 22 8z"/>
+                  <path d="M6 13h12"/>
+                  <path d="M6 17h12"/>
+                </svg>
+                <p class="text-sm font-medium">No rentals found</p>
+                <p class="text-xs text-gray-400 mt-1">New listings will appear here once added.</p>
+              </div>
+              ';
+          }
+          ?>
+      </div>
+
+      <!-- PAGINATION NAVIGATION UI -->
+      <?php if ($total_pages > 1): ?>
+      <div class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-2xl shadow-sm mb-6">
+          <!-- Mobile Pagination -->
+          <div class="flex flex-1 justify-between sm:hidden">
+              <?php if ($page > 1): ?>
+                  <a href="?page=<?php echo $page - 1; ?>#featured_properties" class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Previous</a>
+              <?php else: ?>
+                  <span class="relative inline-flex items-center rounded-md border border-gray-200 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-400 cursor-not-allowed">Previous</span>
+              <?php endif; ?>
+
+              <?php if ($page < $total_pages): ?>
+                  <a href="?page=<?php echo $page + 1; ?>#featured_properties" class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Next</a>
+              <?php else: ?>
+                  <span class="relative ml-3 inline-flex items-center rounded-md border border-gray-200 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-400 cursor-not-allowed">Next</span>
+              <?php endif; ?>
+          </div>
+          
+          <!-- Desktop Pagination -->
+          <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+              <div>
+                  <p class="text-sm text-gray-700">
+                      Showing <span class="font-medium"><?php echo $offset + 1; ?></span> to 
+                      <span class="font-medium"><?php echo min($offset + $limit, $total_rentals); ?></span> of 
+                      <span class="font-medium"><?php echo $total_rentals; ?></span> results
+                  </p>
+              </div>
+              <div>
+                  <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm gap-1" aria-label="Pagination">
+                      <!-- Previous Button -->
+                      <?php if ($page > 1): ?>
+                          <a href="?page=<?php echo $page - 1; ?>#featured_properties" class="relative inline-flex items-center rounded-lg px-3 py-2 text-gray-500 hover:bg-emerald-50 hover:text-emerald-600 transition-colors">
+                              <span class="sr-only">Previous</span>
+                              &#8249;
+                          </a>
+                      <?php endif; ?>
+
+                      <!-- Page Numbers -->
+                      <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                          <a href="?page=<?php echo $i; ?>#featured_properties" class="relative inline-flex items-center px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors <?php echo $i === $page ? 'bg-emerald-600 text-white' : 'text-gray-700 hover:bg-emerald-50 hover:text-emerald-600'; ?>">
+                              <?php echo $i; ?>
+                          </a>
+                      <?php endfor; ?>
+
+                      <!-- Next Button -->
+                      <?php if ($page < $total_pages): ?>
+                          <a href="?page=<?php echo $page + 1; ?>#featured_properties" class="relative inline-flex items-center rounded-lg px-3 py-2 text-gray-500 hover:bg-emerald-50 hover:text-emerald-600 transition-colors">
+                              <span class="sr-only">Next</span>
+                              &#8250;
+                          </a>
+                      <?php endif; ?>
+                  </nav>
+              </div>
+          </div>
+      </div>
+      <?php endif; ?>
     <div id="noResultsMsg" class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400" style="display:none;">
       <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-3">
         <circle cx="11" cy="11" r="8"/>

@@ -231,6 +231,8 @@
                                      $locate = "house_details.php";
                                 }elseif($type == "Commercial Space"){
                                      $locate = "cs_details.php";
+                                }elseif($type == "Event Space"){
+                                     $locate = "es_details.php";
                                 }
 
                                 echo '

@@ -31,8 +31,8 @@ if ($rent_row = $rent_res->fetch_assoc()) {
     $other_info  = $rent_row['other_info'];
 }
 
-// 2. COMMERCIAL DETAILS
-$cs_id  = "";
+
+$es_id  = "";
 $type   = "";
 $area   = "";
 $status = "";
@@ -44,7 +44,7 @@ $result_execute_house = $get_es->get_result();
 
 if ($result_execute_house->num_rows > 0) {
     while ($row_h = $result_execute_house->fetch_assoc()) {
-        $cs_id  = $row_h['es_id']; // Inayos mula $es_id papuntang $cs_id
+        $es_id  = $row_h['es_id']; 
         $type   = $row_h['type'];
         $area   = $row_h['area'];
         $status = $row_h['status'];
@@ -117,7 +117,7 @@ while ($row = $result_all->fetch_assoc()) {
     <form action="../functions.php" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="landlord_id" value="<?php echo htmlspecialchars($landlord_id); ?>">
         <input type="hidden" name="rent_id" value="<?php echo htmlspecialchars($rent_id); ?>">
-        <input type="hidden" name="cs_id" value="<?php echo htmlspecialchars($cs_id); ?>">
+        <input type="hidden" name="es_id" value="<?php echo htmlspecialchars($es_id); ?>">
 
         <p class="mb-3 font-bold">  Event Space Information</p>
         <div class="w-[100%] flex flex-col gap-3 mb-5">

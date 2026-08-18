@@ -1,5 +1,5 @@
 <?php 
-include '../config.php';
+include 'config.php';
 
 $rent_id = $_GET['id'] ?? null;
 
@@ -176,12 +176,12 @@ if ($rent_id && isset($user_id_login) && $user_id_login) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars(($property_name ? $property_name . ' - ' : '') . $name); ?></title>
-    <link rel="shortcut icon" href="../assets/images/logo-icon.png" type="image/x-icon"> 
+    <link rel="shortcut icon" href="assets/images/logo-icon.png" type="image/x-icon"> 
     
-    <link rel="stylesheet" href="../assets/styles/daisy_ui.css">
-    <link rel="stylesheet" href="../assets/styles/index.css">
-    <script src="../assets/scripts/tailwind.js"></script>
-    <script src="../assets/scripts/daisy_ui.js"></script>
+    <link rel="stylesheet" href="assets/styles/daisy_ui.css">
+    <link rel="stylesheet" href="assets/styles/index.css">
+    <script src="assets/scripts/tailwind.js"></script>
+    <script src="assets/scripts/daisy_ui.js"></script>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -207,7 +207,7 @@ if ($rent_id && isset($user_id_login) && $user_id_login) {
 
     <main class="p-4 md:p-8 max-w-7xl mx-auto w-full space-y-6">
        <div class="flex justify-end items-end">
-        <a href="properties.php"><img src="../assets/images/back.png" alt="Back"></a>
+        <a href="index.php"><img src="assets/images/back.png" alt="Back"></a>
       </div>
       <!-- Hero Card -->
       <div class="bg-base-100 rounded-2xl p-4 md:p-6 shadow-sm border border-base-300">
@@ -215,10 +215,10 @@ if ($rent_id && isset($user_id_login) && $user_id_login) {
           
           <div class="lg:col-span-2">
             <div class="relative h-64 sm:h-80 md:h-[360px] w-full rounded-xl overflow-hidden bg-base-300 group shadow-inner">
-              <img src="../assets/uploads/<?= htmlspecialchars($image_cover); ?>" 
+              <img src="assets/uploads/<?= htmlspecialchars($image_cover); ?>" 
                    alt="<?= htmlspecialchars($name); ?>" 
                    class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                   onerror="this.src='../assets/images/placeholder.jpg';" />
+                   onerror="this.src='assets/images/placeholder.jpg';" />
               
               <div class="absolute top-4 left-4">
                 <span class="badge badge-success text-white badge-lg gap-2 shadow-md">
@@ -227,34 +227,6 @@ if ($rent_id && isset($user_id_login) && $user_id_login) {
               </div>
 
           
-                  <a href="chat_portal.php?id=<?= urlencode($user_id); ?>" 
-                 class="<?= $hidden; ?> tooltip tooltip-left absolute bottom-4 right-15 lg:top-4 h-fit text-blue-900 bg-green-300 hover:bg-blue-200 active:bg-red-400 rounded-lg p-1.5 flex items-center justify-center transition-all cursor-pointer border-none outline-none" 
-                 data-tip="Message Landlord">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-square-text"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/><path d="M7 11h10"/><path d="M7 15h6"/><path d="M7 7h8"/></svg>
-              </a>
-
-              <form action="../functions.php" method="POST" class="tooltip tooltip-left absolute bottom-4 right-4 h-fit lg:top-4" data-tip="<?= ($switch == 'on') ? 'Remove from Favorites' : 'Add to my Favorites'; ?>">
-                <input type="hidden" name="type" value="<?= htmlspecialchars($type); ?>">
-                <input type="hidden" name="locate" value="boarding_details.php">
-                <input type="hidden" name="rent_id" value="<?= htmlspecialchars($rent_id); ?>">
-                <input type="hidden" name="current_status" value="<?= htmlspecialchars($switch); ?>">
-
-                <button type="submit" name="add_favorite_btn" value="1" class="bg-green-300 hover:bg-red-200 active:bg-red-400 rounded-lg p-1 flex items-center justify-center transition-all cursor-pointer border-none outline-none">
-                  <svg xmlns="http://www.w3.org/2000/svg" 
-                       width="28" 
-                       height="28" 
-                       viewBox="0 0 24 24" 
-                       fill="<?= ($switch == 'on') ? '#dc2626' : 'none'; ?>" 
-                       stroke="<?= ($switch == 'on') ? '#dc2626' : 'currentColor'; ?>" 
-                       stroke-width="2" 
-                       stroke-linecap="round" 
-                       stroke-linejoin="round" 
-                       class="<?= ($switch == 'on') ? 'text-red-600' : 'text-red-800 hover:fill-red-600 hover:text-red-600'; ?> transition-colors">
-                    <path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/>
-                  </svg>
-                </button>
-              </form>
-       
 
             </div>
           </div>
@@ -429,12 +401,12 @@ if ($rent_id && isset($user_id_login) && $user_id_login) {
           <div class="columns-2 sm:columns-3 md:columns-4 gap-4 space-y-4">
             <?php foreach ($apartment_images as $img): ?>
               <div class="break-inside-avoid rounded-xl overflow-hidden border border-base-200 shadow-xs hover:shadow-md transition-all group bg-base-200 relative">
-                <a href="../assets/uploads/<?= htmlspecialchars($img); ?>" target="_blank" class="block">
-                  <img src="../assets/uploads/<?= htmlspecialchars($img); ?>" 
+                <a href="assets/uploads/<?= htmlspecialchars($img); ?>" target="_blank" class="block">
+                  <img src="assets/uploads/<?= htmlspecialchars($img); ?>" 
                        alt="Event Space Photo" 
                        class="w-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
                        loading="lazy"
-                       onerror="this.src='../assets/images/placeholder.jpg';" />
+                       onerror="this.src='assets/images/placeholder.jpg';" />
                 </a>
               </div>
             <?php endforeach; ?>
@@ -457,7 +429,7 @@ if ($rent_id && isset($user_id_login) && $user_id_login) {
       <div>
         <div class="flex items-center gap-3 mb-6 pb-4 border-b border-base-200">
           <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <img src="../assets/images/logo-icon.png" class="w-6 h-6 object-contain" alt="Logo" onerror="this.src='../assets/images/placeholder.jpg';">
+            <img src="assets/images/logo-icon.png" class="w-6 h-6 object-contain" alt="Logo" onerror="this.src='assets/images/placeholder.jpg';">
           </div>
           <div class="min-w-0 flex-1">
             <h2 class="font-bold text-base text-base-content truncate">
@@ -497,11 +469,11 @@ if ($rent_id && isset($user_id_login) && $user_id_login) {
                       <li>
                         <a href="?id=<?= urlencode($other_id); ?>" class="flex items-center gap-3 p-2.5 rounded-xl transition-all <?= $isActive; ?>">
                           <div class="w-11 h-11 rounded-lg overflow-hidden bg-base-300 flex-shrink-0 border border-base-200">
-                            <img src="../assets/uploads/<?= htmlspecialchars($other_img); ?>" 
+                            <img src="assets/uploads/<?= htmlspecialchars($other_img); ?>" 
                                  alt="<?= htmlspecialchars($other_name); ?>" 
                                  class="w-full h-full object-cover"
                                  loading="lazy"
-                                 onerror="this.src='../assets/images/placeholder.jpg';" />
+                                 onerror="this.src='assets/images/placeholder.jpg';" />
                           </div>
                           <div class="flex-1 min-w-0">
                             <p class="text-sm truncate leading-tight"><?= htmlspecialchars($other_name); ?></p>
@@ -529,8 +501,8 @@ if ($rent_id && isset($user_id_login) && $user_id_login) {
   </div>
 </div>
 
-<script src="../assets/scripts/jquery.js"></script>
-<script src="../assets/scripts/index.js"></script>
+<script src="assets/scripts/jquery.js"></script>
+<script src="assets/scripts/index.js"></script>
 
 <script>
   $(document).ready(function() {
