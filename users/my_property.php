@@ -121,7 +121,7 @@
                 </div>
                 <div class="data-container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-5">
                   <?php
-                  $get_data = $conn->prepare("SELECT * FROM `rentspace` as r WHERE `type` = ? AND `user_id` = ? AND `landlord_id` = ? ORDER BY name");
+                  $get_data = $conn->prepare("SELECT * FROM `rentspace` as r WHERE `type` = ? AND `user_id` = ? AND `landlord_id` = ? ORDER BY  `name` ASC");
                   $get_data->bind_param("sss", $type, $user_id_login, $landlord_id);
                   $get_data->execute();
                   $result_data = $get_data->get_result();
@@ -129,12 +129,7 @@
                   if($result_data->num_rows > 0){
                       while($row = $result_data->fetch_assoc()){
                       $type = $row['type'];
-                        if($type === "Event Space" || $type === "Transient House" || $type === "Parking Space" ||  $type === "Vacant Lot" ){
-                          $extention = "Hour";
-                        }else{
-                          $extention = "Month";
-                        }
-
+                      $rate = $row['rate'];
 
                          echo '
                         <div class="main-data group relative h-80 overflow-hidden rounded-2xl shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
@@ -173,7 +168,7 @@
                                     <div class="flex flex-col">
                                         <div>
                                             <p class="font-bold text-emerald-300 text-sm">
-                                                &#8369; '.number_format($row['price'],2).' / '.$extention.'
+                                                &#8369; '.number_format($row['price'],2).' / '.$rate.'
                                             </p>
                                         </div>
                                      
@@ -218,10 +213,9 @@
 
 
 
-  <script src="./../assets/scripts/index.js"></script>
-  <script src="./../assets/scripts/map.js"></script>
-  <script src="./../assets/scripts/query_filter.js"></script>
+  <script src="../assets/scripts/index.js"></script>
+  <script src="../assets/scripts/map.js"></script>
+  <script src="../assets/scripts/query_filter.js"></script>
 </body>
 </html>
-
 

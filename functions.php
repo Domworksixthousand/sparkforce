@@ -1567,9 +1567,11 @@ if(isset($_POST['edit_amenity'])){
 if (isset($_POST['save_boarding'])) {
     $landlord_id = $_POST['landlord_id'] ?? '';
     $room_name   = trim($_POST['name'] ?? '');
+    $board_rate  = trim($_POST['board_rate'] ?? '');
     $price       = trim($_POST['price'] ?? '');
     $other_info  = trim($_POST['other_info'] ?? '');
     $old_cover   = trim($_POST['old_cover'] ?? '');
+     $rate   = trim($_POST['board_rate'] ?? '');
 
     // 1. BED SESSION / PROCESSING
     $beds = [];
@@ -1577,7 +1579,6 @@ if (isset($_POST['save_boarding'])) {
     if (!empty($_POST['bednum']) && is_array($_POST['bednum'])) {
         foreach ($_POST['bednum'] as $index => $bed_number) {
             $bed_number = trim($bed_number);
-            // Default to 1 deck if not specified
             $num_deck   = !empty($_POST['num_deck'][$index]) ? (int)$_POST['num_deck'][$index] : 1; 
             $bed_image  = $_POST['old_image'][$index] ?? '';
 
@@ -1608,6 +1609,9 @@ if (isset($_POST['save_boarding'])) {
         }
     }
 
+    // I-save ang beds sa session para hindi mawala kapag nagka-error
+    $_SESSION['beds'] = $beds;
+
     // 2. VALIDATE AMENITIES INPUT (Duplicates Check)
     $selected_amenities = [];
     if (!empty($_POST['amenity']) && is_array($_POST['amenity'])) {
@@ -1624,6 +1628,9 @@ if (isset($_POST['save_boarding'])) {
             }
         }
     }
+    
+    // I-save ang amenities sa session
+    $_SESSION['amenities'] = $_POST['amenity'] ?? [];
 
     $rent_id = $room_name . rand(1000, 9999);
     $type    = "Boarding House / Bedspace";
@@ -1647,6 +1654,17 @@ if (isset($_POST['save_boarding'])) {
         }
     }
 
+    // Tukuyin ang tamang cover image (kung may bagong upload o kung retained ang $old_cover)
+    $final_cover = !empty($cover_photo_filename) ? $cover_photo_filename : $old_cover;
+
+    // I-save sa session ang mga text input at ang cover image filename para sa form re-population kung sakaling magka-error
+    $_SESSION['name']       = $room_name;
+    $_SESSION['board_rate'] = $board_rate;
+    $_SESSION['price']      = $price;
+    $_SESSION['other_info'] = $other_info;
+    $_SESSION['fileName']   = $final_cover;
+      $_SESSION['board_rate']   = $rate;
+
     // 4. CHECK DUPLICATE ROOM NAME
     $check_room = $conn->prepare("SELECT 1 FROM `rentspace` WHERE `landlord_id` = ? AND `name` = ?");
     $check_room->bind_param("ss", $landlord_id, $room_name);
@@ -1659,9 +1677,9 @@ if (isset($_POST['save_boarding'])) {
         exit;
     }
 
-    // 5. INSERT INTO RENTSPACE
-    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $insert->bind_param("sssssiss", $rent_id, $room_name, $landlord_id, $user_id_login, $type, $price, $cover_photo_filename, $other_info);
+    // 5. INSERT INTO RENTSPACE (Ginagamit na dito ang $final_cover)
+    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`,`rate`) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)");
+    $insert->bind_param("sssssisss", $rent_id, $room_name, $landlord_id, $user_id_login, $type, $price, $final_cover, $other_info,$rate);
     $insert->execute();
 
     // INSERT AMENITIES
@@ -1681,12 +1699,9 @@ if (isset($_POST['save_boarding'])) {
             $deck_count = (int)$bed['num_deck'];
             $status     = "Available";
 
-            // If num_deck is 2, this loops twice (i = 1, i = 2)
             for ($d = 1; $d <= $deck_count; $d++) {
                 $boarding_id    = $rent_id . '_' . uniqid(); 
                 
-                // Formats as "Bed 1 - Deck 1", "Bed 1 - Deck 2", etc.
-                // If there's only 1 deck, it just keeps the bed number or appends " - Deck 1"
                 $deck_bed_number = ($deck_count > 1) 
                     ? $bed['bed_number'] . " - Deck " . $d 
                     : $bed['bed_number'];
@@ -1697,11 +1712,13 @@ if (isset($_POST['save_boarding'])) {
         }
     }
 
+    // Linisin ang mga session variables kapag naging matagumpay ang pag-save
+    unset($_SESSION['name'], $_SESSION['board_rate'], $_SESSION['price'], $_SESSION['other_info'], $_SESSION['fileName'], $_SESSION['beds'], $_SESSION['amenities'],$_SESSION['rate']);
+
     $_SESSION['success'] = "Successfully Inserted";
     header("Location: users/my_property.php?property_id=" . urlencode($landlord_id));
     exit;
 }
-
 
 if (isset($_POST['edit_boarding'])) {
     $rent_id     = $_POST['rent_id'];
@@ -1710,6 +1727,7 @@ if (isset($_POST['edit_boarding'])) {
     $price       = $_POST['price'];
     $other_info  = $_POST['other_info'];
     $old_cover   = $_POST['old_cover'] ?? '';
+    $rate   = $_POST['rate'] ?? '';
 
     $uploadDir = 'assets/uploads/';
     if (!is_dir($uploadDir)) {
@@ -1797,8 +1815,8 @@ if (isset($_POST['edit_boarding'])) {
     }
 
     // 4. UPDATE RENTSPACE BASIC INFO
-    $update_rentspace = $conn->prepare("UPDATE rentspace SET `name` = ?, `price` = ?, `other_info` = ? WHERE `rent_id` = ?");
-    $update_rentspace->bind_param("ssss", $room_name, $price, $other_info, $rent_id);
+    $update_rentspace = $conn->prepare("UPDATE rentspace SET `name` = ?, `price` = ?, `other_info` = ?,`rate` = ? WHERE `rent_id` = ?");
+    $update_rentspace->bind_param("sssss", $room_name, $price, $other_info,$rate,$rent_id);
     $update_rentspace->execute();
 
     // 5. UPDATE COVER PHOTO

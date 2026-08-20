@@ -13,12 +13,8 @@ if(isset($_GET['property_id'])){
 <dialog id="my_modal_3" class="modal" open>
   <div class="modal-box w-11/12 max-w-1xl">
     <form method="dialog">
-      <button 
-        type="button" 
-        onclick="window.location.href='my_property.php?property_id=<?php echo $landlord_id; ?>';" 
-        class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
-        ✕
-      </button>
+
+      <a href="my_property.php?property_id=<?php echo $landlord_id; ?>"  class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"> ✕</a>
     </form>
 
     <?php if (!empty($_SESSION['error'])): ?>

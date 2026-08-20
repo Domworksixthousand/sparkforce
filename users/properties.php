@@ -132,7 +132,7 @@
                         $max_p       = isset($_GET['max_price']) && is_numeric($_GET['max_price']) ? floatval($_GET['max_price']) : 0;
 
                         $query = "
-                            SELECT r.*, l.province, l.municipality, l.barangay, l.property_name, l.latitude, l.longitude
+                            SELECT r.*, l.province, l.municipality, l.barangay, l.property_name, l.latitude, l.longitude,r.rate
                             FROM rentspace r
                             LEFT JOIN landlord l ON l.landlord_id = r.landlord_id
                             WHERE 1=1
@@ -180,6 +180,7 @@
                                 $name          = htmlspecialchars($row_rentals['name'] ?? '');
                                 $rent_id       = htmlspecialchars($row_rentals['rent_id'] ?? '');
                                 $type          = htmlspecialchars($row_rentals['type'] ?? '');
+                                $rate          = htmlspecialchars($row_rentals['rate'] ?? '');
                                 $image         = htmlspecialchars($row_rentals['image_cover'] ?? '');
                                 $property_name = htmlspecialchars($row_rentals['property_name'] ?? 'Property Location');
                                 $price         = $row_rentals['price'] ?? 0;
@@ -220,21 +221,7 @@
 
                            
 
-                               
-                                if($type == "Boarding House / Bedspace"){
-                                    $locate = "boarding_details.php";
-                                }elseif($type == "Apartment"){
-                                     $locate = "apartment_details.php";
-                                }elseif($type == "Condominium"){
-                                     $locate = "condo_details.php";
-                                }elseif($type == "House"){
-                                     $locate = "house_details.php";
-                                }elseif($type == "Commercial Space"){
-                                     $locate = "cs_details.php";
-                                }elseif($type == "Event Space"){
-                                     $locate = "es_details.php";
-                                }
-
+                         
                                 echo '
                                 <div class="rental-card group bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col hover:-translate-y-1 cursor-pointer" data-id="' . $rent_id . '">
                                     <div class="relative h-44 overflow-hidden bg-slate-100">
@@ -264,7 +251,7 @@
                                                 <span class="text-xs text-slate-400 block font-normal">Rent Rate</span>
                                                 <p class="text-sm font-extrabold text-emerald-600">
                                                     &#8369;' . number_format((float)$price, 2) . ' 
-                                                    <span class="text-[10px] text-slate-400 font-normal">/ ' . $extention . '</span>
+                                                    <span class="text-[10px] text-slate-400 font-normal">/ ' . $rate . '</span>
                                                 </p>
                                             </div>
                                             <a href="'.$locate.'?id=' . $rent_id .'" class="lg:hidden text-xs font-semibold text-emerald-600 hover:text-emerald-800 flex items-center gap-0.5">
