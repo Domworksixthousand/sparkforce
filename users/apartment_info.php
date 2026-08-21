@@ -11,7 +11,7 @@ if (isset($_GET['id']) && isset($_GET['property_id'])) {
 
 // 1. RENTSPACE DETAILS
 $get_rent = $conn->prepare("
-    SELECT name, price, image_cover, other_info 
+    SELECT name, price, image_cover, other_info ,rate
     FROM rentspace 
     WHERE rent_id = ?
 ");
@@ -29,6 +29,7 @@ if ($rent_row = $rent_res->fetch_assoc()) {
     $price       = $rent_row['price'];
     $image_cover = $rent_row['image_cover'];
     $other_info  = $rent_row['other_info'];
+     $rate  = $rent_row['rate'];
 }
 
 // 2. APARTMENT DETAILS & STATUS COUNTS
@@ -117,7 +118,7 @@ function apartmentStatusBadge($status) {
       <div class="absolute bottom-0 left-0 p-5 text-white">
         <h2 class="text-2xl font-bold drop-shadow-sm"><?php echo htmlspecialchars($name); ?></h2>
         <p class="text-lg font-semibold text-success-content">
-          <span class="text-white">&#x20B1;<?php echo htmlspecialchars(number_format((float)$price, 2)); ?> <span class="text-sm font-normal opacity-80">/ month</span></span>
+          <span class="text-white">&#x20B1;<?php echo htmlspecialchars(number_format((float) $price, 2)); ?> <span class="text-sm font-normal opacity-80">/ <?php echo $rate; ?></span></span>
         </p>
       </div>
       <div class="absolute top-3 left-3 flex gap-2">
@@ -158,7 +159,7 @@ function apartmentStatusBadge($status) {
                 <div class="flex items-center justify-between">
                   <div>
                     <h4 class="font-semibold text-base">Type: <?php echo htmlspecialchars($apt['apartment_type'] ?? 'Standard'); ?></h4>
-                    <p class="text-xs text-gray-500">Unit ID: <?php echo htmlspecialchars($apt['apartment_id']); ?></p>
+                  
                   </div>
                   <span class="badge <?php echo apartmentStatusBadge($apt['status']); ?> text-white">
                     <?php echo htmlspecialchars($apt['status']); ?>

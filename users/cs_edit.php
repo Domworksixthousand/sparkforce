@@ -11,7 +11,7 @@ if (isset($_GET['property_id']) && isset($_GET['id'])) {
 
 // RENTSPACE DETAILS
 $get_rent = $conn->prepare("
-    SELECT name, price, image_cover, other_info 
+    SELECT name, price, image_cover, other_info,rate
     FROM rentspace 
     WHERE rent_id = ?
 ");
@@ -29,6 +29,7 @@ if ($rent_row = $rent_res->fetch_assoc()) {
     $price       = $rent_row['price'];
     $image_cover = $rent_row['image_cover'];
     $other_info  = $rent_row['other_info'];
+    $rate  = $rent_row['rate'];
 }
 
 // COMMERCIAL DETAILS
@@ -135,6 +136,13 @@ while ($row = $result_all->fetch_assoc()) {
                 <label class="input w-[100%]">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5 text-gray-500"><path d="M20 11H4"/><path d="M20 7H4"/><path d="M7 21V4a1 1 0 0 1 1-1h4a1 1 0 0 1 0 12H7"/></svg>
                     <input type="text" class="numbers_only grow w-[100%]" name="cs_price" value="<?php echo htmlspecialchars($price ?? ''); ?>" placeholder="Enter Price /Month" required />
+                </label>
+            </span>
+                 <span class="w-[100%]">
+                <p class="mb-2 text-sm">Rate(Per Month/Night/Week/Hour) *</p>
+                <label class="input w-[100%]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-5 text-gray-500"><path d="M20 11H4"/><path d="M20 7H4"/><path d="M7 21V4a1 1 0 0 1 1-1h4a1 1 0 0 1 0 12H7"/></svg>
+                    <input type="text" class="autoInput grow w-[100%]" name="cs_rate"  value="<?php echo $rate ?? ''; ?>" placeholder="Enter Rate" required />
                 </label>
             </span>
             <span class="w-[100%]">

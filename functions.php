@@ -1926,6 +1926,7 @@ if (isset($_POST['save_apartment'])) {
     $price          = trim($_POST['apartment_price'] ?? '');
     $other_info     = trim($_POST['apartment_other_info'] ?? '');
     $apartment_type = $_POST['type'] ?? '';
+    $apartment_rate = $_POST['apartment_rate'] ?? '';
     $raw_amenities  = $_POST['apartment_amenity'] ?? [];
 
     foreach($raw_amenities as $yeah){
@@ -1956,7 +1957,8 @@ if (isset($_POST['save_apartment'])) {
         }
         $selected_amenities[] = $amenity_id;
     }
-       $_SESSION['apartment_name']       = $room_name;
+    $_SESSION['apartment_name']       = $room_name;
+    $_SESSION['apartment_rate']       = $apartment_rate;
     $_SESSION['apartment_price']      = $price;
     $_SESSION['apartment_other_info'] = $other_info;
     $_SESSION['type']                 = $apartment_type;
@@ -2014,8 +2016,8 @@ if (isset($_POST['save_apartment'])) {
     }
 
 
-    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $insert->bind_param("ssssssss", $rent_id, $room_name, $landlord_id, $user_id_login, $type, $price, $cover_photo, $other_info);
+    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`,`rate`) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)");
+    $insert->bind_param("sssssssss", $rent_id, $room_name, $landlord_id, $user_id_login, $type, $price, $cover_photo, $other_info,$apartment_rate);
     $insert->execute();
 
     if (!empty($selected_amenities)) {
@@ -2047,7 +2049,8 @@ if (isset($_POST['save_apartment'])) {
         $_SESSION['apartment_cover'],
         $_SESSION['gallery'],
         $_SESSION['type'],
-        $_SESSION['amenities']
+        $_SESSION['amenities'],
+        $_SESSION['apartment_rate']
     );
 
     $_SESSION['success'] = "Successfully Inserted";
@@ -2068,6 +2071,7 @@ if (isset($_POST['edit_apartment'])) {
     $old_cover         = $_POST['old_cover'] ?? '';
     $amenities         = $_POST['apartment_amenity'] ?? [];
     $status         = $_POST['status'] ?? '';
+    $apartment_rate         = $_POST['apartment_rate'] ?? '';
 
     if ($rent_id === '' || $apartment_id === '') {
         header("location: users/index.php");
@@ -2100,15 +2104,16 @@ if (isset($_POST['edit_apartment'])) {
     
     $update_rent = $conn->prepare("
         UPDATE rentspace
-        SET name = ?, price = ?, image_cover = ?, other_info = ?
+        SET name = ?, price = ?, image_cover = ?, other_info = ?,rate = ?
         WHERE rent_id = ?
     ");
     $update_rent->bind_param(
-        "sssss",
+        "ssssss",
         $apartment_name,
         $apartment_price,
         $image_cover,
         $apartment_other,
+        $apartment_rate,
         $rent_id
     );
     $update_rent->execute();
@@ -2333,6 +2338,7 @@ if(isset($_POST['save_condo'])){
     $square_area    = trim($_POST['square_area'] ?? '');
     $bedroom_type   = $_POST['type'] ?? '';
     $bathrooms      = $_POST['bathrooms'] ?? '';
+    $condo_rate      = $_POST['condo_rate'] ?? '';
     $condition      = $_POST['condition'] ?? '';
     $flooring       = $_POST['flooring'] ?? '';
     $other_info     = trim($_POST['apartment_other_info'] ?? '');
@@ -2371,6 +2377,7 @@ if(isset($_POST['save_condo'])){
     $_SESSION['condition']            = $condition;
     $_SESSION['flooring']             = $flooring;
     $_SESSION['apartment_other_info'] = $other_info;
+    $_SESSION['condo_rate'] = $condo_rate;
     $_SESSION['amenities']            = $raw_amenities ?? [];
 
     // --- COVER PHOTO ---
@@ -2431,8 +2438,8 @@ if(isset($_POST['save_condo'])){
     }
 
     // --- INSERT MAIN TABLE ---
-    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $insert->bind_param("ssssssss", $rent_id, $condo_name, $landlord_id, $user_id_login, $type, $condo_price, $cover_photo, $other_info);
+    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`,`rate`) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)");
+    $insert->bind_param("sssssssss", $rent_id, $condo_name, $landlord_id, $user_id_login, $type, $condo_price, $cover_photo, $other_info,$condo_rate);
     $insert->execute();
 
     // --- INSERT AMENITIES ---
@@ -2472,7 +2479,8 @@ if(isset($_POST['save_condo'])){
         $_SESSION['apartment_other_info'],
         $_SESSION['condo_cover'],
         $_SESSION['gallery'],
-        $_SESSION['amenities']
+        $_SESSION['amenities'],
+         $_SESSION['condo_rate']
     );
 
     $_SESSION['success'] = "Condominium Successfully Inserted";
@@ -2487,6 +2495,7 @@ if (isset($_POST['edit_condo'])) {
     $landlord_id           = $_POST['landlord_id'] ?? '';
     $condo_name            = trim($_POST['condo_name'] ?? '');
     $condo_price           = trim($_POST['condo_price'] ?? '');
+     $condo_rate           = trim($_POST['condo_rate'] ?? '');
     $apartment_other_info  = trim($_POST['apartment_other_info'] ?? '');
     
     $square_area           = trim($_POST['square_area'] ?? '');
@@ -2554,10 +2563,10 @@ if (isset($_POST['edit_condo'])) {
 
     $stmt_rent = $conn->prepare("
         UPDATE rentspace 
-        SET name = ?, price = ?, image_cover = ?, other_info = ? 
+        SET name = ?, price = ?, image_cover = ?, other_info = ?,rate = ?
         WHERE rent_id = ?
     ");
-    $stmt_rent->bind_param("sssss", $condo_name, $condo_price, $cover_filename, $apartment_other_info, $rent_id);
+    $stmt_rent->bind_param("ssssss", $condo_name, $condo_price, $cover_filename, $apartment_other_info,$condo_rate,$rent_id);
     $stmt_rent->execute();
 
 
@@ -2627,6 +2636,7 @@ if (isset($_POST['save_house'])) {
     $house_price    = trim($_POST['house_price'] ?? '');
     $square_area    = trim($_POST['square_area'] ?? '');
     $house_type     = $_POST['type'] ?? '';
+    $house_rate     = $_POST['house_rate'] ?? '';
     $bedroom        = $_POST['bedroom'] ?? '';
     $bathrooms      = $_POST['bathrooms'] ?? '';
     $flooring       = $_POST['flooring'] ?? '';
@@ -2697,6 +2707,7 @@ if (isset($_POST['save_house'])) {
     $_SESSION['apartment_other_info'] = $other_info;
     $_SESSION['amenities']            = $raw_amenities;
     $_SESSION['house_cover']            = $cover_photo;
+    $_SESSION['house_rate']            = $house_rate;
 
     
     $status   = "Available";
@@ -2736,8 +2747,8 @@ if (isset($_POST['save_house'])) {
     }
 
     // --- INSERT MAIN RENTSPACE TABLE ---
-    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $insert->bind_param("ssssssss", $rent_id, $house_name, $landlord_id, $user_id_login, $type, $house_price, $cover_photo, $other_info);
+    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`,`rate`) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)");
+    $insert->bind_param("sssssssss", $rent_id, $house_name, $landlord_id, $user_id_login, $type, $house_price, $cover_photo, $other_info,$house_rate);
     $insert->execute();
     $status = "Available";
     // --- INSERT HOUSE TABLE ---
@@ -2776,7 +2787,8 @@ if (isset($_POST['save_house'])) {
         $_SESSION['apartment_other_info'],
         $_SESSION['house_cover'],
         $_SESSION['gallery'],
-        $_SESSION['amenities']
+        $_SESSION['amenities'],
+        $_SESSION['house_rate']
     );
 
     $_SESSION['success'] = "House Successfully Inserted";
@@ -2786,6 +2798,7 @@ if (isset($_POST['save_house'])) {
 
 if (isset($_POST['edit_house'])) {
 
+    $house_rate        = $_POST['house_rate'] ?? '';
     $rent_id        = $_POST['rent_id'] ?? '';
     $landlord_id    = $_POST['landlord_id'] ?? '';
     $house_name     = trim($_POST['house_name'] ?? '');
@@ -2850,8 +2863,8 @@ if (isset($_POST['edit_house'])) {
     }
 
     // --- UPDATE MAIN RENTSPACE TABLE ---
-    $update_rentspace = $conn->prepare("UPDATE `rentspace` SET `name` = ?, `price` = ?, `image_cover` = ?, `other_info` = ? WHERE `rent_id` = ? AND `landlord_id` = ?");
-    $update_rentspace->bind_param("ssssss", $house_name, $house_price, $cover_photo, $other_info, $rent_id, $landlord_id);
+    $update_rentspace = $conn->prepare("UPDATE `rentspace` SET `name` = ?, `price` = ?, `image_cover` = ?, `other_info` = ?,rate=? WHERE `rent_id` = ? AND `landlord_id` = ?");
+    $update_rentspace->bind_param("sssssss", $house_name, $house_price, $cover_photo, $other_info,$house_rate, $rent_id, $landlord_id);
     $update_rentspace->execute();
 
     // --- UPDATE HOUSE SPECIFICATIONS TABLE ---
@@ -2926,6 +2939,7 @@ if (isset($_POST['save_cs'])) {
     $square_area   = trim($_POST['square_area'] ?? '');
     $cs_type       = $_POST['type'] ?? '';
     $other_info    = trim($_POST['cs_other_info'] ?? '');
+    $cs_rate    = trim($_POST['cs_rate'] ?? '');
     $raw_amenities = $_POST['cs_amenity'] ?? [];
 
     $uploadDir = 'assets/uploads/';
@@ -2990,6 +3004,7 @@ if (isset($_POST['save_cs'])) {
     $_SESSION['cs_other_info'] = $other_info;
     $_SESSION['amenities']     = $raw_amenities;
     $_SESSION['cs_cover']      = $cover_photo;
+    $_SESSION['cs_rate']      = $cs_rate;
 
     $status = "Available";
     $rent_id = "CS" . rand(1000, 9999);
@@ -3023,8 +3038,8 @@ if (isset($_POST['save_cs'])) {
     }
 
     // --- INSERT MAIN RENTSPACE TABLE ---
-    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $insert->bind_param("ssssssss", $rent_id, $cs_name, $landlord_id, $user_id_login, $type, $cs_price, $cover_photo, $other_info);
+    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`,`rate`) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)");
+    $insert->bind_param("sssssssss", $rent_id, $cs_name, $landlord_id, $user_id_login, $type, $cs_price, $cover_photo, $other_info,$cs_rate);
     $insert->execute();
 
     // --- INSERT COMMERCIAL_SPACE TABLE ---
@@ -3059,7 +3074,8 @@ if (isset($_POST['save_cs'])) {
         $_SESSION['cs_other_info'],
         $_SESSION['cs_cover'],
         $_SESSION['gallery'],
-        $_SESSION['amenities']
+        $_SESSION['amenities'],
+         $_SESSION['cs_rate']
     );
 
     $_SESSION['success'] = "Commercial Space Successfully Inserted";
@@ -3071,6 +3087,7 @@ if (isset($_POST['save_cs'])) {
 if (isset($_POST['update_cs'])) {
 
     $rent_id        = $_POST['rent_id'] ?? '';
+    $cs_rate        = $_POST['cs_rate'] ?? '';
     $landlord_id    = $_POST['landlord_id'] ?? '';
     $cs_name        = trim($_POST['cs_name'] ?? '');
     $cs_price       = trim($_POST['cs_price'] ?? '');
@@ -3142,8 +3159,8 @@ if (isset($_POST['update_cs'])) {
     }
 
     // --- UPDATE MAIN RENTSPACE TABLE ---
-    $update_rentspace = $conn->prepare("UPDATE `rentspace` SET `name` = ?, `price` = ?, `image_cover` = ?, `other_info` = ? WHERE `rent_id` = ? AND `landlord_id` = ?");
-    $update_rentspace->bind_param("ssssss", $cs_name, $cs_price, $cover_photo, $other_info, $rent_id, $landlord_id);
+    $update_rentspace = $conn->prepare("UPDATE `rentspace` SET `name` = ?, `price` = ?, `image_cover` = ?, `other_info` = ?,`rate` = ? WHERE `rent_id` = ? AND `landlord_id` = ?");
+    $update_rentspace->bind_param("sssssss", $cs_name, $cs_price, $cover_photo, $other_info,$cs_rate,$rent_id, $landlord_id);
     $update_rentspace->execute();
 
     // --- UPDATE COMMERCIAL SPACE TABLE ---
@@ -3205,6 +3222,7 @@ if(isset($_POST['save_es'])){
 
   
         $landlord_id = $_POST['landlord_id'] ?? '';
+        $es_rate = $_POST['es_rate'] ?? '';
         $es_name = trim($_POST['es_name'] ?? '');
         $es_price = trim($_POST['es_price'] ?? '');
         $square_area = trim($_POST['square_area'] ?? '');
@@ -3291,6 +3309,7 @@ if(isset($_POST['save_es'])){
         $_SESSION['type']          = $es_type;
         $_SESSION['es_other_info'] = $other_info;
         $_SESSION['amenities']     = $raw_amenities;
+        $_SESSION['es_rate']     = $es_rate;
 
  
         // --- CHECK DUPLICATE ---
@@ -3312,8 +3331,8 @@ if(isset($_POST['save_es'])){
         $es_id = "COM" . rand(10000, 99999);
 
         // --- INSERT MAIN RENTSPACE TABLE ---
-        $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        $insert->bind_param("ssssssss", $rent_id, $es_name, $landlord_id, $user_id_login, $type, $es_price, $cover_photo, $other_info);
+        $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`,`rate`) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)");
+        $insert->bind_param("sssssssss", $rent_id, $es_name, $landlord_id, $user_id_login, $type, $es_price, $cover_photo, $other_info,$es_rate);
         $insert->execute();
 
         // --- INSERT EVENT_SPACE TABLE ---
@@ -3348,7 +3367,8 @@ if(isset($_POST['save_es'])){
             $_SESSION['es_other_info'],
             $_SESSION['es_cover'],
             $_SESSION['gallery'],
-            $_SESSION['amenities']
+            $_SESSION['amenities'],
+            $_SESSION['es_rate']
         );
 
         $_SESSION['success'] = "Event Space Successfully Inserted";
@@ -3362,6 +3382,7 @@ if (isset($_POST['update_es'])) {
     $landlord_id = $_POST['landlord_id'] ?? '';
     $rent_id     = $_POST['rent_id'] ?? '';
     $es_id       = $_POST['es_id'] ?? ''; 
+    $es_rate       = $_POST['es_rate'] ?? ''; 
 
     $es_name     = trim($_POST['es_name'] ?? '');
     $es_price    = trim($_POST['es_price'] ?? '');
@@ -3469,8 +3490,8 @@ if (isset($_POST['update_es'])) {
     }
 
     // --- 5. UPDATE MAIN RENTSPACE TABLE ---
-    $update_rent = $conn->prepare("UPDATE `rentspace` SET `name` = ?, `price` = ?, `image_cover` = ?, `other_info` = ? WHERE `rent_id` = ?");
-    $update_rent->bind_param("sssss", $es_name, $es_price, $cover_photo, $other_info, $rent_id);
+    $update_rent = $conn->prepare("UPDATE `rentspace` SET `name` = ?, `price` = ?, `image_cover` = ?, `other_info` = ?,rate=? WHERE `rent_id` = ?");
+    $update_rent->bind_param("ssssss", $es_name, $es_price, $cover_photo, $other_info,$es_rate, $rent_id);
     $update_rent->execute();
 
     // --- 6. UPDATE EVENT_SPACE TABLE ---
