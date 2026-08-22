@@ -12,7 +12,7 @@ $saved_amenities = [];
 if ($rent_id) {
     // 1. RENTSPACE DETAILS
     $get_rent = $conn->prepare("
-        SELECT name, price, image_cover, other_info, landlord_id, user_id, type
+        SELECT name, price, image_cover, other_info, landlord_id, user_id, type,rate
         FROM rentspace 
         WHERE rent_id = ?
     ");
@@ -28,6 +28,7 @@ if ($rent_id) {
         $landlord_id = $rent_row['landlord_id'];
         $user_id     = $rent_row['user_id'];
         $type        = $rent_row['type'];
+         $rate        = $rent_row['rate'];
     }
 
     // 2. EVENT SPACE UNITS
@@ -246,7 +247,7 @@ if ($rent_id && isset($user_id_login) && $user_id_login) {
               <div class="bg-primary/10 p-4 rounded-xl border border-primary/20">
                 <span class="text-xs font-semibold text-success uppercase tracking-wider">Rental Rate</span>
                 <div class="text-3xl font-black text-success mt-1">
-                  ₱<?= number_format((float)$price, 2); ?> <span class="text-sm font-normal text-base-content/70">/ Hour</span>
+                  ₱<?= number_format((float) $price, 2); ?> <span class="text-sm font-normal text-base-content/70">/ <?php echo $rate; ?></span>
                 </div>
               </div>
 

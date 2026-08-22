@@ -12,7 +12,7 @@ $saved_amenities = [];
 if ($rent_id) {
     // 1. RENTSPACE DETAILS
     $get_rent = $conn->prepare("
-        SELECT name, price, image_cover, other_info, landlord_id, user_id, type
+        SELECT name, price, image_cover, other_info, landlord_id, user_id, type,rate
         FROM rentspace 
         WHERE rent_id = ?
     ");
@@ -28,6 +28,7 @@ if ($rent_id) {
         $landlord_id = $rent_row['landlord_id'];
         $user_id     = $rent_row['user_id'];
         $type        = $rent_row['type'];
+         $rate        = $rent_row['rate'];
     }
 
     // 2. COMMERCIAL DETAILS
@@ -241,9 +242,9 @@ if ($rent_id && $user_id_login) {
               <div class="divider my-3"></div>
 
               <div class="bg-primary/10 p-4 rounded-xl border border-primary/20">
-                <span class="text-xs font-semibold text-success uppercase tracking-wider">Monthly Rent</span>
+                <span class="text-xs font-semibold text-success uppercase tracking-wider">Rental Rent</span>
                 <div class="text-3xl font-black text-success mt-1">
-                  ₱<?= number_format((float)$price, 2); ?> <span class="text-sm font-normal text-base-content/70">/ month</span>
+                  ₱<?= number_format((float) $price, 2); ?> <span class="text-sm font-normal text-base-content/70">/ <?php echo $rate; ?></span>
                 </div>
               </div>
 

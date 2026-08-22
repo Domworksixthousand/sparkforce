@@ -46,7 +46,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-5">
       <?php
         $get_rental = $conn->prepare("
-            SELECT r.*, l.province, l.municipality, l.barangay, l.property_name,r.price,r.type
+            SELECT r.*, l.province, l.municipality, l.barangay, l.property_name,r.price,r.type,r.rate
             FROM rentspace r
             LEFT JOIN landlord l ON l.landlord_id = r.landlord_id WHERE r.price >= ? AND r.price <= ? AND r.type = ?
         ");
@@ -62,6 +62,7 @@
                 $type        = htmlspecialchars($row_rentals['type'] ?? '');
                 $image       = htmlspecialchars($row_rentals['image_cover'] ?? '');
                 $property_name       = htmlspecialchars($row_rentals['property_name'] ?? '');
+                $rate       = htmlspecialchars($row_rentals['rate'] ?? '');
                 $price       = $row_rentals['price'] ?? 0;
 
                 $location = trim(
@@ -76,12 +77,6 @@
                     ? 'assets/uploads/' . $image
                     : 'assets/images/background_cover.png';
 
-
-                  if($type === "Event Space" || $type === "Transient House" || $type === "Parking Space" ||  $type === "Vacant Lot" ){
-                    $extention = "Hour";
-                  }else{
-                    $extention = "Month";
-                  }
 
                 if($type === "Boarding House / Bedspace"){
                   $locate = "boarding_details.php";
@@ -140,7 +135,7 @@
                         <div class="mt-auto flex items-center justify-between pt-3 border-t border-gray-100">
                             <p class="text-sm font-bold text-emerald-600">
                                 &#8369;' . number_format((float)$price, 2) . '
-                                <span class="text-xs font-normal text-gray-400">/ ' .$extention.'</span>
+                                <span class="text-xs font-normal text-gray-400">/ ' .$rate.'</span>
                             </p>
                         </div>
                     </div>
