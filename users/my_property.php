@@ -1,5 +1,3 @@
-
-
 <?php
   include '../config.php'; 
   if(!isset($_SESSION['user_login'])){
@@ -96,30 +94,27 @@
         <!--main content-->
         <main>
             <section class="my-container py-[50px]">
-                <div class="mb-3 text-end">
-                    <a href="<?php echo $location_add; ?>?property_id=<?php echo $landlord_id; ?>" class="btn btn-success text-white ">Add</a>
+
+                <!-- Toolbar card -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
+                    <div class="flex items-center justify-between gap-3 flex-wrap mb-4">
+                        <h1 class="text-lg font-bold text-gray-800 m-0"><?php echo htmlspecialchars($property_name); ?></h1>
+                        <a href="<?php echo $location_add; ?>?property_id=<?php echo $landlord_id; ?>" class="inline-flex items-center gap-1.5 bg-[#0d9488] hover:bg-[#0b7d73] text-white px-4 py-2.5 rounded-lg text-sm font-semibold no-underline transition hover:-translate-y-0.5 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                            Add
+                        </a>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-3 flex-wrap">
+                        <label class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 max-w-[420px] w-full focus-within:border-[#0fab9e] focus-within:ring-2 focus-within:ring-[#0fab9e]/20 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 shrink-0"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+                            <input type="text" id="pr_search" placeholder="<?php echo htmlspecialchars($placeholder); ?>" class="border-none outline-none bg-transparent py-2.5 w-full text-sm" />
+                        </label>
+                        <div id="pr_result_count" class="text-sm text-gray-500 whitespace-nowrap"></div>
+                    </div>
                 </div>
-                <div class="flex justify-start items-start mb-5  w-[100%]">
-                    <label class="input validator  w-[100%] rounded-[5px]">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search-icon lucide-search"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
-                        <input type="text"  class="autoInput search_data_property input w-[100%]" placeholder="<?php echo $placeholder; ?>"  />
-                    </label>
-                </div>
-                <div class="flex items-center gap-2 mb-10">
-                    <select id="entries_limit1" class="select w-fit rounded-[5px]">
-                      <option value="8" selected>8</option>
-                      <option value="1">1</option>
-                      <option value="2">2</option>
-                      <option value="3">3</option>
-                      <option value="4">4</option>
-                      <option value="5">5</option>
-                      <option value="6">6</option>
-                      <option value="7">7</option>
-                      <option value="All">All</option>
-                    </select>
-                    <p>Entries per Page</p>
-                </div>
-                <div class="data-container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-5">
+
+                <div class="data-container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-5" id="pr_grid">
                   <?php
                   $get_data = $conn->prepare("SELECT * FROM `rentspace` as r WHERE `type` = ? AND `user_id` = ? AND `landlord_id` = ? ORDER BY  `name` ASC");
                   $get_data->bind_param("sss", $type, $user_id_login, $landlord_id);
@@ -132,7 +127,7 @@
                       $rate = $row['rate'];
 
                          echo '
-                        <div class="main-data group relative h-80 overflow-hidden rounded-2xl shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
+                        <div class="main-data pr-card-item group relative h-80 overflow-hidden rounded-2xl shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
 
                             <!-- Background Cover -->
                             <div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
@@ -181,24 +176,25 @@
                         </div>
                       ';
                       }
-                  } else {
-                      echo '<div class="col-span-full flex items-center justify-center py-20 text-center">
-                              <div class="flex flex-col items-center gap-3 text-gray-400">
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bed-icon lucide-bed"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>
-                                  <p class="text-sm font-medium">No Data Found</p>
-                              </div>
-                            </div>';
-                    }
+                  }
                   ?>
-                    <div class="no-data-shown hidden col-span-full flex items-center justify-center py-20 text-center">
-                    <div class="flex flex-col items-center gap-3 text-gray-400">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bed-icon lucide-bed">
-                        <path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/>
-                      </svg>
-                      <p class="text-sm font-medium">No Data Found</p>
-                    </div>
+                </div>
+
+                <div class="no-data-shown hidden col-span-full flex items-center justify-center py-20 text-center" id="pr_empty_state">
+                  <div class="flex flex-col items-center gap-3 text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bed-icon lucide-bed">
+                      <path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/>
+                    </svg>
+                    <p class="text-sm font-medium">No Data Found</p>
                   </div>
-                </div> 
+                </div>
+
+                <!-- Pagination -->
+                <div class="flex items-center justify-between gap-3 flex-wrap bg-white rounded-xl shadow-sm border border-gray-100 px-5 py-4" id="pr_pagination">
+                    <div class="text-sm text-gray-500" id="pr_pagination_info"></div>
+                    <div class="flex items-center gap-1.5 flex-wrap" id="pr_pagination_controls"></div>
+                </div>
+
             </section>
         </main>
 

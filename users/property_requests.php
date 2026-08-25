@@ -1,5 +1,3 @@
-
-
 <?php
   include '../config.php'; 
   if(!isset($_SESSION['user_login'])){
@@ -44,82 +42,91 @@
         <!--main content-->
         <main class="">
            <section class="my-container py-[50px]">
-                    <div class="flex justify-start items-start mb-5  w-[100%]">
-                        <label class="input validator  w-[100%] rounded-[5px]">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search-icon lucide-search"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
-                            <input type="text"  class="search_data1 input w-[100%] " placeholder="Property Type, Property Name, Address"  />
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+
+                    <!-- Toolbar -->
+                    <div class="flex items-center justify-between gap-3 flex-wrap px-5 py-4 border-b border-gray-100">
+                        <label class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 max-w-[380px] w-full focus-within:border-[#0fab9e] focus-within:ring-2 focus-within:ring-[#0fab9e]/20 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 shrink-0"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+                            <input type="text" id="pr_search" placeholder="Search by property type, name, or address" class="border-none outline-none bg-transparent py-2.5 w-full text-sm" />
                         </label>
+                        <div id="pr_result_count" class="text-sm text-gray-500 whitespace-nowrap"></div>
                     </div>
-                    <div class="flex items-center gap-2 mb-10">
-                        <select id="entries_limit1" class="select w-fit rounded-[5px]">
-                            <option value="8" selected>8</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                            <option value="6">6</option>
-                            <option value="7">7</option>
-                            <option value="All">All</option>
-                        </select>
-                        <p>Entries per Page</p>
-                    </div>
+
                     <div class="overflow-x-auto">
-                        <table class="table table-zebra">
+                        <table class="table w-full border-collapse" id="pr_table">
                             <thead>
-                                <tr  class="bg-[#0d9488] text-white">
-                                    <th class="text-center">Property Type</th>
-                                    <th class="text-center">Property Name</th>
-                                    <th class="text-center">Address</th>
-                                    <th class="text-center">Date Request</th>
-                                    <th class="text-center">Status</th>
-                                    <th class="text-center">Actions</th>
+                                <tr class="bg-gradient-to-b from-[#0fab9e] to-[#0d9488] text-white">
+                                    <th class="text-center font-semibold text-xs uppercase tracking-wide px-4 py-3.5">Property Type</th>
+                                    <th class="text-center font-semibold text-xs uppercase tracking-wide px-4 py-3.5">Property Name</th>
+                                    <th class="text-center font-semibold text-xs uppercase tracking-wide px-4 py-3.5">Address</th>
+                                    <th class="text-center font-semibold text-xs uppercase tracking-wide px-4 py-3.5">Date Request</th>
+                                    <th class="text-center font-semibold text-xs uppercase tracking-wide px-4 py-3.5">Status</th>
+                                    <th class="text-center font-semibold text-xs uppercase tracking-wide px-4 py-3.5">Actions</th>
                                 </tr>
                             </thead>
-                                <tbody class="myTable1">
-                                    <?php
-                                            $request_status = "Pending";
-                                            $get = $conn->prepare("SELECT * FROM `landlord` WHERE  `user_id` = ?  ORDER BY date_request DESC");
-                                            $get->bind_param("s",$user_id_login);
-                                            $get->execute();
-                                            $result_get = $get->get_result();
-                                            if($result_get->num_rows>0){
-                                                while($row = mysqli_fetch_assoc($result_get)){
-                                                $province = $row['province'];
-                                                $municipality = $row['municipality'];
-                                                $barangay = $row['barangay'];
-                                                $address = $row['province'] . ' ' . $row['municipality'] . ' ' . $row['barangay'];
-                                                $type = $row['type'];
-                                                $property_name = $row['property_name'];
-                                                $date_request = $row['date_request'];
-                                                $status = $row['status'];
-                                                $landlord_id = $row['landlord_id'];
+                            <tbody id="pr_table_body">
+                                <?php
+                                        $get = $conn->prepare("SELECT * FROM `landlord` WHERE  `user_id` = ?  ORDER BY date_request DESC");
+                                        $get->bind_param("s",$user_id_login);
+                                        $get->execute();
+                                        $result_get = $get->get_result();
+                                        if($result_get->num_rows>0){
+                                            while($row = mysqli_fetch_assoc($result_get)){
+                                            $province = $row['province'];
+                                            $municipality = $row['municipality'];
+                                            $barangay = $row['barangay'];
+                                            $address = $row['province'] . ' ' . $row['municipality'] . ' ' . $row['barangay'];
+                                            $type = $row['type'];
+                                            $property_name = $row['property_name'];
+                                            $date_request = $row['date_request'];
+                                            $status = $row['status'];
+                                            $landlord_id = $row['landlord_id'];
 
-                                                if($status === "Approved"){
-                                                    $bg_color = "bg-success";
-                                                }elseif($status === "Pending"){
-                                                    $bg_color = "bg-warning";
-                                                }else{
-                                                    $bg_color = "bg-error";
-                                                }
-                                             
-                                            echo '
-                                                <tr class="data-row1">
-                                                    <td class="text-center">' . $type . '</td>
-                                                    <td class="text-center">' . $property_name . '</td>
-                                                    <td class="text-center">' . $address . '</td>
-                                                    <td class="text-center">' . date('F j, Y', strtotime($date_request)) . '</td>
-                                                    <td class="' . $bg_color . ' text-center font-bold">' . $status . '</td>
-                                                    <td class="text-center">
-                                                        <a href="property_requests_info.php?id=' . $landlord_id . '&location_back=request_accounts.php" class="btn btn-success text-white">More Info</a>
-                                                    </td>
-                                                </tr>';
+                                            if($status === "Approved"){
+                                                $badge_class = "bg-emerald-500";
+                                            }elseif($status === "Pending"){
+                                                $badge_class = "bg-amber-500";
+                                            }else{
+                                                $badge_class = "bg-red-500";
                                             }
+
+                                        echo '
+                                            <tr class="pr-row border-b border-gray-100 last:border-b-0 hover:bg-teal-50/60 transition-colors">
+                                                <td class="text-center px-4 py-3.5 text-sm text-gray-700">' . htmlspecialchars($type) . '</td>
+                                                <td class="text-center px-4 py-3.5 text-sm text-gray-700">' . htmlspecialchars($property_name) . '</td>
+                                                <td class="text-center px-4 py-3.5 text-sm text-gray-700">' . htmlspecialchars($address) . '</td>
+                                                <td class="text-center px-4 py-3.5 text-sm text-gray-700">' . date('F j, Y', strtotime($date_request)) . '</td>
+                                                <td class="text-center px-4 py-3.5">
+                                                    <span class="inline-block px-3.5 py-1 rounded-full text-xs font-bold text-white ' . $badge_class . '">' . htmlspecialchars($status) . '</span>
+                                                </td>
+                                                <td class="text-center px-4 py-3.5">
+                                                    <a href="property_requests_info.php?id=' . $landlord_id . '&location_back=request_accounts.php" class="inline-flex items-center gap-1.5 bg-[#0d9488] hover:bg-[#0b7d73] text-white px-4 py-2 rounded-md text-sm font-semibold no-underline transition hover:-translate-y-0.5">
+                                                        More Info
+                                                    </a>
+                                                </td>
+                                            </tr>';
                                         }
-                                    ?>
+                                    }
+                                ?>
                             </tbody>
                         </table>
+
+                        <div class="hidden flex-col items-center justify-center py-16 px-5 text-center text-gray-400" id="pr_empty_state">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-3 opacity-50"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                            <p class="text-sm m-0">No property requests found.</p>
+                        </div>
                     </div>
+
+                    <!-- Pagination -->
+                    <div class="flex items-center justify-between gap-3 flex-wrap px-5 py-4 border-t border-gray-100" id="pr_pagination">
+                        <div class="text-sm text-gray-500" id="pr_pagination_info"></div>
+                        <div class="flex items-center gap-1.5 flex-wrap" id="pr_pagination_controls"></div>
+                    </div>
+
+                </div>
+
             </section>   
         </main>
       </div>
@@ -136,4 +143,3 @@
     <script src="./../assets/scripts/query_filter.js"></script>
 </body>
 </html>
-

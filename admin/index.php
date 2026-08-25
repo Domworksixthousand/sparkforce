@@ -21,7 +21,6 @@
     <script src="./../assets/scripts/jquery.js"></script>
     <script src="../assets/scripts/apex_chart.js"></script>
 </head>
-<!-- INAYOS: Binigyan ng overflow-x-hidden at min-h-screen -->
 <body class="bg-base-100 no-scrollbar overflow-x-hidden min-h-screen">
 
   <!---alert-->
@@ -32,7 +31,6 @@
   <div class="drawer lg:drawer-open min-h-screen">
     <input id="my-drawer" type="checkbox" class="drawer-toggle" />
     
-    <!-- INAYOS: Binigyan ng min-w-0 at overflow-x-hidden para hindi lumagpas ang main content -->
     <div class="drawer-content flex flex-col min-w-0 overflow-x-hidden">
       <nav class="navbar w-full bg-base-300 px-4 bg-[#0fab9e]">
         <label for="my-drawer" aria-label="open sidebar" class="btn btn-square btn-ghost lg:hidden">
@@ -42,8 +40,8 @@
       </nav>
 
       <div class="p-6">
-        <!--main content-->
         <main class="space-y-6">
+
           <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0fab9e]/10 via-base-100 to-base-100 border border-base-200 p-6 md:p-8">
             <svg xmlns="http://www.w3.org/2000/svg" class="absolute -right-6 -bottom-6 size-40 text-[#0fab9e]/10 pointer-events-none" fill="currentColor" viewBox="0 0 24 24">
               <path d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/>
@@ -88,10 +86,8 @@
               $blocked = mysqli_fetch_assoc($res4)['total'] ?? 0;
             ?>
 
-            <!-- INAYOS: Pinalitan ang w-[100%] ng w-full -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 w-full">
               
-              <!-- Verified Card -->
               <div class="bg-white p-5 rounded-xl border border-emerald-100 cursor-pointer shadow-sm flex items-center justify-between min-w-0" onclick="location.href='accounts.php'">
                 <div>
                   <p class="text-xs font-semibold uppercase tracking-wider text-emerald-600">Verified</p>
@@ -104,7 +100,6 @@
                 </div>
               </div>
 
-              <!-- Pending Card -->
               <div class="bg-white p-5 rounded-xl border border-amber-100 cursor-pointer shadow-sm flex items-center justify-between min-w-0" onclick="location.href='request_accounts.php'">
                 <div>
                   <p class="text-xs font-semibold uppercase tracking-wider text-amber-600">Pending</p>
@@ -117,7 +112,6 @@
                 </div>
               </div>
 
-              <!-- Disapproved Card -->
               <div class="bg-white p-5 rounded-xl border border-rose-100 cursor-pointer shadow-sm flex items-center justify-between min-w-0" onclick="location.href='disapproved_accounts.php'">
                 <div>
                   <p class="text-xs font-semibold uppercase tracking-wider text-rose-600">Disapproved</p>
@@ -130,7 +124,6 @@
                 </div>
               </div>
 
-              <!-- Blocked Card -->
               <div class="bg-white p-5 rounded-xl border border-slate-200 cursor-pointer shadow-sm flex items-center justify-between min-w-0" onclick="location.href='blocked_accounts.php'">
                 <div>
                   <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Blocked</p>
@@ -157,10 +150,8 @@
               $disapproved_properties = mysqli_fetch_assoc($res3)['total'] ?? 0;
             ?>
 
-            <!-- INAYOS: Pinalitan ang w-[100%] ng w-full -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
               
-              <!-- Verified Properties Card -->
               <div class="bg-white p-5 rounded-xl border border-emerald-100 shadow-sm flex items-center justify-between cursor-pointer hover:border-emerald-300 transition-colors min-w-0" onclick="location.href='verified_properties.php'">
                 <div>
                   <p class="text-xs font-semibold uppercase tracking-wider text-emerald-600">Verified Properties</p>
@@ -173,7 +164,6 @@
                 </div>
               </div>
 
-              <!-- Pending Properties Card -->
               <div class="bg-white p-5 rounded-xl border border-amber-100 shadow-sm flex items-center justify-between cursor-pointer hover:border-amber-300 transition-colors min-w-0" onclick="location.href='pending_properties.php'">
                 <div>
                   <p class="text-xs font-semibold uppercase tracking-wider text-amber-600">Pending Properties</p>
@@ -188,161 +178,302 @@
 
             </div>
           </section>
-         </section>
+
+          <?php
+        
+            $reg_q_daily = mysqli_query($conn, "
+              SELECT DATE(`date_request`) as label, COUNT(*) as total 
+              FROM `accounts` 
+              WHERE `user_type` > 1 AND `date_request` IS NOT NULL 
+              GROUP BY DATE(`date_request`) 
+              ORDER BY DATE(`date_request`) ASC
+            ");
+            $reg_d_labels = []; $reg_d_totals = [];
+            while ($r = mysqli_fetch_assoc($reg_q_daily)) {
+                $reg_d_labels[] = $r['label'];
+                $reg_d_totals[] = (int)$r['total'];
+            }
+
+            $reg_q_weekly = mysqli_query($conn, "
+              SELECT CONCAT('Week ', WEEK(MIN(`date_request`)), ' (', YEAR(MIN(`date_request`)), ')') as label, COUNT(*) as total 
+              FROM `accounts` 
+              WHERE `user_type` <= 2 AND `date_request` IS NOT NULL 
+              GROUP BY YEAR(`date_request`), WEEK(`date_request`) 
+              ORDER BY MIN(`date_request`) ASC
+            ");
+            $reg_w_labels = []; $reg_w_totals = [];
+            while ($r = mysqli_fetch_assoc($reg_q_weekly)) {
+                $reg_w_labels[] = $r['label'];
+                $reg_w_totals[] = (int)$r['total'];
+            }
+
+            $reg_q_monthly = mysqli_query($conn, "
+              SELECT DATE_FORMAT(MIN(`date_request`), '%b %Y') as label, COUNT(*) as total 
+              FROM `accounts` 
+              WHERE `user_type` <= 2 AND `date_request` IS NOT NULL 
+              GROUP BY YEAR(`date_request`), MONTH(`date_request`) 
+              ORDER BY MIN(`date_request`) ASC
+            ");
+            $reg_m_labels = []; $reg_m_totals = [];
+            while ($r = mysqli_fetch_assoc($reg_q_monthly)) {
+                $reg_m_labels[] = $r['label'];
+                $reg_m_totals[] = (int)$r['total'];
+            }
+
+            $reg_q_yearly = mysqli_query($conn, "
+              SELECT YEAR(`date_request`) as label, COUNT(*) as total 
+              FROM `accounts` 
+              WHERE `user_type` <= 2 AND `date_request` IS NOT NULL 
+              GROUP BY YEAR(`date_request`) 
+              ORDER BY YEAR(`date_request`) ASC
+            ");
+            $reg_y_labels = []; $reg_y_totals = [];
+            while ($r = mysqli_fetch_assoc($reg_q_yearly)) {
+                $reg_y_labels[] = $r['label'];
+                $reg_y_totals[] = (int)$r['total'];
+            }
+
+            /* ---- 2. APPROVED PROPERTIES (prop_) ---- */
+            $prop_q_daily = $conn->query("
+              SELECT DATE(`date_request`) as label, COUNT(*) as total 
+              FROM `landlord` 
+              WHERE `status` = 'Approved' AND `date_request` IS NOT NULL 
+              GROUP BY DATE(`date_request`) 
+              ORDER BY DATE(`date_request`) ASC
+            ");
+            $prop_d_labels = []; $prop_d_totals = [];
+            while ($r = $prop_q_daily->fetch_assoc()) {
+                $prop_d_labels[] = $r['label'];
+                $prop_d_totals[] = (int)$r['total'];
+            }
+
+            $prop_q_weekly = $conn->query("
+              SELECT CONCAT('Week ', WEEK(MIN(`date_request`)), ' (', YEAR(MIN(`date_request`)), ')') as label, COUNT(*) as total 
+              FROM `landlord` 
+              WHERE `status` = 'Approved' AND `date_request` IS NOT NULL 
+              GROUP BY YEAR(`date_request`), WEEK(`date_request`) 
+              ORDER BY MIN(`date_request`) ASC
+            ");
+            $prop_w_labels = []; $prop_w_totals = [];
+            while ($r = $prop_q_weekly->fetch_assoc()) {
+                $prop_w_labels[] = $r['label'];
+                $prop_w_totals[] = (int)$r['total'];
+            }
+
+            $prop_q_monthly = $conn->query("
+              SELECT DATE_FORMAT(MIN(`date_request`), '%b %Y') as label, COUNT(*) as total 
+              FROM `landlord` 
+              WHERE `status` = 'Approved' AND `date_request` IS NOT NULL 
+              GROUP BY YEAR(`date_request`), MONTH(`date_request`) 
+              ORDER BY MIN(`date_request`) ASC
+            ");
+            $prop_m_labels = []; $prop_m_totals = [];
+            while ($r = $prop_q_monthly->fetch_assoc()) {
+                $prop_m_labels[] = $r['label'];
+                $prop_m_totals[] = (int)$r['total'];
+            }
+
+            $prop_q_yearly = $conn->query("
+              SELECT YEAR(`date_request`) as label, COUNT(*) as total 
+              FROM `landlord` 
+              WHERE `status` = 'Approved' AND `date_request` IS NOT NULL 
+              GROUP BY YEAR(`date_request`) 
+              ORDER BY YEAR(`date_request`) ASC
+            ");
+            $prop_y_labels = []; $prop_y_totals = [];
+            while ($r = $prop_q_yearly->fetch_assoc()) {
+                $prop_y_labels[] = $r['label'];
+                $prop_y_totals[] = (int)$r['total'];
+            }
+
+            /* ---- 3. REPORTS (rep_) ---- */
+            $rep_q_daily = $conn->query("SELECT DATE(date_reported) as period, COUNT(*) as total FROM `report` GROUP BY DATE(date_reported) ORDER BY period ASC");
+            $rep_d_labels = []; $rep_d_totals = [];
+            while ($row = $rep_q_daily->fetch_assoc()) {
+                $rep_d_labels[] = date('M d, Y', strtotime($row['period']));
+                $rep_d_totals[] = (int)$row['total'];
+            }
+
+            $rep_q_weekly = $conn->query("SELECT YEARWEEK(date_reported, 1) as period, COUNT(*) as total FROM `report` GROUP BY YEARWEEK(date_reported, 1) ORDER BY period ASC");
+            $rep_w_labels = []; $rep_w_totals = [];
+            while ($row = $rep_q_weekly->fetch_assoc()) {
+                $rep_w_labels[] = "Week " . substr($row['period'], 4) . " (" . substr($row['period'], 0, 4) . ")";
+                $rep_w_totals[] = (int)$row['total'];
+            }
+
+            $rep_q_monthly = $conn->query("SELECT DATE_FORMAT(date_reported, '%Y-%m') as period, COUNT(*) as total FROM `report` GROUP BY DATE_FORMAT(date_reported, '%Y-%m') ORDER BY period ASC");
+            $rep_m_labels = []; $rep_m_totals = [];
+            while ($row = $rep_q_monthly->fetch_assoc()) {
+                $rep_m_labels[] = date('F Y', strtotime($row['period'] . '-01'));
+                $rep_m_totals[] = (int)$row['total'];
+            }
+
+            $rep_q_yearly = $conn->query("SELECT YEAR(date_reported) as period, COUNT(*) as total FROM `report` GROUP BY YEAR(date_reported) ORDER BY period ASC");
+            $rep_y_labels = []; $rep_y_totals = [];
+            while ($row = $rep_q_yearly->fetch_assoc()) {
+                $rep_y_labels[] = (string)$row['period'];
+                $rep_y_totals[] = (int)$row['total'];
+            }
+          ?>
+
           <section class="p-6 bg-slate-50 rounded-2xl">
-            <?php
-              // --- 1. DAILY QUERY ---
-              $q_daily = mysqli_query($conn, "
-                SELECT DATE(`date_request`) as label, COUNT(*) as total 
-                FROM `accounts` 
-                WHERE `user_type` > 1 AND `date_request` IS NOT NULL 
-                GROUP BY DATE(`date_request`) 
-                ORDER BY DATE(`date_request`) ASC
-              ");
-              $d_labels = []; $d_totals = [];
-              while ($r = mysqli_fetch_assoc($q_daily)) {
-                  $d_labels[] = $r['label'];
-                  $d_totals[] = (int)$r['total'];
-              }
-
-              // --- 2. WEEKLY QUERY ---
-              $q_weekly = mysqli_query($conn, "
-                SELECT CONCAT('Week ', WEEK(MIN(`date_request`)), ' (', YEAR(MIN(`date_request`)), ')') as label, COUNT(*) as total 
-                FROM `accounts` 
-                WHERE `user_type` <= 2 AND `date_request` IS NOT NULL 
-                GROUP BY YEAR(`date_request`), WEEK(`date_request`) 
-                ORDER BY MIN(`date_request`) ASC
-              ");
-              $w_labels = []; $w_totals = [];
-              while ($r = mysqli_fetch_assoc($q_weekly)) {
-                  $w_labels[] = $r['label'];
-                  $w_totals[] = (int)$r['total'];
-              }
-
-              // --- 3. MONTHLY QUERY ---
-              $q_monthly = mysqli_query($conn, "
-                SELECT DATE_FORMAT(MIN(`date_request`), '%b %Y') as label, COUNT(*) as total 
-                FROM `accounts` 
-                WHERE `user_type` <= 2 AND `date_request` IS NOT NULL 
-                GROUP BY YEAR(`date_request`), MONTH(`date_request`) 
-                ORDER BY MIN(`date_request`) ASC
-              ");
-              $m_labels = []; $m_totals = [];
-              while ($r = mysqli_fetch_assoc($q_monthly)) {
-                  $m_labels[] = $r['label'];
-                  $m_totals[] = (int)$r['total'];
-              }
-
-              // --- 4. YEARLY QUERY ---
-              $q_yearly = mysqli_query($conn, "
-                SELECT YEAR(`date_request`) as label, COUNT(*) as total 
-                FROM `accounts` 
-                WHERE `user_type` <= 2 AND `date_request` IS NOT NULL 
-                GROUP BY YEAR(`date_request`) 
-                ORDER BY YEAR(`date_request`) ASC
-              ");
-              $y_labels = []; $y_totals = [];
-              while ($r = mysqli_fetch_assoc($q_yearly)) {
-                  $y_labels[] = $r['label'];
-                  $y_totals[] = (int)$r['total'];
-              }
-            ?>
-
             <div class="w-full bg-white p-6 rounded-xl border border-slate-200 shadow-sm min-w-0">
-              <!-- Header & Toggle Buttons -->
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div>
                   <h2 class="text-xl font-bold text-slate-800">Account Registration Analytics</h2>
-                  <p class="text-sm text-slate-500">User registrations trend over time </p>
+                  <p class="text-sm text-slate-500">User registrations trend over time</p>
                 </div>
-
-                <!-- Filter Controls -->
                 <div class="inline-flex p-1 bg-slate-100 rounded-lg text-sm font-medium text-slate-600 self-start sm:self-auto">
-                  <button onclick="updateChart('daily')" id="btn-daily" class="px-3 py-1.5 rounded-md bg-white text-slate-800 shadow-sm transition-all">Daily</button>
-                  <button onclick="updateChart('weekly')" id="btn-weekly" class="px-3 py-1.5 rounded-md hover:text-slate-800 transition-all">Weekly</button>
-                  <button onclick="updateChart('monthly')" id="btn-monthly" class="px-3 py-1.5 rounded-md hover:text-slate-800 transition-all">Monthly</button>
-                  <button onclick="updateChart('yearly')" id="btn-yearly" class="px-3 py-1.5 rounded-md hover:text-slate-800 transition-all">Yearly</button>
+                  <button onclick="updateChart('reg', 'daily')"   id="reg-btn-daily"   class="px-3 py-1.5 rounded-md bg-white text-slate-800 shadow-sm transition-all">Daily</button>
+                  <button onclick="updateChart('reg', 'weekly')"  id="reg-btn-weekly"  class="px-3 py-1.5 rounded-md hover:text-slate-800 transition-all">Weekly</button>
+                  <button onclick="updateChart('reg', 'monthly')" id="reg-btn-monthly" class="px-3 py-1.5 rounded-md hover:text-slate-800 transition-all">Monthly</button>
+                  <button onclick="updateChart('reg', 'yearly')"  id="reg-btn-yearly"  class="px-3 py-1.5 rounded-md hover:text-slate-800 transition-all">Yearly</button>
                 </div>
               </div>
-
-              <!-- Chart Container -->
-              <div id="registrationChart" class="w-full h-80 min-w-0"></div>
+              <div id="reg-chart" class="w-full h-80 min-w-0"></div>
             </div>
           </section>
-        <section class="p-6 bg-slate-50 rounded-2xl">
-            <?php
 
-              $q_daily = $conn->query("
-                SELECT DATE(`date_request`) as label, COUNT(*) as total 
-                FROM `landlord` 
-                WHERE `status` = 'Approved' AND `date_request` IS NOT NULL 
-                GROUP BY DATE(`date_request`) 
-                ORDER BY DATE(`date_request`) ASC
-              ");
-              $d_labels = []; $d_totals = [];
-              while ($r = $q_daily->fetch_assoc()) {
-                  $d_labels[] = $r['label'];
-                  $d_totals[] = (int)$r['total'];
-              }
-
-              $q_weekly = $conn->query("
-                SELECT CONCAT('Week ', WEEK(MIN(`date_request`)), ' (', YEAR(MIN(`date_request`)), ')') as label, COUNT(*) as total 
-                FROM `landlord` 
-                WHERE `status` = 'Approved' AND `date_request` IS NOT NULL 
-                GROUP BY YEAR(`date_request`), WEEK(`date_request`) 
-                ORDER BY MIN(`date_request`) ASC
-              ");
-              $w_labels = []; $w_totals = [];
-              while ($r = $q_weekly->fetch_assoc()) {
-                  $w_labels[] = $r['label'];
-                  $w_totals[] = (int)$r['total'];
-              }
-
-              $q_monthly = $conn->query("
-                SELECT DATE_FORMAT(MIN(`date_request`), '%b %Y') as label, COUNT(*) as total 
-                FROM `landlord` 
-                WHERE `status` = 'Approved' AND `date_request` IS NOT NULL 
-                GROUP BY YEAR(`date_request`), MONTH(`date_request`) 
-                ORDER BY MIN(`date_request`) ASC
-              ");
-              $m_labels = []; $m_totals = [];
-              while ($r = $q_monthly->fetch_assoc()) {
-                  $m_labels[] = $r['label'];
-                  $m_totals[] = (int)$r['total'];
-              }
-
-              $q_yearly = $conn->query("
-                SELECT YEAR(`date_request`) as label, COUNT(*) as total 
-                FROM `landlord` 
-                WHERE `status` = 'Approved' AND `date_request` IS NOT NULL 
-                GROUP BY YEAR(`date_request`) 
-                ORDER BY YEAR(`date_request`) ASC
-              ");
-              $y_labels = []; $y_totals = [];
-              while ($r = $q_yearly->fetch_assoc()) {
-                  $y_labels[] = $r['label'];
-                  $y_totals[] = (int)$r['total'];
-              }
-            ?>
-
+          <section class="p-6 bg-slate-50 rounded-2xl">
             <div class="w-full bg-white p-6 rounded-xl border border-slate-200 shadow-sm min-w-0">
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div>
                   <h2 class="text-xl font-bold text-slate-800">Approved Properties Analytics</h2>
                   <p class="text-sm text-slate-500">Properties approved over time</p>
                 </div>
-
                 <div class="inline-flex p-1 bg-slate-100 rounded-lg text-sm font-medium text-slate-600 self-start sm:self-auto">
-                  <button onclick="updatePropChart('daily')" id="prop-btn-daily" class="px-3 py-1.5 rounded-md bg-white text-slate-800 shadow-sm transition-all">Daily</button>
-                  <button onclick="updatePropChart('weekly')" id="prop-btn-weekly" class="px-3 py-1.5 rounded-md hover:text-slate-800 transition-all">Weekly</button>
-                  <button onclick="updatePropChart('monthly')" id="prop-btn-monthly" class="px-3 py-1.5 rounded-md hover:text-slate-800 transition-all">Monthly</button>
-                  <button onclick="updatePropChart('yearly')" id="prop-btn-yearly" class="px-3 py-1.5 rounded-md hover:text-slate-800 transition-all">Yearly</button>
+                  <button onclick="updateChart('prop', 'daily')"   id="prop-btn-daily"   class="px-3 py-1.5 rounded-md bg-white text-slate-800 shadow-sm transition-all">Daily</button>
+                  <button onclick="updateChart('prop', 'weekly')"  id="prop-btn-weekly"  class="px-3 py-1.5 rounded-md hover:text-slate-800 transition-all">Weekly</button>
+                  <button onclick="updateChart('prop', 'monthly')" id="prop-btn-monthly" class="px-3 py-1.5 rounded-md hover:text-slate-800 transition-all">Monthly</button>
+                  <button onclick="updateChart('prop', 'yearly')"  id="prop-btn-yearly"  class="px-3 py-1.5 rounded-md hover:text-slate-800 transition-all">Yearly</button>
                 </div>
               </div>
-
-              <div id="propertiesChart" class="w-full h-80 min-w-0"></div>
+              <div id="prop-chart" class="w-full h-80 min-w-0"></div>
             </div>
           </section>
+
+          <section class="p-6 bg-slate-50 rounded-2xl">
+            <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+              <h3 class="text-slate-800 font-bold text-lg">Reports Overview</h3>
+              <div class="bg-slate-200/80 p-1 rounded-lg flex space-x-1 text-sm font-medium text-slate-600">
+                <button id="rep-btn-daily"   onclick="updateChart('rep', 'daily')"   class="px-3 py-1.5 rounded-md bg-white text-slate-800 shadow-sm transition-all">Daily</button>
+                <button id="rep-btn-weekly"  onclick="updateChart('rep', 'weekly')"  class="px-3 py-1.5 rounded-md hover:text-slate-800 transition-all">Weekly</button>
+                <button id="rep-btn-monthly" onclick="updateChart('rep', 'monthly')" class="px-3 py-1.5 rounded-md hover:text-slate-800 transition-all">Monthly</button>
+                <button id="rep-btn-yearly"  onclick="updateChart('rep', 'yearly')"  class="px-3 py-1.5 rounded-md hover:text-slate-800 transition-all">Yearly</button>
+              </div>
+            </div>
+            <div id="rep-chart"></div>
+          </section>
+
+          <script>
+            // ---- One config object per chart, keyed by prefix (reg / prop / rep) ----
+            const chartConfigs = {
+              reg: {
+                containerId: 'reg-chart',
+                seriesName: 'Registrations',
+                color: '#2563eb',
+                datasets: {
+                  daily:   { categories: <?php echo json_encode($reg_d_labels); ?>, data: <?php echo json_encode($reg_d_totals); ?> },
+                  weekly:  { categories: <?php echo json_encode($reg_w_labels); ?>, data: <?php echo json_encode($reg_w_totals); ?> },
+                  monthly: { categories: <?php echo json_encode($reg_m_labels); ?>, data: <?php echo json_encode($reg_m_totals); ?> },
+                  yearly:  { categories: <?php echo json_encode($reg_y_labels); ?>, data: <?php echo json_encode($reg_y_totals); ?> }
+                }
+              },
+              prop: {
+                containerId: 'prop-chart',
+                seriesName: 'Approved Properties',
+                color: '#059669',
+                datasets: {
+                  daily:   { categories: <?php echo json_encode($prop_d_labels); ?>, data: <?php echo json_encode($prop_d_totals); ?> },
+                  weekly:  { categories: <?php echo json_encode($prop_w_labels); ?>, data: <?php echo json_encode($prop_w_totals); ?> },
+                  monthly: { categories: <?php echo json_encode($prop_m_labels); ?>, data: <?php echo json_encode($prop_m_totals); ?> },
+                  yearly:  { categories: <?php echo json_encode($prop_y_labels); ?>, data: <?php echo json_encode($prop_y_totals); ?> }
+                }
+              },
+              rep: {
+                containerId: 'rep-chart',
+                seriesName: 'Reports Count',
+                color: '#dc2626',
+                datasets: {
+                  daily:   { categories: <?php echo json_encode($rep_d_labels); ?>, data: <?php echo json_encode($rep_d_totals); ?> },
+                  weekly:  { categories: <?php echo json_encode($rep_w_labels); ?>, data: <?php echo json_encode($rep_w_totals); ?> },
+                  monthly: { categories: <?php echo json_encode($rep_m_labels); ?>, data: <?php echo json_encode($rep_m_totals); ?> },
+                  yearly:  { categories: <?php echo json_encode($rep_y_labels); ?>, data: <?php echo json_encode($rep_y_totals); ?> }
+                }
+              }
+            };
+
+            // One ApexCharts instance per prefix, so we can .destroy() before re-render
+            const chartInstances = {};
+
+            function renderChart(prefix, period) {
+              const config = chartConfigs[prefix];
+              const dataset = config.datasets[period];
+              const container = document.querySelector('#' + config.containerId);
+              if (!container) return;
+
+              if (chartInstances[prefix]) {
+                chartInstances[prefix].destroy();
+              }
+              container.innerHTML = '';
+
+              const options = {
+                series: [{ name: config.seriesName, data: dataset.data }],
+                chart: {
+                  type: 'bar',
+                  height: 320,
+                  toolbar: { show: false },
+                  fontFamily: 'Inter, sans-serif',
+                  animations: { enabled: true }
+                },
+                colors: [config.color],
+                plotOptions: {
+                  bar: {
+                    horizontal: false,
+                    columnWidth: dataset.data.length < 5 ? '45%' : '55%',
+                    borderRadius: 4
+                  }
+                },
+                dataLabels: {
+                  enabled: true,
+                  style: { fontSize: '1rem', fontWeight: '700', colors: ['#ffffff'] },
+                  formatter: (val) => (val > 0 ? val : ''),
+                  dropShadow: { enabled: true, top: 1, left: 1, blur: 2, color: '#000000', opacity: 0.4 }
+                },
+                xaxis: {
+                  categories: dataset.categories,
+                  labels: { style: { colors: '#64748b', fontSize: '12px', fontWeight: '500' } }
+                },
+                yaxis: {
+                  min: 0,
+                  forceNiceScale: true,
+                  labels: { style: { colors: '#64748b' }, formatter: (val) => Math.floor(val) }
+                },
+                grid: { borderColor: '#f1f5f9', padding: { top: 10, right: 20, left: 20 } },
+                tooltip: { theme: 'light' }
+              };
+
+              chartInstances[prefix] = new ApexCharts(container, options);
+              chartInstances[prefix].render();
+            }
+
+            function updateChart(prefix, period) {
+              renderChart(prefix, period);
+              ['daily', 'weekly', 'monthly', 'yearly'].forEach(p => {
+                const btn = document.getElementById(`${prefix}-btn-${p}`);
+                if (!btn) return;
+                btn.className = (p === period)
+                  ? 'px-3 py-1.5 rounded-md bg-white text-slate-800 shadow-sm transition-all'
+                  : 'px-3 py-1.5 rounded-md hover:text-slate-800 transition-all';
+              });
+            }
+
+            // Initial load for all three charts
+            renderChart('reg', 'daily');
+            renderChart('prop', 'daily');
+            renderChart('rep', 'daily');
+          </script>
+
         </main>
       </div>
     </div>
@@ -357,242 +488,3 @@
   <script src="./../assets/scripts/query_filter.js"></script>
 </body>
 </html>
-
-
-<script>
-  const chartDatasets = {
-    daily: {
-      categories: <?php echo json_encode($d_labels); ?>,
-      data: <?php echo json_encode($d_totals); ?>
-    },
-    weekly: {
-      categories: <?php echo json_encode($w_labels); ?>,
-      data: <?php echo json_encode($w_totals); ?>
-    },
-    monthly: {
-      categories: <?php echo json_encode($m_labels); ?>,
-      data: <?php echo json_encode($m_totals); ?>
-    },
-    yearly: {
-      categories: <?php echo json_encode($y_labels); ?>,
-      data: <?php echo json_encode($y_totals); ?>
-    }
-  };
-
-  let chart = null;
-
-  function renderChart(period) {
-    const dataset = chartDatasets[period];
-    const container = document.querySelector("#registrationChart");
-
-    if (chart) {
-      chart.destroy();
-    }
-    container.innerHTML = '';
-
-    const options = {
-      series: [{
-        name: 'Registered Accounts',
-        data: dataset.data
-      }],
-      chart: {
-        type: 'bar',
-        height: 320,
-        toolbar: { show: false },
-        fontFamily: 'Inter, sans-serif',
-        animations: { enabled: true }
-      },
-      colors: ['#2563eb'],
-      plotOptions: {
-        bar: {
-          horizontal: false,
-          columnWidth: dataset.data.length < 5 ? '45%' : '55%',
-          borderRadius: 4,
-          dataLabels: {
-            position: 'center'  
-          }
-        }
-      },
-      dataLabels: {
-        enabled: true,
-        enabledOnSeries: [0],
-        offsetY: 0,
-        offsetX: 0,
-        textAnchor: 'middle',
-        style: {
-          fontSize: '2rem',       
-          fontWeight: '800',      
-          colors: ['#ffffff']     
-        },
-        formatter: function (val) {
-          return val > 0 ? val : '';
-        },
-        background: {
-          enabled: false       
-        },
-        dropShadow: {
-          enabled: true,
-          top: 1,
-          left: 1,
-          blur: 2,
-          color: '#000000',
-          opacity: 0.4    
-        }
-      },
-      xaxis: {
-        categories: dataset.categories,
-        labels: { 
-          style: { colors: '#64748b', fontSize: '13px', fontWeight: '500' } 
-        }
-      },
-      yaxis: {
-        min: 0,
-        forceNiceScale: true,
-        labels: {
-          style: { colors: '#64748b' },
-          formatter: (val) => Math.floor(val)
-        }
-      },
-      grid: {
-        borderColor: '#f1f5f9',
-        padding: { top: 10, right: 20, left: 20 }
-      },
-      tooltip: { theme: 'light' }
-    };
-
-    chart = new ApexCharts(container, options);
-    chart.render();
-  }
-
-  renderChart('daily');
-
-  function updateChart(period) {
-    renderChart(period);
-
-    ['daily', 'weekly', 'monthly', 'yearly'].forEach(p => {
-      const btn = document.getElementById(`btn-${p}`);
-      btn.className = (p === period) 
-        ? "px-3 py-1.5 rounded-md bg-white text-slate-800 shadow-sm transition-all"
-        : "px-3 py-1.5 rounded-md hover:text-slate-800 transition-all";
-    });
-  }
-</script>
-
-
-
-<script>
-  const propDatasets = {
-    daily: {
-      categories: <?php echo json_encode($d_labels); ?>,
-      data: <?php echo json_encode($d_totals); ?>
-    },
-    weekly: {
-      categories: <?php echo json_encode($w_labels); ?>,
-      data: <?php echo json_encode($w_totals); ?>
-    },
-    monthly: {
-      categories: <?php echo json_encode($m_labels); ?>,
-      data: <?php echo json_encode($m_totals); ?>
-    },
-    yearly: {
-      categories: <?php echo json_encode($y_labels); ?>,
-      data: <?php echo json_encode($y_totals); ?>
-    }
-  };
-
-  let propChart = null;
-
-  function renderPropChart(period) {
-    const dataset = propDatasets[period];
-    const container = document.querySelector("#propertiesChart");
-
-    if (propChart) {
-      propChart.destroy();
-    }
-    container.innerHTML = '';
-
-    const options = {
-      series: [{
-        name: 'Approved Properties',
-        data: dataset.data
-      }],
-      chart: {
-        type: 'bar',
-        height: 320,
-        toolbar: { show: false },
-        fontFamily: 'Inter, sans-serif',
-        animations: { enabled: true }
-      },
-      colors: ['#059669'], 
-      plotOptions: {
-        bar: {
-          horizontal: false,
-          columnWidth: dataset.data.length < 5 ? '45%' : '55%',
-          borderRadius: 4,
-          dataLabels: {
-            position: 'center'
-          }
-        }
-      },
-      dataLabels: {
-        enabled: true,
-        enabledOnSeries: [0],
-        offsetY: 0,
-        offsetX: 0,
-        textAnchor: 'middle',
-        style: {
-          fontSize: '20px',
-          fontWeight: '800',
-          colors: ['#ffffff']
-        },
-        formatter: function (val) {
-          return val > 0 ? val : '';
-        },
-        background: { enabled: false },
-        dropShadow: {
-          enabled: true,
-          top: 1,
-          left: 1,
-          blur: 2,
-          color: '#000000',
-          opacity: 0.4
-        }
-      },
-      xaxis: {
-        categories: dataset.categories,
-        labels: { 
-          style: { colors: '#64748b', fontSize: '13px', fontWeight: '500' } 
-        }
-      },
-      yaxis: {
-        min: 0,
-        forceNiceScale: true,
-        labels: {
-          style: { colors: '#64748b' },
-          formatter: (val) => Math.floor(val)
-        }
-      },
-      grid: {
-        borderColor: '#f1f5f9',
-        padding: { top: 10, right: 20, left: 20 }
-      },
-      tooltip: { theme: 'light' }
-    };
-
-    propChart = new ApexCharts(container, options);
-    propChart.render();
-  }
-
-  renderPropChart('daily');
-
-  function updatePropChart(period) {
-    renderPropChart(period);
-
-    ['daily', 'weekly', 'monthly', 'yearly'].forEach(p => {
-      const btn = document.getElementById(`prop-btn-${p}`);
-      btn.className = (p === period) 
-        ? "px-3 py-1.5 rounded-md bg-white text-slate-800 shadow-sm transition-all"
-        : "px-3 py-1.5 rounded-md hover:text-slate-800 transition-all";
-    });
-  }
-</script>

@@ -91,7 +91,12 @@
             <li>
                 <a href="reports.php" class="flex items-center gap-3 active">                           
                     <svg xmlns="http://www.w3.org/2000/svg" width="25" class="text-white" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-flag-icon lucide-flag"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528"/></svg>
-                <span class="text-white">Reports</span>
+                    <span class="text-white">
+                        Reports
+                    <div class="report_data indicator  ms-5">
+                    <!--count-->
+                    </div>
+                    </span>
                 </a>
             </li>
             <div class="divider text-white"></div>
@@ -104,6 +109,3 @@
         </ul>
       </div>
 
-
-
-      

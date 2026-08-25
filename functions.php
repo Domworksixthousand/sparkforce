@@ -16,10 +16,10 @@ if(isset($_GET['update_messages'])){
     $seen_status = "seen";
     $update = $conn->prepare("UPDATE messages SET `status` = ? WHERE `sender_id` = ? AND `receiver_id` = ? AND `status` != ?");
     $update->bind_param("ssss", $seen_status, $update_messages, $user_id_login, $seen_status);
-    $update->execute();
-
+    $update->execute();  
     header("location:users/chat_portal.php");
     exit;
+  
 }
 
 if(isset($_GET['noti_id'])){
@@ -3527,5 +3527,115 @@ if (isset($_POST['update_es'])) {
 
     $_SESSION['success'] = "Event Space Updated Successfully";
     header("Location: users/my_property.php?property_id=" . urlencode($landlord_id));
+    exit;
+}
+
+if (isset($_POST['save_report'])) {
+ 
+    $report_type       = $_POST['report_type'] ?? '';
+    $user_id_reported  = $_POST['user_id_reported'] ?? '';
+    $rent_id            = $_POST['rent_id'] ?? '';
+    $reason             = trim($_POST['reason'] ?? '');
+    $location_back      = basename($_POST['location_back'] ?? '');
+    $status             = 'Pending';
+   
+    $datetoday          = date('Y-m-d H:i:s');
+ 
+    if (!$user_id_login) {
+        $_SESSION['error'] = 'You must be logged in to submit a report.';
+        header('location: ../login.php');
+        exit;
+    }
+ 
+    if ($reason === '') {
+        $_SESSION['error'] = 'Please describe your concern.';
+        header('location: users/report.php?id=' . urlencode($rent_id)
+            . '&location_back=' . urlencode($location_back)
+            . '&user_id=' . urlencode($user_id_reported)
+            . '&report_type=' . urlencode($report_type));
+        exit;
+    }
+ 
+    $report_id = $report_type . '_' . uniqid();
+ 
+    $check = $conn->prepare("SELECT * FROM `report` WHERE `report_type` = ? AND `user_id_reporter` = ? AND `user_id_reported` = ? AND `post_id` = ? AND `status` = ?");
+    $check->bind_param("sssss", $report_type, $user_id_login, $user_id_reported, $rent_id, $status);
+    $check->execute();
+    $result_check = $check->get_result();
+ 
+    if ($result_check->num_rows > 0) {
+        $check->close();
+        $_SESSION['error'] = 'Report Already on Process';
+ 
+        header('location: users/report.php?id=' . urlencode($rent_id)
+            . '&location_back=' . urlencode($location_back)
+            . '&user_id=' . urlencode($user_id_reported)
+            . '&report_type=' . urlencode($report_type));
+        exit;
+    }
+ 
+    $check->close();
+ 
+    // -------------------------------------------------------------
+    // Handle the photo upload. The original code collected
+    // gallery[] files but never moved them to disk or inserted them
+    // into report_images — that logic was missing entirely.
+    // -------------------------------------------------------------
+    $upload_dir      = __DIR__ . '/assets/uploads/';
+    $allowed_types   = ['image/jpeg', 'image/png'];
+    $saved_filenames = [];
+ 
+    if (!empty($_FILES['gallery']['name'][0])) {
+        foreach ($_FILES['gallery']['tmp_name'] as $i => $tmp_name) {
+            if ($_FILES['gallery']['error'][$i] !== UPLOAD_ERR_OK) {
+                continue;
+            }
+            $mime = mime_content_type($tmp_name);
+            if (!in_array($mime, $allowed_types, true)) {
+                continue; // skip anything that isn't actually a jpg/png
+            }
+            $ext      = pathinfo($_FILES['gallery']['name'][$i], PATHINFO_EXTENSION);
+            $filename = uniqid('report_', true) . '.' . $ext;
+ 
+            if (move_uploaded_file($tmp_name, $upload_dir . $filename)) {
+                $saved_filenames[] = $filename;
+            }
+        }
+    }
+ 
+    // Photos retained from a previous failed attempt count too.
+    if (!empty($_SESSION['gallery'])) {
+        $saved_filenames = array_merge($saved_filenames, $_SESSION['gallery']);
+    }
+ 
+    if (empty($saved_filenames)) {
+        $_SESSION['error'] = 'Please attach at least one photo.';
+        header('location: users/report.php?id=' . urlencode($rent_id)
+            . '&location_back=' . urlencode($location_back)
+            . '&user_id=' . urlencode($user_id_reported)
+            . '&report_type=' . urlencode($report_type));
+        exit;
+    }
+ 
+    // -------------------------------------------------------------
+    // Insert the report, then one row per photo into report_images.
+    // (The original insert here had `report_id` listed as a column
+    // twice, no VALUES clause, and was never executed.)
+    // -------------------------------------------------------------
+    $insert_report = $conn->prepare("INSERT INTO report (`report_id`,`report_type`,`user_id_reporter`,`user_id_reported`,`reason`,`post_id`,`status`,`date_reported`) VALUES (?,?,?,?,?,?,?,?)");
+    $insert_report->bind_param("ssssssss", $report_id, $report_type, $user_id_login, $user_id_reported, $reason, $rent_id, $status, $datetoday);
+    $insert_report->execute();
+    $insert_report->close();
+ 
+    $insert_image = $conn->prepare("INSERT INTO `report_images` (`report_id`, `image_name`) VALUES (?, ?)");
+    foreach ($saved_filenames as $filename) {
+        $insert_image->bind_param("ss", $report_id, $filename);
+        $insert_image->execute();
+    }
+    $insert_image->close();
+ 
+    unset($_SESSION['gallery']);
+    $_SESSION['success'] = 'Successfully Reported';
+    header('location: users/' . $location_back . '?id=' . urlencode($rent_id));
     exit;
 }
