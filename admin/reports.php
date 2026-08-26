@@ -92,7 +92,7 @@
                                         $fullname = $lastname . " " . $firstname . " " . $middlename . " " . $suffix;
                                       
 
-                                            if($status === "Approved"){
+                                            if($status === "Resolved"){
                                                 $badge_class = "bg-emerald-500";
                                             }elseif($status === "Pending"){
                                                 $badge_class = "bg-amber-500";

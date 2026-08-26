@@ -14,9 +14,12 @@ if ($result_count && $result_count->num_rows > 0) {
     $reports_count = $row_count['reports_count'] ?? 0;
 }
 
-
-    echo "
-        <span class='indicator-item badge badge-error text-white'>
-            $reports_count
-        </span>
-    ";
+    if($reports_count > 0){
+ 
+        echo "
+            <span class='indicator-item badge badge-error text-white'>
+                $reports_count
+            </span>
+        ";
+        
+    }

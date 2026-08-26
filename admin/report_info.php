@@ -89,6 +89,17 @@ $status_styles = [
 $status_key   = strtolower($status ?? 'pending');
 [$status_badge_class, $status_dot_class] = $status_styles[$status_key] ?? $status_styles['pending'];
 
+
+$stmt = $conn->prepare("SELECT COUNT(DISTINCT user_id_reporter) as total_reported FROM report WHERE `post_id` = ?");
+$stmt->bind_param("s", $post_id);
+$stmt->execute();
+$result = $stmt->get_result(); 
+$row = $result->fetch_assoc();
+
+$total_reported = (int)$row['total_reported'];
+
+
+
 // Small escaping helper for output
 function h($v) { return htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8'); }
 ?>
@@ -103,7 +114,7 @@ function h($v) { return htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8'); }
     <div class="flex items-center justify-between mb-4">
       <div>
         <h3 class="text-lg font-bold text-gray-800">Report #<?= h($report_id) ?></h3>
-        <p class="text-sm text-gray-400"><?= h($date_reported) ?></p>
+       <p class="text-sm text-gray-400"><?= h(date('F j, Y', strtotime($date_reported))) ?></p>
       </div>
       <span class="px-3 py-1 rounded-full text-xs font-semibold <?= $status_badge_class ?>">
         <span class="inline-block w-1.5 h-1.5 rounded-full mr-1.5 align-middle <?= $status_dot_class ?>"></span><?= h(ucfirst($status ?? 'pending')) ?>
@@ -247,12 +258,26 @@ function h($v) { return htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8'); }
       <?php endif; ?>
     </div>
 
-    <div class="modal-action mt-6">
-      <button type="button" onclick="location.href='reports.php'" class="btn btn-ghost rounded-[5px]">Close</button>
-      <?php if ($status_key === 'pending' || $status_key === 'reviewing'): ?>
-        <button type="submit" class="btn text-white bg-[#0d9488] hover:bg-[#0b7d73] border-none rounded-[5px]">Mark Resolved</button>
-      <?php endif; ?>
-    </div>
+   <div class="modal-action mt-6">
+      <?php
+      if ($total_reported > 10) {
+          ?>
+          <!-- Halimbawa: May kasamang user_id sa URL para alam kung sino ang ibaban -->
+          <a href="report_ban_form.php?reoprt_id=<?= $report_id ?>" class="btn btn-error">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-x-icon lucide-shield-x"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m14.5 9.5-5 5"/><path d="m9.5 9.5 5 5"/></svg>
+              Ban Account
+          </a>
+          <?php
+      } else {
+          ?>
+          <a href="warning_form.php?report_id=<?= $report_id ?>" class="btn btn-warning text-black">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-triangle-alert-icon lucide-triangle-alert"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+              Send Warning
+          </a>
+          <?php
+      }
+      ?>
+  </div>
 
   </div>
 </dialog>

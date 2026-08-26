@@ -30,7 +30,7 @@ if(isset($_GET['noti_id'])){
     $update->bind_param("ss", $status, $noti_id);
     $update->execute();
 
-    header("location:users/$link");
+    header("location:users/$link?noti_id=$noti_id");
     exit;
 }
 
@@ -3638,4 +3638,65 @@ if (isset($_POST['save_report'])) {
     $_SESSION['success'] = 'Successfully Reported';
     header('location: users/' . $location_back . '?id=' . urlencode($rent_id));
     exit;
+}
+
+if(isset($_POST['send_warning'])){
+    $report_id = $_POST['report_id'];
+    $message = $_POST['message'];
+
+    $get_details = $conn->prepare("SELECT * FROM `report` WHERE `report_id` = ?");
+    $get_details->bind_param("s", $report_id);
+    $get_details->execute();
+    $result_details = $get_details->get_result();
+
+    if ($result_details && $result_details->num_rows > 0) {
+        $row_details       = $result_details->fetch_assoc();
+        $report_type       = $row_details['report_type'];
+        $user_id_reporter  = $row_details['user_id_reporter'];
+        $user_id_reported  = $row_details['user_id_reported'];
+        $reason            = $row_details['reason'];
+        $post_id           = $row_details['post_id'];
+        $status            = $row_details['status'];
+        $date_reported     = $row_details['date_reported'];
+    }
+
+    $check_noti = $conn->prepare("SELECT * FROM `report_count` WHERE post_id = ? AND `reporter_id` = ? AND `reported_id` = ?");
+    $check_noti->bind_param("sss",$post_id,$user_id_reporter,$user_id_reported);
+    $check_noti->execute();
+    $result_check = $check_noti->get_result();
+    if($result_check->num_rows>0){
+        $_SESSION['error'] = "User Already sent a Warning";
+        header("location:admin/reports.php");
+        exit;
+    }else{
+        $unseen = "unseen";
+        $sender = "RENTSPACE TEAM";
+        $link = "report_message.php";
+        //send noti sa reported
+        $insert = $conn->prepare("INSERT INTO `notifications` (`text_noti`, `status`, `date_sent`, `time_sent`, `sender`, `receiver`, `link`) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $insert->bind_param("sssssss", $message, $unseen, $datetoday, $timetoday_24_hourformat, $sender, $user_id_reported, $link);
+        $insert->execute();
+
+           //insert count
+        $insert_count = $conn->prepare("INSERT INTO `report_count` (`reported_id`,`post_id`,`reporter_id`) VALUES (?,?,?)");
+        $insert_count->bind_param("sss",$user_id_reported,$post_id,$user_id_reporter);
+        $insert_count->execute();
+
+        //update report
+        $status = "Resolved";
+        $update_status = $conn->prepare("UPDATE `report` SET `status` = ? WHERE `report_id` = ?");
+        $update_status->bind_param("ss",$status,$report_id);
+        $update_status->execute();
+
+        //sende message sa reporter
+        $mess = "Action has been taken regarding your report. Thank you for helping keep our community safe.";
+        $insert = $conn->prepare("INSERT INTO `notifications` (`text_noti`, `status`, `date_sent`, `time_sent`, `sender`, `receiver`, `link`) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $insert->bind_param("sssssss", $mess, $unseen, $datetoday, $timetoday_24_hourformat, $sender, $user_id_reporter, $link);
+        $insert->execute();
+
+        $_SESSION['success'] = "Successfully notified";
+        header("location:admin/reports.php");
+        exit;
+
+    }
 }
