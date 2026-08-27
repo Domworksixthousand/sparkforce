@@ -3576,11 +3576,7 @@ if (isset($_POST['save_report'])) {
  
     $check->close();
  
-    // -------------------------------------------------------------
-    // Handle the photo upload. The original code collected
-    // gallery[] files but never moved them to disk or inserted them
-    // into report_images — that logic was missing entirely.
-    // -------------------------------------------------------------
+  
     $upload_dir      = __DIR__ . '/assets/uploads/';
     $allowed_types   = ['image/jpeg', 'image/png'];
     $saved_filenames = [];

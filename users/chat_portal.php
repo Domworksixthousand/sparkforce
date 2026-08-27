@@ -119,8 +119,11 @@
               <img src="<?php echo htmlspecialchars($final_photo); ?>" alt="<?php echo htmlspecialchars($fullname); ?>" class="object-cover" />
             </div>
           </div>
-          <div>
+          <div class="flex items-center justify-between  w-[100%]">
             <h3 class="font-bold text-sm"><?php echo htmlspecialchars($fullname); ?></h3>
+             <a href="report.php?user_id=<?php echo urlencode($user_id_chat); ?>&location_back=messages.php&id=<?php echo urlencode($user_id_chat); ?>&report_type=Message" class=" tooltip tooltip-left h-fit text-blue-900 me-7  hover:bg-blue-200 active:bg-red-400 rounded-lg p-1.5 flex items-center justify-center transition-all cursor-pointer border-none outline-none" data-tip="Report">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-circle-warning-icon lucide-message-circle-warning"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+            </a>
           </div>
         </header>
         <div id="message_body" class="flex-1 overflow-y-auto p-4 space-y-4">

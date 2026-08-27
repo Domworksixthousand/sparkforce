@@ -200,15 +200,28 @@
                                     ? '../assets/uploads/' . $image
                                     : '../assets/images/background_cover.png';
 
-                                $extention = in_array($type, ["Event Space", "Transient House", "Parking Space", "Vacant Lot"]) ? "Hour" : "Month";
+                     
                                 $locate = ($type === "Boarding House / Bedspace") ? "boarding_details.php" : "apartment_details.php";
+
+                                if($type === "Boarding House / Bedspace"){
+                                    $locate = "boarding_details.php";
+                                }elseif($type === "Apartment"){
+                                    $locate = "apartment_details.php";
+                                }elseif($type === "Condominium"){
+                                    $locate = "condo_details.php";
+                                }elseif($type === "Commercial Space"){
+                                    $locate = "cs_details.php";
+                                }elseif($type === "House"){
+                                    $locate = "house_details.php";
+                                }elseif($type === "Event Space"){
+                                    $locate = "es_details.php";
+                                }
 
                                 $map_locations[] = [
                                     'id'           => $rent_id,
                                     'title'        => $property_name,
                                     'name'         => $name,
                                     'price'        => number_format((float)$price, 2),
-                                    'ext'          => $extention,
                                     'type'         => $type,
                                     'url'          => $locate . '?id=' . $rent_id,
                                     'image'        => $image_url,

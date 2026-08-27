@@ -8,7 +8,16 @@ if (isset($_GET['property_id'])) {
     exit;
 }
 ?>
+<script src="https://cdn.tiny.cloud/1/ssew95wvyspsqckuynqjy38ov5ktrks0qbp94mxchgh1ucty/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 
+    <script>
+      tinymce.init({
+        selector: '#myEditor',
+        height: 300,
+        plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table help wordcount',
+        toolbar: 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help'
+      });
+    </script>
 <dialog id="my_modal_3" class="modal" open>
   <div class="modal-box w-11/12 max-w-1xl ">
     <form method="dialog">
@@ -20,11 +29,7 @@ if (isset($_GET['property_id'])) {
       </button>
     </form>
 
-    <?php if (!empty($_SESSION['error'])): ?>
-        <div class="alert alert-error text-white mb-4 text-sm">
-            <?php echo htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?>
-        </div>
-    <?php endif; ?>
+    
 
     <form action="../functions.php" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="landlord_id" value="<?php echo htmlspecialchars($landlord_id); ?>">
@@ -86,7 +91,7 @@ if (isset($_GET['property_id'])) {
         <div class="w-[100%] flex flex-col lg:flex-row gap-3 mb-5">
             <span class="w-[100%]">
                 <p class="mb-2 text-sm">Other Informations *</p>
-                <textarea class="input w-[100%] border border-gray-300 rounded-sm min-h-50 p-3" name="cs_other_info" placeholder="Enter Other Informations" required><?php echo htmlspecialchars($_SESSION['cs_other_info'] ?? ''); ?></textarea>
+                <textarea  id="myEditor" name="cs_other_info" placeholder="Enter Other Informations" required><?php echo htmlspecialchars($_SESSION['cs_other_info'] ?? ''); ?></textarea>
             </span>
         </div>
 

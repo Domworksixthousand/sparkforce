@@ -218,7 +218,9 @@ if ($rent_id && $user_id_login) {
                   <i class="fa-solid fa-building"></i> <?= htmlspecialchars(ucfirst($type ?: 'Apartment')); ?>
                 </span>
               </div>
-
+              <a href="report.php?user_id=<?php echo urlencode($user_id); ?>&location_back=apartment_details.php&id=<?php echo urlencode($rent_id); ?>&report_type=Post" class="<?php echo $hidden; ?> tooltip tooltip-left absolute bottom-4 right-27 lg:top-4 h-fit text-blue-900 bg-green-300 hover:bg-blue-200 active:bg-red-400 rounded-lg p-1.5 flex items-center justify-center transition-all cursor-pointer border-none outline-none" data-tip="Report">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-circle-warning-icon lucide-message-circle-warning"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+              </a>
               <a href="chat_portal.php?id=<?= urlencode($user_id); ?>" 
                  class="<?= $hidden; ?> tooltip tooltip-left absolute bottom-4 right-15 lg:top-4 h-fit text-blue-900 bg-green-300 hover:bg-blue-200 active:bg-red-400 rounded-lg p-1.5 flex items-center justify-center transition-all cursor-pointer border-none outline-none" 
                  data-tip="Message Landlord">

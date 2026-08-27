@@ -1,21 +1,9 @@
 <?php
 
-// -----------------------------------------------------------------
-// Only ever include a page from this whitelist. The original code
-// did `include "$location_back";` straight from $_GET, which lets
-// anyone include arbitrary files on the server.
-// -----------------------------------------------------------------
-$allowed_pages = [
-    'amenities.php',
-    'rentals.php',
-    'listings.php',
-    // add every page this modal is legitimately opened from
-];
-
 $location_back = basename($_GET['location_back'] ?? '');
 
 
-include $location_back;
+include "$location_back";
 
 $user_id     = $_GET['user_id'] ?? '';
 $rent_id     = $_GET['id'] ?? '';
@@ -33,11 +21,6 @@ $report_type = $_GET['report_type'] ?? '';
         <input type="hidden" name="rent_id" value="<?php echo htmlspecialchars($rent_id); ?>">
         <input type="hidden" name="location_back" value="<?php echo htmlspecialchars($location_back); ?>">
 
-        <?php if (!empty($_SESSION['error'])): ?>
-            <div class="alert alert-error bg-error/10 text-error border border-error/20 p-2 mb-3 text-xs rounded-lg">
-                <?php echo htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?>
-            </div>
-        <?php endif; ?>
 
         <div class="w-[100%] mb-3">
                 <p class="mb-2 text-sm"> Photos  *</p>
