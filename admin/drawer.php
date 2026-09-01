@@ -50,7 +50,7 @@
                     </li>
                     <li>
                         <a href="blocked_accounts.php" class="block text-sm text-white hover:text-white py-1 px-2">
-                            Blocked Accounts                   
+                            Banned Accounts                   
                         </a>
                     </li>
                 </ul>

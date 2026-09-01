@@ -29,9 +29,17 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-      
-        if (totalMatched === 0) {
-            $(".myTable").append('<tr id="no-data-row"><td colspan="5" class="text-center py-4 font-semibold ">No Data Found!</td></tr>');
+     if (totalMatched === 0) {
+            $(".myTable").append(`
+                <tr id="no-data-row">
+                    <td colspan="5" class="p-0 border-none">
+                        <div class="flex flex-col items-center justify-center py-16 px-5 text-center text-base-content/40 w-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-3 opacity-50"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                            <p class="text-sm m-0">No property requests found.</p>
+                        </div>
+                    </td>
+                </tr>
+            `);
         }
     }
 
@@ -85,7 +93,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
       
         if (totalMatched === 0) {
-            $(".myTable1").append('<tr id="no-data-row1"><td colspan="6" class="text-center py-4 font-semibold ">No Data Found!</td></tr>');
+             $(".myTable1").append(`
+                <tr id="no-data-row1">
+                    <td colspan="6" class="p-0 border-none">
+                        <div class="flex flex-col items-center justify-center py-16 px-5 text-center text-base-content/40 w-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-3 opacity-50"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                            <p class="text-sm m-0">No Amenties found.</p>
+                        </div>
+                    </td>
+                </tr>
+            `);
         }
     }
 
@@ -195,7 +212,7 @@ document.addEventListener("DOMContentLoaded", ()=> {
     fetchData();
 
 });
-
+/*
 document.addEventListener("DOMContentLoaded", function () {
 
     const CARDS_PER_PAGE = 8; 
@@ -323,7 +340,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     render();
-});
+});*/
 
 document.addEventListener("DOMContentLoaded", function () {
    $(document).ready(function () {
@@ -356,12 +373,20 @@ document.addEventListener("DOMContentLoaded", function () {
 }); 
 });
 
+
 //property request
+/*
 document.addEventListener("DOMContentLoaded", function () {
 
     const ROWS_PER_PAGE = 8; 
 
     const $tbody      = $("#pr_table_body");
+
+    // ✅ IDAGDAG ITO — huwag tumakbo itong script kung walang table sa page na ito
+    if ($tbody.length === 0) {
+        return;
+    }
+
     const allRows      = $tbody.find("tr.pr-row").toArray();
     const $search       = $("#pr_search");
     const $emptyState   = $("#pr_empty_state");
@@ -480,4 +505,198 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     render();
+});*/
+
+//my_property.php script
+ document.addEventListener("DOMContentLoaded", function(){
+ $(function () {
+    var $search = $('#pr_search');
+    var $grid = $('#pr_grid');
+    var $cards = $grid.find('.pr-card-item');
+    var $count = $('#pr_result_count');
+    var $empty = $('#pr_empty_state');
+    var total = $cards.length;
+
+    function filterCards() {
+      var q = $search.val().toLowerCase().trim();
+      var visible = 0;
+
+      $cards.each(function () {
+        var $card = $(this);
+        var name = ($card.attr('data-name') || '').toLowerCase();
+
+        if (name.indexOf(q) !== -1) {
+          $card.show();
+          visible++;
+        } else {
+          $card.hide();
+        }
+      });
+
+      $count.text(
+        q === ''
+          ? total + ' item' + (total !== 1 ? 's' : '')
+          : visible + ' of ' + total + ' item' + (total !== 1 ? 's' : '')
+      );
+
+      if (visible === 0) {
+        $empty.removeClass('hidden').addClass('flex');
+      } else {
+        $empty.addClass('hidden').removeClass('flex');
+      }
+    }
+
+    $search.on('input keyup', filterCards);
+
+    // initialize count on page load
+    filterCards();
+  });
+ });
+
+//property_request.php
+ document.addEventListener("DOMContentLoaded", function(){
+    $(document).ready(function() {
+    const rowsPerPage = 5; // Adjust number of rows per page if needed
+    let currentPage = 1;
+
+    function filterAndPagination() {
+        const query = $('#pr_search1').val().toLowerCase().trim();
+        const $rows = $('#pr_table_body1 tr.pr-row');
+        let matchedRows = [];
+
+        // Filter rows based on search input (checks property type, name, address, etc.)
+        $rows.each(function() {
+            const rowText = $(this).text().toLowerCase();
+            if (rowText.includes(query)) {
+                matchedRows.push(this);
+            }
+        });
+
+        const totalMatches = matchedRows.length;
+        const totalPages = Math.ceil(totalMatches / rowsPerPage) || 1;
+
+        if (currentPage > totalPages) {
+            currentPage = totalPages;
+        }
+
+        // Hide all rows initially
+        $rows.hide();
+
+        // Show only rows for the current page
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage;
+        
+        for (let i = startIndex; i < endIndex && i < totalMatches; i++) {
+            $(matchedRows[i]).show();
+        }
+
+        // Toggle empty state message
+        if (totalMatches === 0) {
+            $('#pr_empty_state').removeClass('hidden').addClass('flex');
+            $('#pr_pagination1').hide();
+        } else {
+            $('#pr_empty_state').removeClass('flex').addClass('hidden');
+            $('#pr_pagination1').show();
+        }
+
+        // Update result count info
+        if (totalMatches > 0) {
+            $('#pr_result_count').text(`Showing ${startIndex + 1}-${Math.min(endIndex, totalMatches)} of ${totalMatches} entries`);
+        } else {
+            $('#pr_result_count').text('0 entries found');
+        }
+
+        // Render Pagination Controls
+        renderPaginationControls(totalPages);
+    }
+
+    function renderPaginationControls(totalPages) {
+        const $controls = $('#pr_pagination_controls');
+        $controls.empty();
+
+        if (totalPages <= 1) {
+            $('#pr_pagination_info').text('');
+            return;
+        }
+
+        $('#pr_pagination_info').text(`Page ${currentPage} of ${totalPages}`);
+
+        // Previous Button
+        const prevDisabled = currentPage === 1 ? 'opacity-50 cursor-not-allowed' : '';
+        $controls.append(`<button class="px-3 py-1 text-sm border rounded bg-white hover:bg-gray-100 ${prevDisabled}" id="pr_prev_btn">Prev</button>`);
+
+        // Page Number Buttons
+        for (let i = 1; i <= totalPages; i++) {
+            const activeClass = i === currentPage ? 'bg-[#0fab9e] text-white border-[#0fab9e]' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100';
+            $controls.append(`<button class="px-3 py-1 text-sm border rounded page-num-btn ${activeClass}" data-page="${i}">${i}</button>`);
+        }
+
+        // Next Button
+        const nextDisabled = currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : '';
+        $controls.append(`<button class="px-3 py-1 text-sm border rounded bg-white hover:bg-gray-100 ${nextDisabled}" id="pr_next_btn">Next</button>`);
+    }
+
+    // Event Listeners
+    $('#pr_search1').on('keyup input', function() {
+        currentPage = 1; // Reset to page 1 on search
+        filterAndPagination();
+    });
+
+    $(document).on('click', '.page-num-btn', function() {
+        currentPage = parseInt($(this).attr('data-page'));
+        filterAndPagination();
+    });
+
+    $(document).on('click', '#pr_prev_btn', function() {
+        if (currentPage > 1) {
+            currentPage--;
+            filterAndPagination();
+        }
+    });
+
+    $(document).on('click', '#pr_next_btn', function() {
+        const $rows = $('#pr_table_body1 tr.pr-row').filter(function() {
+            const query = $('#pr_search1').val().toLowerCase().trim();
+            return $(this).text().toLowerCase().includes(query);
+        });
+        const totalPages = Math.ceil($rows.length / rowsPerPage);
+        
+        if (currentPage < totalPages) {
+            currentPage++;
+            filterAndPagination();
+        }
+    });
+
+    // Initial call on page load
+    filterAndPagination();
+});
+ });
+
+//admin reports.php
+ document.addEventListener("DOMContentLoaded", function(){
+$(document).ready(function() {
+    $('#pr_search2').on('keyup', function() {
+        var value = $(this).val().toLowerCase();
+        var visibleCount = 0;
+
+        $('#pr_table_body .pr-row2').filter(function() {
+            var rowText = $(this).text().toLowerCase();
+            var isMatch = rowText.indexOf(value) > -1;
+            $(this).toggle(isMatch);
+            if (isMatch) {
+                visibleCount++;
+            }
+        });
+
+        // Update result count display kung mayroon man
+        $('#pr_result_count').text(visibleCount + ' report(s) found');
+
+        // Ipakita o itago ang empty state kung walang makita
+        if (visibleCount === 0) {
+            $('#pr_empty_state').removeClass('hidden').addClass('flex');
+        } else {
+            $('#pr_empty_state').removeClass('flex').addClass('hidden');
+        }
+    });
+});
 });

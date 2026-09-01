@@ -235,7 +235,7 @@ if ($already_viewed == 0) {
           <form action="../functions.php" method="POST" class="tooltip tooltip-left absolute bottom-4 right-4 h-fit lg:top-4 " data-tip="<?php echo ($switch == 'on') ? 'Remove from Favorites' : 'Add to my Favorites'; ?>">
 
               <input type="hidden" name="type" value="<?php echo $type; ?>">
-              <input type="hidden" name="locate" value="boarding_details.php">
+              <input type="hidden" name="locate" value="apartment_details.php">
               <input type="hidden" name="rent_id" value="<?php echo $rent_id; ?>">
               <input type="hidden" name="current_status" value="<?php echo $switch; ?>">
 
@@ -265,7 +265,7 @@ if ($already_viewed == 0) {
           <div class="flex flex-col justify-between space-y-4">
             <div>
               <h1 class="text-2xl md:text-3xl font-extrabold text-base-content">
-                <?= htmlspecialchars($name); ?>
+              <?= htmlspecialchars(mb_strlen($name) > 22 ? mb_substr($name, 0, 22) . '...' : $name); ?>
               </h1>
               <p class="text-sm text-base-content/70 mt-1 flex items-center gap-1.5">
                 <i class="fa-solid fa-location-dot text-error"></i> 
@@ -322,7 +322,7 @@ if ($already_viewed == 0) {
               <i class="fa-solid fa-circle-info text-success"></i> About This Apartment
             </h2>
             <p class="text-base-content/80 text-sm leading-relaxed whitespace-pre-line">
-              <?= htmlspecialchars($other_info ?: 'No description available for this apartment space.'); ?>
+              <?= $other_info ?: 'No description available for this apartment space.'; ?>
             </p>
           </div>
 

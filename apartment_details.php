@@ -251,7 +251,7 @@ if($result_account->num_rows > 0){
               <i class="fa-solid fa-circle-info text-success"></i> About This Apartment
             </h2>
             <p class="text-base-content/80 text-sm leading-relaxed whitespace-pre-line">
-              <?= htmlspecialchars($other_info ?: 'No description available for this apartment space.'); ?>
+              <?= $other_info ?: 'No description available for this apartment space.'; ?>
             </p>
           </div>
 
@@ -395,9 +395,9 @@ if($result_account->num_rows > 0){
             <img src="assets/images/logo-icon.png" class="w-6 h-6 object-contain" alt="Logo" onerror="this.src='assets/images/placeholder.png';">
           </div>
           <div class="min-w-0 flex-1">
-            <h2 class="font-bold text-base text-base-content truncate">
-              <?= htmlspecialchars($property_name ?: 'RentSpace'); ?>
-            </h2>
+           <h1 class="text-2xl md:text-3xl font-extrabold text-base-content">
+                <?= htmlspecialchars(mb_strlen($name) > 22 ? mb_substr($name, 0, 22) . '...' : $name); ?>
+            </h1>
             <span class="text-xs text-base-content/60 flex items-center gap-1">
               <i class="fa-solid fa-building text-success text-[10px]"></i> Landlord Listings
             </span>

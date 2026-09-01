@@ -232,8 +232,8 @@ if ($rent_id && $user_id_login) {
           <div class="flex flex-col justify-between space-y-4">
             <div>
               <h1 class="text-2xl md:text-3xl font-extrabold text-base-content">
-                <?= htmlspecialchars($name); ?>
-              </h1>
+                <?= htmlspecialchars(mb_strlen($name) > 22 ? mb_substr($name, 0, 22) . '...' : $name); ?>
+            </h1>
               <p class="text-sm text-base-content/70 mt-1 flex items-center gap-1.5">
                 <i class="fa-solid fa-location-dot text-error"></i> 
                 <?= htmlspecialchars(trim("$barangay, $municipality, $province", ", ")); ?>
@@ -283,7 +283,7 @@ if ($rent_id && $user_id_login) {
               <i class="fa-solid fa-circle-info text-success"></i> About This Commercial Space
             </h2>
             <p class="text-base-content/80 text-sm leading-relaxed whitespace-pre-line">
-              <?= htmlspecialchars($other_info ?: 'No description available for this commercial space.'); ?>
+              <?= $other_info ?: 'No description available for this commercial space.'; ?>
             </p>
           </div>
 

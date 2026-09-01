@@ -145,29 +145,29 @@ while ($row = $amen_res->fetch_assoc()) {
 
       <!-- 1. OVERVIEW PANEL -->
       <div class="tab-panel" data-panel="overview">
-        <!-- Quick Specs Summary -->
+        <!-- Quick Specs Summary 
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5 p-3 bg-base-200 rounded-lg text-center text-xs">
           <div>
             <span class="block text-gray-500 font-semibold">Bedrooms</span>
-            <span class="text-sm font-bold text-gray-800"><?php echo !empty($bedroom) ? htmlspecialchars($bedroom) : 'N/A'; ?></span>
+            <span class="text-sm font-bold text-gray-800"><?php// echo !empty($bedroom) ? htmlspecialchars($bedroom) : 'N/A'; ?></span>
           </div>
           <div>
             <span class="block text-gray-500 font-semibold">Bathrooms</span>
-            <span class="text-sm font-bold text-gray-800"><?php echo !empty($bathrooms) ? htmlspecialchars($bathrooms) : 'N/A'; ?></span>
+            <span class="text-sm font-bold text-gray-800"><?php// echo !empty($bathrooms) ? htmlspecialchars($bathrooms) : 'N/A'; ?></span>
           </div>
           <div>
             <span class="block text-gray-500 font-semibold">Area</span>
-            <span class="text-sm font-bold text-gray-800"><?php echo !empty($area) ? htmlspecialchars($area) . ' sqm' : 'N/A'; ?></span>
+            <span class="text-sm font-bold text-gray-800"><?php// echo !empty($area) ? htmlspecialchars($area) . ' sqm' : 'N/A'; ?></span>
           </div>
           <div>
             <span class="block text-gray-500 font-semibold">Parking</span>
-            <span class="text-sm font-bold text-gray-800"><?php echo !empty($parking) ? htmlspecialchars($parking) : 'N/A'; ?></span>
+            <span class="text-sm font-bold text-gray-800"><?php// echo !empty($parking) ? htmlspecialchars($parking) : 'N/A'; ?></span>
           </div>
-        </div>
+        </div>-->
 
         <h3 class="font-semibold text-sm text-gray-500 uppercase tracking-wide mb-2">About this Property</h3>
         <p class="text-sm leading-relaxed text-gray-700 whitespace-pre-line">
-          <?php echo !empty($other_info) ? htmlspecialchars($other_info) : 'No additional information provided.'; ?>
+          <?php echo !empty($other_info) ? $other_info : 'No additional information provided.'; ?>
         </p>
       </div>
 

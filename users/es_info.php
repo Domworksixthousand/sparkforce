@@ -158,7 +158,7 @@ function getStatusBadgeClass($status) {
       <div class="tab-panel" data-panel="overview">
         <h3 class="font-semibold text-sm text-gray-500 uppercase tracking-wide mb-2">About this Venue</h3>
         <p class="text-sm leading-relaxed text-gray-700 whitespace-pre-line">
-          <?php echo !empty($other_info) ? htmlspecialchars($other_info) : 'No additional information provided.'; ?>
+          <?php echo !empty($other_info) ? $other_info : 'No additional information provided.'; ?>
         </p>
       </div>
 

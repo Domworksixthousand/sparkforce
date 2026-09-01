@@ -178,9 +178,11 @@
     <script src="../assets/scripts/cool_alert.js"></script>
     <script src="./../assets/scripts/jquery.js"></script>
     <script src="../assets/scripts/apex_chart.js"></script>
-    
 </head>
 <body class="bg-base-100">
+  <?php
+    include '../banned_modal.php'; 
+  ?>
   <div class="drawer lg:drawer-open ">
     <input id="my-drawer" type="checkbox" class="drawer-toggle" />
     <div class="drawer-content flex flex-col ">

@@ -191,9 +191,9 @@ if ($user_id) {
           <!-- Quick Overview Card -->
           <div class="flex flex-col justify-between space-y-4">
             <div>
-              <h1 class="text-2xl md:text-3xl font-extrabold text-base-content leading-tight">
-                <?= htmlspecialchars($name); ?>
-              </h1>
+              <h1 class="text-2xl md:text-3xl font-extrabold text-base-content">
+                <?= htmlspecialchars(mb_strlen($name) > 22 ? mb_substr($name, 0, 22) . '...' : $name); ?>
+            </h1>
               <p class="text-xs md:text-sm text-base-content/70 mt-2 flex items-start gap-1.5">
                 <i class="fa-solid fa-location-dot text-error mt-0.5"></i> 
                 <span><?= htmlspecialchars(trim("$barangay, $municipality, $province", ", ") ?: 'Location unavailable'); ?></span>
@@ -277,7 +277,7 @@ if ($user_id) {
               <i class="fa-solid fa-circle-info text-success"></i> About This Property
             </h2>
             <p class="text-base-content/80 text-sm leading-relaxed whitespace-pre-line">
-              <?= htmlspecialchars($other_info ?: 'No description available for this space.'); ?>
+              <?= $other_info ?: 'No description available for this space.'; ?>
             </p>
           </div>
 

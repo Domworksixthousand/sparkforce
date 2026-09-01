@@ -48,6 +48,7 @@ if ($result_execute_cs->num_rows > 0) {
         $cs_id  = $row_cs['cs_id'] ?? '';
         $type   = $row_cs['type'] ?? '';
         $area   = $row_cs['area'] ?? '';
+        $area   = $row_cs['area'] ?? '';
         $status = $row_cs['status'] ?? '';
     }
 }
@@ -154,7 +155,7 @@ function getStatusBadgeClass($status) {
 
       <!-- 1. OVERVIEW PANEL -->
       <div class="tab-panel" data-panel="overview">
-        <!-- Quick Specs Summary -->
+        <!-- Quick Specs Summary 
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5 p-3 bg-base-200 rounded-lg text-center text-xs">
           <div>
             <span class="block text-gray-500 font-semibold">Space Type</span>
@@ -168,11 +169,11 @@ function getStatusBadgeClass($status) {
             <span class="block text-gray-500 font-semibold">Status</span>
             <span class="text-sm font-bold text-gray-800"><?php echo !empty($status) ? htmlspecialchars(ucfirst($status)) : 'N/A'; ?></span>
           </div>
-        </div>
+        </div>-->
 
         <h3 class="font-semibold text-sm text-gray-500 uppercase tracking-wide mb-2">About this Property</h3>
         <p class="text-sm leading-relaxed text-gray-700 whitespace-pre-line">
-          <?php echo !empty($other_info) ? htmlspecialchars($other_info) : 'No additional information provided.'; ?>
+          <?php echo !empty($other_info) ? $other_info : 'No additional information provided.'; ?>
         </p>
       </div>
 

@@ -49,7 +49,7 @@
                     <div class="flex items-center justify-between gap-3 flex-wrap px-5 py-4 border-b border-gray-100">
                         <label class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 max-w-[380px] w-full focus-within:border-[#0fab9e] focus-within:ring-2 focus-within:ring-[#0fab9e]/20 transition">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 shrink-0"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
-                            <input type="text" id="pr_search" placeholder="Search Report Type or User Reported" class="border-none outline-none bg-transparent py-2.5 w-full text-sm" />
+                            <input type="text" id="pr_search2" placeholder="Search Report Type or User Reported" class="border-none outline-none bg-transparent py-2.5 w-full text-sm" />
                         </label>
                         <div id="pr_result_count" class="text-sm text-gray-500 whitespace-nowrap"></div>
                     </div>
@@ -101,7 +101,7 @@
                                             }
 
                                         echo '
-                                            <tr class="pr-row border-b border-gray-100 last:border-b-0 hover:bg-teal-50/60 transition-colors">
+                                            <tr class="pr-row2 border-b border-gray-100 last:border-b-0 hover:bg-teal-50/60 transition-colors">
                                                 <td class="text-center px-4 py-3.5 text-sm text-gray-700">' . htmlspecialchars($report_type) . '</td>
                                                 <td class="text-center px-4 py-3.5 text-sm text-gray-700">' . htmlspecialchars($fullname) . '</td>
                                                 <td class="text-center px-4 py-3.5 text-sm text-gray-700">' . htmlspecialchars($date_reported) . '</td>
@@ -129,7 +129,7 @@
                     </div>
 
                     <!-- Pagination -->
-                    <div class="flex items-center justify-between gap-3 flex-wrap px-5 py-4 border-t border-gray-100" id="pr_pagination">
+                    <div class="flex items-center justify-between gap-3 flex-wrap px-5 py-4 border-t border-gray-100" id="pr_pagination2">
                         <div class="text-sm text-gray-500" id="pr_pagination_info"></div>
                         <div class="flex items-center gap-1.5 flex-wrap" id="pr_pagination_controls"></div>
                     </div>
@@ -150,4 +150,3 @@
   <script src="./../assets/scripts/query_filter.js"></script>
 </body>
 </html>
-

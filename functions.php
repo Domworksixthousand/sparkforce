@@ -420,14 +420,15 @@ if (isset($_POST['signin'])) {
     $password = $_POST['password'] ?? '';
     $username = $_POST['username'] ?? '';
     $user_type_limit = 3; 
-    $status = 'Approved';
+    $status1 = 'Approved';
+    $status2 = 'Banned';
 
     $_SESSION['username'] = $username;
     $_SESSION['password'] = $password;
 
 
-    $get_user = $conn->prepare("SELECT `user_id`, `username`, `password`, `user_type` FROM `accounts` WHERE `username` = ? AND `user_type` <= ? AND `status` = ?");
-    $get_user->bind_param("sss", $username, $user_type_limit,$status);
+    $get_user = $conn->prepare("SELECT `user_id`, `username`, `password`, `user_type` FROM `accounts` WHERE `username` = ? AND `user_type` <= ? AND (`status` = ? OR `status` = ?)");
+    $get_user->bind_param("ssss", $username, $user_type_limit,$status1,$status2);
     $get_user->execute();
     $result_user = $get_user->get_result();
 
@@ -2329,20 +2330,19 @@ if (isset($_POST['send_message'])) {
 }
 
 
+if (isset($_POST['save_condo'])) {
 
-if(isset($_POST['save_condo'])){
-    
     $landlord_id    = $_POST['landlord_id'] ?? '';
-    $condo_name     = trim($_POST['condo_name'] ?? '');
-    $condo_price    = trim($_POST['condo_price'] ?? '');
+    $condo_name     = trim($_POST['cs_name'] ?? '');
+    $condo_price    = trim($_POST['cs_price'] ?? '');
     $square_area    = trim($_POST['square_area'] ?? '');
     $bedroom_type   = $_POST['type'] ?? '';
     $bathrooms      = $_POST['bathrooms'] ?? '';
-    $condo_rate      = $_POST['condo_rate'] ?? '';
+    $condo_rate     = $_POST['cs_rate'] ?? '';
     $condition      = $_POST['condition'] ?? '';
     $flooring       = $_POST['flooring'] ?? '';
-    $other_info     = trim($_POST['apartment_other_info'] ?? '');
-    $raw_amenities  = $_POST['apartment_amenity'] ?? [];
+    $other_info     = trim($_POST['cs_other_info'] ?? '');
+    $raw_amenities  = $_POST['cs_amenity'] ?? [];
 
     $status       = "Available";
     $rent_id      = $condo_name . rand(1000, 9999);
@@ -2362,39 +2362,39 @@ if(isset($_POST['save_condo'])){
 
         if (in_array($amenity_id, $selected_amenities)) {
             $_SESSION['error'] = "Amenities Selected Must Not Be The Same";
-            header("Location: users/apartment_add.php?property_id=" . urlencode($landlord_id));
+            header("Location: users/condo_add.php?property_id=" . urlencode($landlord_id));
             exit;
         }
         $selected_amenities[] = $amenity_id;
     }
 
     // Store in session para ma-retain pag may error
-    $_SESSION['condo_name']           = $condo_name;
-    $_SESSION['condo_price']          = $condo_price;
-    $_SESSION['square_area']          = $square_area;
-    $_SESSION['type']                 = $bedroom_type;
-    $_SESSION['bathrooms']            = $bathrooms;
-    $_SESSION['condition']            = $condition;
-    $_SESSION['flooring']             = $flooring;
-    $_SESSION['apartment_other_info'] = $other_info;
-    $_SESSION['condo_rate'] = $condo_rate;
-    $_SESSION['amenities']            = $raw_amenities ?? [];
+    $_SESSION['cs_name']       = $condo_name;
+    $_SESSION['cs_price']      = $condo_price;
+    $_SESSION['square_area']   = $square_area;
+    $_SESSION['type']          = $bedroom_type;
+    $_SESSION['bathrooms']     = $bathrooms;
+    $_SESSION['condition']     = $condition;
+    $_SESSION['flooring']      = $flooring;
+    $_SESSION['cs_other_info'] = $other_info;
+    $_SESSION['cs_rate']       = $condo_rate;
+    $_SESSION['amenities']     = $raw_amenities ?? [];
 
     // --- COVER PHOTO ---
-    if (isset($_FILES['apartment_cover']) && $_FILES['apartment_cover']['error'] === UPLOAD_ERR_OK) {
-        $fileTmpPath   = $_FILES['apartment_cover']['tmp_name'];
-        $fileExtension = strtolower(pathinfo($_FILES['apartment_cover']['name'], PATHINFO_EXTENSION));
+    if (isset($_FILES['cs_cover']) && $_FILES['cs_cover']['error'] === UPLOAD_ERR_OK) {
+        $fileTmpPath   = $_FILES['cs_cover']['tmp_name'];
+        $fileExtension = strtolower(pathinfo($_FILES['cs_cover']['name'], PATHINFO_EXTENSION));
         $new_cover     = time() . '_condo_cover.' . $fileExtension;
 
         if (move_uploaded_file($fileTmpPath, $uploadDir . $new_cover)) {
-            $_SESSION['condo_cover'] = $new_cover;
+            $_SESSION['cs_cover'] = $new_cover;
         }
     } elseif (!empty($_POST['old_cover'])) {
         // Retain old cover if walang bagong upload
-        $_SESSION['condo_cover'] = $_POST['old_cover'];
+        $_SESSION['cs_cover'] = $_POST['old_cover'];
     }
 
-    $cover_photo = $_SESSION['condo_cover'] ?? '';
+    $cover_photo = $_SESSION['cs_cover'] ?? '';
 
     if (empty($cover_photo)) {
         $_SESSION['error'] = "Cover photo is required";
@@ -2438,8 +2438,8 @@ if(isset($_POST['save_condo'])){
     }
 
     // --- INSERT MAIN TABLE ---
-    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`,`rate`) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)");
-    $insert->bind_param("sssssssss", $rent_id, $condo_name, $landlord_id, $user_id_login, $type, $condo_price, $cover_photo, $other_info,$condo_rate);
+    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`, `rate`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $insert->bind_param("sssssssss", $rent_id, $condo_name, $landlord_id, $user_id_login, $type, $condo_price, $cover_photo, $other_info, $condo_rate);
     $insert->execute();
 
     // --- INSERT AMENITIES ---
@@ -2460,7 +2460,6 @@ if(isset($_POST['save_condo'])){
         }
     }
 
-
     if (!empty($bedroom_type)) {
         $insert_condo = $conn->prepare("INSERT INTO `condo` (`condo_id`, `rent_id`, `square_area`, `bedroom_type`, `bathrooms`, `cond_condition`, `flooring`, `status`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $insert_condo->bind_param("ssssssss", $condo_id, $rent_id, $square_area, $bedroom_type, $bathrooms, $condition, $flooring, $status);
@@ -2469,18 +2468,18 @@ if(isset($_POST['save_condo'])){
 
     // --- CLEAR SESSION ---
     unset(
-        $_SESSION['condo_name'],
-        $_SESSION['condo_price'],
+        $_SESSION['cs_name'],
+        $_SESSION['cs_price'],
         $_SESSION['square_area'],
         $_SESSION['type'],
         $_SESSION['bathrooms'],
         $_SESSION['condition'],
         $_SESSION['flooring'],
-        $_SESSION['apartment_other_info'],
-        $_SESSION['condo_cover'],
+        $_SESSION['cs_other_info'],
+        $_SESSION['cs_cover'],
         $_SESSION['gallery'],
         $_SESSION['amenities'],
-         $_SESSION['condo_rate']
+        $_SESSION['cs_rate']
     );
 
     $_SESSION['success'] = "Condominium Successfully Inserted";
@@ -3695,4 +3694,34 @@ if(isset($_POST['send_warning'])){
         exit;
 
     }
+}
+
+if(isset($_POST['banned_account'])){
+    $report_id = $_POST['report_id'];
+    
+    $get_details = $conn->prepare("SELECT * FROM `report` WHERE `report_id` = ?");
+    $get_details->bind_param("s", $report_id);
+    $get_details->execute();
+    $result_details = $get_details->get_result();
+
+    if ($result_details && $result_details->num_rows > 0) {
+    $row_details       = $result_details->fetch_assoc();
+    $report_type       = $row_details['report_type'];
+    $user_id_reporter  = $row_details['user_id_reporter'];
+    $user_id_reported  = $row_details['user_id_reported'];
+    $reason            = $row_details['reason'];
+    $post_id           = $row_details['post_id'];
+    $status            = $row_details['status'];
+    $date_reported     = $row_details['date_reported'];
+    }
+
+    $status = "Banned";
+    $update_acccount = $conn->prepare("UPDATE `accounts` SET `status` = ? WHERE `user_id` = ?");
+    $update_acccount->bind_param("ss",$status,$user_id_reported);
+    $update_acccount->execute();
+
+    $_SESSION['success'] = "Successfully Banned";
+    header("location:admin/reports.php");
+    exit;
+
 }
