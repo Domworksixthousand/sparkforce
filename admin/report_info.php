@@ -19,6 +19,7 @@ $fullname_reporter = 'Unknown user';
 $fullname_reported  = 'Unknown user';
 $profile_reporter   = '../assets/images/logo-icon.png';
 $profile_reported   = '../assets/images/logo-icon.png';
+$user_status        = null;
 
 $post_caption = null;
 $post_image   = null;
@@ -58,7 +59,13 @@ function get_account_display($conn, $user_id) {
 
         return [
             'fullname' => implode(' ', $parts),
-            'profile'  => !empty($row['profile']) ? $row['profile'] : '../assets/images/logo-icon.png',
+            // Build the FULL usable path here, once, so every caller
+            // gets a ready-to-use src value — no more guessing whether
+            // a prefix needs to be added at the template level.
+            'profile'  => !empty($row['profile'])
+                ? '../assets/uploads/' . $row['profile']
+                : '../assets/images/logo-icon.png',
+            'status'   => $row['status'] ?? null,
         ];
     }
     return null;
@@ -77,6 +84,7 @@ if ($user_id_reported) {
     if ($reported) {
         $fullname_reported = $reported['fullname'];
         $profile_reported  = $reported['profile'];
+        $user_status  = $reported['status'];
     }
 }
 
@@ -93,7 +101,7 @@ $status_key   = strtolower($status ?? 'pending');
 $stmt = $conn->prepare("SELECT COUNT(user_id_reported) as total_reported FROM report WHERE `post_id` = ?");
 $stmt->bind_param("s", $post_id);
 $stmt->execute();
-$result = $stmt->get_result(); 
+$result = $stmt->get_result();
 $row = $result->fetch_assoc();
 
 $total_reported = (int)$row['total_reported'];
@@ -126,7 +134,7 @@ function h($v) { return htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8'); }
       <div class="flex items-center gap-1" id="amenity_tabs">
         <button type="button" data-tab="details"
           class="amenity-tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors border-[#0d9488] text-[#0d9488] cursor-pointer">
-          Details
+          Details 
         </button>
         <button type="button" data-tab="images"
           class="amenity-tab-btn px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors border-transparent text-gray-500 hover:text-gray-700 cursor-pointer">
@@ -145,7 +153,7 @@ function h($v) { return htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8'); }
 
         <!-- Reporter card -->
         <div class="border border-gray-100 rounded-[8px] p-4 flex items-center gap-3">
-          <img src="../assets/uploads/<?= h($profile_reporter) ?>" alt="Reporter" class="w-11 h-11 rounded-full object-cover bg-gray-100" />
+          <img src="<?= h($profile_reporter) ?>" alt="Reporter" class="w-11 h-11 rounded-full object-cover bg-gray-100" />
           <div class="min-w-0">
             <p class="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">Reported by</p>
             <p class="text-sm font-semibold text-gray-800 truncate"><?= h($fullname_reporter) ?></p>
@@ -260,21 +268,24 @@ function h($v) { return htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8'); }
 
    <div class="modal-action mt-6">
       <?php
-      if ($total_reported > 5 ) {
-          ?>
-          <a href="report_ban_form.php?report_id=<?= $report_id ?>" class="btn btn-error">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-x-icon lucide-shield-x"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m14.5 9.5-5 5"/><path d="m9.5 9.5 5 5"/></svg>
-              Ban Account
-          </a>
-          <?php
-      } else {
-          ?>
-          <a href="warning_form.php?report_id=<?= $report_id ?>" class="btn btn-warning text-black">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-triangle-alert-icon lucide-triangle-alert"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
-              Send Warning
-          </a>
-          <?php
+      if($user_status === "Approved"){
+           if ($total_reported > 5 ) {
+              ?>
+              <a href="report_ban_form.php?report_id=<?= h($report_id) ?>" class="btn btn-error">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-x-icon lucide-shield-x"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m14.5 9.5-5 5"/><path d="m9.5 9.5 5 5"/></svg>
+                  Ban Account
+              </a>
+              <?php
+          } else {
+            ?>
+            <a href="warning_form.php?report_id=<?= h($report_id) ?>" class="btn btn-warning text-black">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-triangle-alert-icon lucide-triangle-alert"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                Send Warning
+            </a>
+            <?php
+        }
       }
+     
       ?>
   </div>
 

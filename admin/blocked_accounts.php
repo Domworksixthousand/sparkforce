@@ -76,7 +76,7 @@
                                 <tbody class="myTable">
                                     <?php
 
-                                        $user_status = "Blocked";
+                                        $user_status = "Banned";
                                         $request = $conn->prepare("SELECT * FROM `accounts` WHERE `status` = ?");
                                         $request->bind_param("s",$user_status);
                                         $request->execute();
