@@ -61,6 +61,11 @@
     $location_edit = "es_edit.php";
     $location_info = "es_info.php";
     $placeholder = "Search Event Space Name / Number";
+  }elseif($type === "Transient House"){
+    $location_add = "trasient_add.php";
+    $location_edit = "trasient_edit.php";
+    $location_info = "trasient_info.php";
+    $placeholder = "Search Event Trasient Name / Number";
   }
 
  ?>
@@ -71,6 +76,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-site-verification" content="u9XxwAs-OvAizH_6uuclWJ-izjdAxNuADcmPGo0UdQE" />
     <title><?php echo htmlspecialchars($property_name); ?></title>
      <link rel="shortcut icon" href="./../assets/images/logo-icon.png" type="image/x-icon"> 
     <link rel="stylesheet" href="./../assets/styles/daisy_ui.css">

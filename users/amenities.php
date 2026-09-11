@@ -9,6 +9,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-site-verification" content="u9XxwAs-OvAizH_6uuclWJ-izjdAxNuADcmPGo0UdQE" />
     <title>Amenities Management</title>
     <link rel="shortcut icon" href="./../assets/images/logo-icon.png" type="image/x-icon"> 
     <link rel="stylesheet" href="./../assets/styles/daisy_ui.css">
@@ -122,12 +123,16 @@
                                 </tr>';
                         }
                     } else {
-                        ?>
-                        <div class=" flex-col items-center justify-center py-16 px-5 text-center text-base-content/40" >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-3 opacity-50"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                            <p class="text-sm m-0">No Amenities found.</p>
-                        </div>
-                        <?php
+                        echo '
+                            <tr id="no-data-row1">
+                                <td colspan="3" class="text-center py-16 px-5 text-base-content/40">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-3 opacity-50"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                                        <p class="text-sm m-0">No Amenities found.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        ';
                     }
                 ?>
               </tbody>

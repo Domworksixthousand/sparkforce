@@ -26,6 +26,7 @@
   <!---alert-->
   <?php 
       include '../alerts.php'; 
+      include  '../vendor/mailer_sender_php/index.php';
   ?>
 
   <div class="drawer lg:drawer-open min-h-screen">

@@ -16,6 +16,7 @@
         return true;
     }
 
+
     #connection sa mysql
     session_start();
     $conn = mysqli_connect("localhost","root","","sparkforce_db");
@@ -108,7 +109,6 @@
         }
 
     }
-
 
 
 

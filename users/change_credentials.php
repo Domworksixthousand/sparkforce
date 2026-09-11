@@ -1,3 +1,4 @@
+
 <?php
 
 include 'my_account.php';
@@ -6,7 +7,7 @@ include 'my_account.php';
 
 
   <!--change profile modal-->
-  <dialog id="my_modal_3" class="modal ">
+  <dialog id="my_modal_3" class="modal " open>
     <div class="modal-box ">
        <form method="dialog" class=" flex justify-end items-end" >
           <button type="button" onclick="location.href='my_account.php'" class="cursor-pointer">
@@ -39,7 +40,7 @@ include 'my_account.php';
                     </span>
                     <span class="w-[100%] mb-3">
                         <p class="mb-2">Repeat Password *</p>
-                        <label class="input w-[100%]">
+                    <label class="input w-[100%]">
                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"  class="size-5 text-gray-500">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
                             </svg>

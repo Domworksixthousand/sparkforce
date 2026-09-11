@@ -850,6 +850,7 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
   });
+  
 //admin/report_info.php
 document.addEventListener("DOMContentLoaded", function () {
   const tabButtons = document.querySelectorAll(".amenity-tab-btn");

@@ -3725,3 +3725,153 @@ if(isset($_POST['banned_account'])){
     exit;
 
 }
+
+
+if (isset($_POST['save_transient'])) {
+
+    $landlord_id     = $_POST['landlord_id'] ?? '';
+    $transient_rate  = $_POST['transient_rate'] ?? '';
+    $transient_name  = trim($_POST['transient_name'] ?? '');
+    $transient_price = trim($_POST['transient_price'] ?? '');
+    $square_area     = trim($_POST['transient_square_area'] ?? '');
+    $transient_type  = $_POST['transient_type'] ?? '';
+    $other_info      = trim($_POST['transient_other_info'] ?? '');
+    $raw_amenities   = $_POST['transient_amenity'] ?? [];
+
+    $uploadDir = 'assets/uploads/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+
+    // --- COVER PHOTO ---
+    if (isset($_FILES['transient_cover']) && $_FILES['transient_cover']['error'] === UPLOAD_ERR_OK) {
+        $fileTmpPath = $_FILES['transient_cover']['tmp_name'];
+        $fileExtension = strtolower(pathinfo($_FILES['transient_cover']['name'], PATHINFO_EXTENSION));
+        $new_cover = time() . '_transient_cover.' . $fileExtension;
+
+        if (move_uploaded_file($fileTmpPath, $uploadDir . $new_cover)) {
+            $_SESSION['transient_cover'] = $new_cover;
+        }
+    } elseif (!empty($_POST['old_cover'])) {
+        $_SESSION['transient_cover'] = $_POST['old_cover'];
+    }
+
+    $cover_photo = $_SESSION['transient_cover'] ?? '';
+
+    if (empty($cover_photo)) {
+        $_SESSION['error'] = "Cover photo is required";
+        header("Location: users/trasient_add.php?property_id=" . urlencode($landlord_id));
+        exit;
+    }
+
+    // --- GALLERY PHOTOS ---
+    if (!empty($_FILES['gallery']['name'][0])) {
+        $new_gallery = [];
+        foreach ($_FILES['gallery']['name'] as $i => $img_name) {
+            if ($_FILES['gallery']['error'][$i] !== UPLOAD_ERR_OK)
+                continue;
+            $ext = strtolower(pathinfo($img_name, PATHINFO_EXTENSION));
+            $new_name = uniqid() . '_transient_' . $i . '.' . $ext;
+            if (move_uploaded_file($_FILES['gallery']['tmp_name'][$i], $uploadDir . $new_name)) {
+                $new_gallery[] = $new_name;
+            }
+        }
+        if (!empty($new_gallery)) {
+            $_SESSION['gallery'] = $new_gallery;
+        }
+    }
+    $gallery_images = $_SESSION['gallery'] ?? [];
+
+    if (count($gallery_images) < 3 || count($gallery_images) > 10) {
+        $_SESSION['error'] = "Please upload 3 to 10 photos for the gallery";
+        header("Location: users/trasient_add.php?property_id=" . urlencode($landlord_id));
+        exit;
+    }
+
+    // --- VALIDATE AMENITIES ---
+    $selected_amenities = [];
+    foreach ($raw_amenities as $amenity_id) {
+        $amenity_id = trim($amenity_id);
+        if ($amenity_id === '')
+            continue;
+
+        if (in_array($amenity_id, $selected_amenities)) {
+            $_SESSION['error'] = "Amenities Selected Must Not Be The Same";
+            header("Location: users/trasient_add.php?property_id=" . urlencode($landlord_id));
+            exit;
+        }
+        $selected_amenities[] = $amenity_id;
+    }
+
+    // --- STORE IN SESSION FOR FORM RE-POPULATION ---
+    $_SESSION['transient_name']       = $transient_name;
+    $_SESSION['transient_price']      = $transient_price;
+    $_SESSION['square_area']          = $square_area;
+    $_SESSION['type']                 = $transient_type;
+    $_SESSION['transient_other_info'] = $other_info;
+    $_SESSION['amenities']            = $raw_amenities;
+    $_SESSION['transient_rate']       = $transient_rate;
+
+    // --- CHECK DUPLICATE ---
+    $check_transient = $conn->prepare("SELECT 1 FROM `rentspace` WHERE `landlord_id` = ? AND `name` = ?");
+    $check_transient->bind_param("ss", $landlord_id, $transient_name);
+    $check_transient->execute();
+    $result_transient_name = $check_transient->get_result();
+
+    if ($result_transient_name->num_rows > 0) {
+        $_SESSION['error'] = "$transient_name Already Exists";
+        header("Location: users/trasient_add.php?property_id=" . urlencode($landlord_id));
+        exit;
+    }
+
+    // --- GENERATE UNIQUE IDS ---
+    $status = "Available";
+    $rent_id = "TR" . rand(1000, 9999);
+    $type = "Transient House";
+    $transient_id = "TRH" . rand(10000, 99999);
+
+    // --- INSERT MAIN RENTSPACE TABLE ---
+    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`, `rate`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $insert->bind_param("sssssssss", $rent_id, $transient_name, $landlord_id, $user_id_login, $type, $transient_price, $cover_photo, $other_info, $transient_rate);
+    $insert->execute();
+
+    // --- INSERT TRANSIENT TABLE ---
+    $insert_transient = $conn->prepare("INSERT INTO `transient` (`transient_id`, `rent_id`, `square_area`, `type`, `status`) VALUES (?, ?, ?, ?, ?)");
+    $insert_transient->bind_param("sssss", $transient_id, $rent_id, $square_area, $transient_type, $status);
+    $insert_transient->execute();
+
+    // --- INSERT AMENITIES ---
+    if (!empty($selected_amenities)) {
+        $insert_amen = $conn->prepare("INSERT INTO `rentspace_amenities` (`rent_id`, `amen_id`) VALUES (?, ?)");
+        foreach ($selected_amenities as $amenity_id) {
+            $insert_amen->bind_param("si", $rent_id, $amenity_id);
+            $insert_amen->execute();
+        }
+    }
+
+    // --- INSERT GALLERY ---
+    if (!empty($gallery_images)) {
+        $insert_gallery = $conn->prepare("INSERT INTO `gallery2` (`image`, `rent_id`) VALUES (?, ?)");
+        foreach ($gallery_images as $img) {
+            $insert_gallery->bind_param("ss", $img, $rent_id);
+            $insert_gallery->execute();
+        }
+    }
+
+    // --- CLEAR SESSION FORM DATA ---
+    unset(
+        $_SESSION['transient_name'],
+        $_SESSION['transient_price'],
+        $_SESSION['square_area'],
+        $_SESSION['type'],
+        $_SESSION['transient_other_info'],
+        $_SESSION['transient_cover'],
+        $_SESSION['gallery'],
+        $_SESSION['amenities'],
+        $_SESSION['transient_rate']
+    );
+
+    $_SESSION['success'] = "Transient House Successfully Inserted";
+    header("Location: users/my_property.php?property_id=" . urlencode($landlord_id));
+    exit;
+}

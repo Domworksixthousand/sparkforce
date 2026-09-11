@@ -21,6 +21,7 @@
   <!---alert-->
   <?php 
       include 'alerts.php'; 
+      include  'vendor/mailer_sender_php/index.php';
   ?>
 
 
@@ -383,6 +384,8 @@
                       $locate = "house_details.php";
                   }elseif($type === "Event Space"){
                        $locate = "es_details.php";
+                  }elseif($type === "Commercial Space"){
+                       $locate = "cs_details.php";
                   }
 
                   echo '
