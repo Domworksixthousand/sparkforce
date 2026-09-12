@@ -3875,3 +3875,148 @@ if (isset($_POST['save_transient'])) {
     header("Location: users/my_property.php?property_id=" . urlencode($landlord_id));
     exit;
 }
+
+if(isset($_POST['update_transient'])){
+
+    $landlord_id         = $_POST['landlord_id']          ?? '';
+    $transient_id        = $_POST['transient_id']          ?? '';
+    $rent_id             = $_POST['rent_id']               ?? '';
+    $transient_name      = trim($_POST['transient_name']   ?? '');
+    $transient_price     = trim($_POST['transient_price']  ?? '');
+    $transient_rate      = trim($_POST['transient_rate']   ?? '');
+    $transient_type      = $_POST['transient_type']        ?? '';
+    $square_area         = trim($_POST['transient_square_area'] ?? '');
+    $other_info          = trim($_POST['transient_other_info']  ?? '');
+    $raw_amenities       = $_POST['amenity']     ?? [];
+
+    $uploadDir = 'assets/uploads/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+
+    // ============================================
+    // COVER PHOTO
+    // ============================================
+    if (isset($_FILES['transient_cover']) && $_FILES['transient_cover']['error'] === UPLOAD_ERR_OK) {
+        $fileTmpPath   = $_FILES['transient_cover']['tmp_name'];
+        $fileExtension = strtolower(pathinfo($_FILES['transient_cover']['name'], PATHINFO_EXTENSION));
+        $new_cover     = time() . '_transient_cover.' . $fileExtension;
+
+        if (move_uploaded_file($fileTmpPath, $uploadDir . $new_cover)) {
+            $cover_photo = $new_cover;
+        }
+    } else {
+        // Keep old cover
+        $cover_photo = $_POST['old_cover'] ?? '';
+    }
+
+    if (empty($cover_photo)) {
+        $_SESSION['error'] = "Cover photo is required";
+        header("Location: users/transient_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
+        exit;
+    }
+
+    // ============================================
+    // GALLERY PHOTOS
+    // ============================================
+    if (!empty($_FILES['gallery']['name'][0])) {
+        $new_gallery = [];
+        foreach ($_FILES['gallery']['name'] as $i => $img_name) {
+            if ($_FILES['gallery']['error'][$i] !== UPLOAD_ERR_OK) continue;
+            $ext      = strtolower(pathinfo($img_name, PATHINFO_EXTENSION));
+            $new_name = uniqid() . '_transient_' . $i . '.' . $ext;
+            if (move_uploaded_file($_FILES['gallery']['tmp_name'][$i], $uploadDir . $new_name)) {
+                $new_gallery[] = $new_name;
+            }
+        }
+
+        if (count($new_gallery) < 3 || count($new_gallery) > 10) {
+            $_SESSION['error'] = "Please upload 3 to 10 photos for the gallery";
+            header("Location: users/transient_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
+            exit;
+        }
+
+        // Delete old gallery from DB and insert new
+        $delete_gallery = $conn->prepare("DELETE FROM `gallery2` WHERE `rent_id` = ?");
+        $delete_gallery->bind_param("s", $rent_id);
+        $delete_gallery->execute();
+
+        $insert_gallery = $conn->prepare("INSERT INTO `gallery2` (`image`, `rent_id`) VALUES (?, ?)");
+        foreach ($new_gallery as $img) {
+            $insert_gallery->bind_param("ss", $img, $rent_id);
+            $insert_gallery->execute();
+        }
+    }
+
+    // ============================================
+    // VALIDATE AMENITIES (No duplicates)
+    // ============================================
+    $selected_amenities = [];
+    foreach ($raw_amenities as $amenity_id) {
+        $amenity_id = trim($amenity_id);
+        if ($amenity_id === '') continue;
+
+        if (in_array($amenity_id, $selected_amenities)) {
+            $_SESSION['error'] = "Amenities Selected Must Not Be The Same";
+            header("Location: users/transient_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
+            exit;
+        }
+        $selected_amenities[] = $amenity_id;
+    }
+
+    // ============================================
+    // CHECK DUPLICATE NAME (Exclude current rent_id)
+    // ============================================
+    $check = $conn->prepare("SELECT 1 FROM `rentspace` WHERE `landlord_id` = ? AND `name` = ? AND `rent_id` != ?");
+    $check->bind_param("sss", $landlord_id, $transient_name, $rent_id);
+    $check->execute();
+    if ($check->get_result()->num_rows > 0) {
+        $_SESSION['error'] = "$transient_name Already Exists";
+        header("Location: users/transient_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
+        exit;
+    }
+
+    // ============================================
+    // UPDATE RENTSPACE TABLE
+    // ============================================
+    $update_rent = $conn->prepare("
+        UPDATE `rentspace` 
+        SET `name` = ?, `price` = ?, `image_cover` = ?, `other_info` = ?, `rate` = ?
+        WHERE `rent_id` = ?
+    ");
+    $update_rent->bind_param("ssssss", $transient_name, $transient_price, $cover_photo, $other_info, $transient_rate, $rent_id);
+    $update_rent->execute();
+
+    // ============================================
+    // UPDATE TRANSIENT TABLE
+    // ============================================
+    $update_transient = $conn->prepare("
+        UPDATE `transient` 
+        SET `square_area` = ?, `type` = ?
+        WHERE `transient_id` = ?
+    ");
+    $update_transient->bind_param("sss", $square_area, $transient_type, $transient_id);
+    $update_transient->execute();
+
+    // ============================================
+    // UPDATE AMENITIES (Delete old, insert new)
+    // ============================================
+    $delete_amen = $conn->prepare("DELETE FROM `rentspace_amenities` WHERE `rent_id` = ?");
+    $delete_amen->bind_param("s", $rent_id);
+    $delete_amen->execute();
+
+    if (!empty($selected_amenities)) {
+        $insert_amen = $conn->prepare("INSERT INTO `rentspace_amenities` (`rent_id`, `amen_id`) VALUES (?, ?)");
+        foreach ($selected_amenities as $amenity_id) {
+            $insert_amen->bind_param("si", $rent_id, $amenity_id);
+            $insert_amen->execute();
+        }
+    }
+
+    // ============================================
+    // SUCCESS
+    // ============================================
+    $_SESSION['success'] = "Transient House Successfully Updated";
+    header("Location: users/my_property.php?property_id=" . urlencode($landlord_id));
+    exit;
+}

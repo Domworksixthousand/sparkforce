@@ -252,14 +252,14 @@ if (isset($_GET['property_id'])) {
         <div class="space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-2">
                 <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400">Room Amenities</h3>
-                <button type="button" id="addamenBtn3"
+                <button type="button" id="addamenBtn"
                         class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     Add Amenities
                 </button>
             </div>
 
-            <div id="amenities-container3" class="space-y-2">
+            <div id="amenities-container" class="space-y-2">
                 <?php
                 $active = "yes";
                 $get_amen = $conn->prepare("SELECT * FROM amenities WHERE user_id=? AND active=?");
@@ -446,15 +446,13 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // ============================================
-    // COVER PHOTO LIVE PREVIEW
-    // ============================================
-    const coverInput = document.getElementById('cover');
+
+    const coverInput           = document.getElementById('cover');
     const coverPreviewContainer = document.getElementById('cover-preview-container');
-    const coverPreviewImg = document.getElementById('cover-preview-img');
-    const coverPreviewName = document.getElementById('cover-preview-name');
-    const coverPreviewSize = document.getElementById('cover-preview-size');
-    const coverLabel = document.getElementById('cover-label');
+    const coverPreviewImg      = document.getElementById('cover-preview-img');
+    const coverPreviewName     = document.getElementById('cover-preview-name');
+    const coverPreviewSize     = document.getElementById('cover-preview-size');
+    const coverLabel           = document.getElementById('cover-label');
 
     if (coverInput) {
         coverInput.addEventListener('change', function (e) {
@@ -463,7 +461,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const reader = new FileReader();
             reader.onload = function (ev) {
-                coverPreviewImg.src = ev.target.result;
+                coverPreviewImg.src          = ev.target.result;
                 coverPreviewName.textContent = file.name;
                 coverPreviewSize.textContent = (file.size / 1024).toFixed(1) + ' KB';
 
@@ -485,9 +483,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // ============================================
     // GALLERY PHOTOS LIVE PREVIEW
     // ============================================
-    const galleryInput = document.getElementById('gallery');
+    const galleryInput           = document.getElementById('gallery');
     const galleryPreviewContainer = document.getElementById('gallery-preview-container');
-    const galleryLabel = document.getElementById('gallery-label');
+    const galleryLabel           = document.getElementById('gallery-label');
 
     if (galleryInput) {
         galleryInput.addEventListener('change', function (e) {
@@ -518,6 +516,7 @@ document.addEventListener('DOMContentLoaded', function () {
             `;
         });
     }
+
 
 
 });

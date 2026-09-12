@@ -127,8 +127,10 @@ while ($row = $saved_amen_res->fetch_assoc()) {
 
     <!-- Modal Form Body -->
     <form action="../functions.php" method="POST" enctype="multipart/form-data" class="p-6 overflow-y-auto space-y-8" id="mainForm">
-        <input type="hidden" name="landlord_id" value="<?php echo htmlspecialchars($landlord_id); ?>">
-        <input type="hidden" name="transient_id" value="<?php echo htmlspecialchars($transient_id); ?>">
+        <!-- Add this inside your form, after landlord_id and transient_id -->
+<input type="hidden" name="landlord_id"   value="<?php echo htmlspecialchars($landlord_id); ?>">
+<input type="hidden" name="transient_id"  value="<?php echo htmlspecialchars($transient_id); ?>">
+<input type="hidden" name="rent_id"       value="<?php echo htmlspecialchars($rent_id); ?>"> 
 
         <!-- ============================================ -->
         <!-- SECTION 1: TRANSIENT HOUSE INFORMATION -->
@@ -330,14 +332,14 @@ while ($row = $saved_amen_res->fetch_assoc()) {
        <div class="space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-2">
                 <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400">Room Amenities</h3>
-                <button type="button" id="addamenBtn3"
+                <button type="button" id="addamenBtn"
                         class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     Add Amenities
                 </button>
             </div>
 
-            <div id="amenities-container3" class="space-y-2">
+            <div id="amenities-container" class="space-y-2">
                 <?php
                 $active = "yes";
                 if (isset($user_id_login) && !empty($user_id_login)) {
@@ -366,7 +368,7 @@ while ($row = $saved_amen_res->fetch_assoc()) {
                 ?>
                 <div class="amen-item flex items-center gap-2 bg-slate-50/50 border border-slate-200 rounded-xl p-2">
                     <select class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                            name="transient_amenity[]" required>
+                            name="amenity[]" required>
                         <option value="" disabled <?php echo empty($selectedAmenId) ? 'selected' : ''; ?>>Select Amenity</option>
                         <?php foreach ($all_amenities as $amen) { ?>
                             <option value="<?php echo htmlspecialchars($amen['amen_id']); ?>"
@@ -393,7 +395,7 @@ while ($row = $saved_amen_res->fetch_assoc()) {
             <button type="submit" name="update_transient"
                     class="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                Save
+                Update
             </button>
         </div>
     </form>
