@@ -199,7 +199,7 @@ if ($rent_id && $user_id_login) {
 
     <main class="p-4 md:p-8 max-w-7xl mx-auto w-full space-y-6">
       <div class="flex justify-end items-end">
-        <a href="index.php"><img src="../assets/images/back.png" alt="Back"></a>
+        <a href="properties.php"><img src="../assets/images/back.png" alt="Back"></a>
       </div>
 
       <div class="bg-base-100 rounded-2xl p-4 md:p-6 shadow-sm border border-base-300">

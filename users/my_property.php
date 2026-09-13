@@ -66,6 +66,11 @@
     $location_edit = "trasient_edit.php";
     $location_info = "trasient_info.php";
     $placeholder = "Search Event Trasient Name / Number";
+  }elseif($type === "Parking Space"){
+    $location_add = "ps_add.php";
+    $location_edit = "ps_edit.php";
+    $location_info = "ps_info.php";
+    $placeholder = "Search  Parking Space Name / Number";
   }
 
  ?>

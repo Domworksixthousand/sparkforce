@@ -4020,3 +4020,152 @@ if(isset($_POST['update_transient'])){
     header("Location: users/my_property.php?property_id=" . urlencode($landlord_id));
     exit;
 }
+
+if (isset($_POST['save_parkingspace'])) {
+
+    $landlord_id         = $_POST['landlord_id'] ?? '';
+    $parkingspace_rate   = $_POST['parkingspace_rate'] ?? '';
+    $parkingspace_name   = trim($_POST['parkingspace_name'] ?? '');
+    $parkingspace_price  = trim($_POST['parkingspace_price'] ?? '');
+    $square_area         = trim($_POST['parkingspace_square_area'] ?? '');
+    $parkingspace_type   = $_POST['parkingspace_type'] ?? '';
+    $other_info          = trim($_POST['parkingspace_other_info'] ?? '');
+    $raw_amenities       = $_POST['parkingspace_amenity'] ?? [];
+
+    $uploadDir = 'assets/uploads/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+
+    // --- COVER PHOTO ---
+    if (isset($_FILES['parkingspace_cover']) && $_FILES['parkingspace_cover']['error'] === UPLOAD_ERR_OK) {
+        $fileTmpPath = $_FILES['parkingspace_cover']['tmp_name'];
+        $fileExtension = strtolower(pathinfo($_FILES['parkingspace_cover']['name'], PATHINFO_EXTENSION));
+        $new_cover = time() . '_parkingspace_cover.' . $fileExtension;
+
+        if (move_uploaded_file($fileTmpPath, $uploadDir . $new_cover)) {
+            $_SESSION['parkingspace_cover'] = $new_cover;
+        }
+    } elseif (!empty($_POST['old_cover'])) {
+        $_SESSION['parkingspace_cover'] = $_POST['old_cover'];
+    }
+
+    $cover_photo = $_SESSION['parkingspace_cover'] ?? '';
+
+    if (empty($cover_photo)) {
+        $_SESSION['error'] = "Cover photo is required";
+        header("Location: users/parkingspace_add.php?property_id=" . urlencode($landlord_id));
+        exit;
+    }
+
+    // --- GALLERY PHOTOS ---
+    if (!empty($_FILES['gallery']['name'][0])) {
+        $new_gallery = [];
+        foreach ($_FILES['gallery']['name'] as $i => $img_name) {
+            if ($_FILES['gallery']['error'][$i] !== UPLOAD_ERR_OK)
+                continue;
+            $ext = strtolower(pathinfo($img_name, PATHINFO_EXTENSION));
+            $new_name = uniqid() . '_parkingspace_' . $i . '.' . $ext;
+            if (move_uploaded_file($_FILES['gallery']['tmp_name'][$i], $uploadDir . $new_name)) {
+                $new_gallery[] = $new_name;
+            }
+        }
+        if (!empty($new_gallery)) {
+            $_SESSION['gallery'] = $new_gallery;
+        }
+    }
+    $gallery_images = $_SESSION['gallery'] ?? [];
+
+    if (count($gallery_images) < 3 || count($gallery_images) > 10) {
+        $_SESSION['error'] = "Please upload 3 to 10 photos for the gallery";
+        header("Location: users/parkingspace_add.php?property_id=" . urlencode($landlord_id));
+        exit;
+    }
+
+    // --- VALIDATE AMENITIES ---
+    $selected_amenities = [];
+    foreach ($raw_amenities as $amenity_id) {
+        $amenity_id = trim($amenity_id);
+        if ($amenity_id === '')
+            continue;
+
+        if (in_array($amenity_id, $selected_amenities)) {
+            $_SESSION['error'] = "Amenities Selected Must Not Be The Same";
+            header("Location: users/parkingspace_add.php?property_id=" . urlencode($landlord_id));
+            exit;
+        }
+        $selected_amenities[] = $amenity_id;
+    }
+
+    // --- STORE IN SESSION FOR FORM RE-POPULATION ---
+    $_SESSION['parkingspace_name']       = $parkingspace_name;
+    $_SESSION['parkingspace_price']      = $parkingspace_price;
+    $_SESSION['square_area']             = $square_area;
+    $_SESSION['type']                    = $parkingspace_type;
+    $_SESSION['parkingspace_other_info'] = $other_info;
+    $_SESSION['amenities']               = $raw_amenities;
+    $_SESSION['parkingspace_rate']       = $parkingspace_rate;
+
+    // --- CHECK DUPLICATE ---
+    $check_parkingspace = $conn->prepare("SELECT 1 FROM `rentspace` WHERE `landlord_id` = ? AND `name` = ?");
+    $check_parkingspace->bind_param("ss", $landlord_id, $parkingspace_name);
+    $check_parkingspace->execute();
+    $result_parkingspace_name = $check_parkingspace->get_result();
+
+    if ($result_parkingspace_name->num_rows > 0) {
+        $_SESSION['error'] = "$parkingspace_name Already Exists";
+        header("Location: users/parkingspace_add.php?property_id=" . urlencode($landlord_id));
+        exit;
+    }
+
+    // --- GENERATE UNIQUE IDS ---
+    $status = "Available";
+    $rent_id = "PS" . rand(1000, 9999);
+    $type = "Parking Space";
+    $ps_id = "PSP" . rand(10000, 99999);
+
+    // --- INSERT MAIN RENTSPACE TABLE ---
+    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`, `rate`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $insert->bind_param("sssssssss", $rent_id, $parkingspace_name, $landlord_id, $user_id_login, $type, $parkingspace_price, $cover_photo, $other_info, $parkingspace_rate);
+    $insert->execute();
+
+    // --- INSERT PARKING_SPACE TABLE ---
+    $insert_parkingspace = $conn->prepare("INSERT INTO `parking_space` (`ps_id`, `square_area`, `type`, `status`, `rent_id`) VALUES (?, ?, ?, ?, ?)");
+    $insert_parkingspace->bind_param("sssss", $ps_id, $square_area, $parkingspace_type, $status, $rent_id);
+    $insert_parkingspace->execute();
+
+    // --- INSERT AMENITIES ---
+    if (!empty($selected_amenities)) {
+        $insert_amen = $conn->prepare("INSERT INTO `rentspace_amenities` (`rent_id`, `amen_id`) VALUES (?, ?)");
+        foreach ($selected_amenities as $amenity_id) {
+            $insert_amen->bind_param("si", $rent_id, $amenity_id);
+            $insert_amen->execute();
+        }
+    }
+
+    // --- INSERT GALLERY ---
+    if (!empty($gallery_images)) {
+        $insert_gallery = $conn->prepare("INSERT INTO `gallery2` (`image`, `rent_id`) VALUES (?, ?)");
+        foreach ($gallery_images as $img) {
+            $insert_gallery->bind_param("ss", $img, $rent_id);
+            $insert_gallery->execute();
+        }
+    }
+
+    // --- CLEAR SESSION FORM DATA ---
+    unset(
+        $_SESSION['parkingspace_name'],
+        $_SESSION['parkingspace_price'],
+        $_SESSION['square_area'],
+        $_SESSION['type'],
+        $_SESSION['parkingspace_other_info'],
+        $_SESSION['parkingspace_cover'],
+        $_SESSION['gallery'],
+        $_SESSION['amenities'],
+        $_SESSION['parkingspace_rate']
+    );
+
+    $_SESSION['success'] = "Parking Space Successfully Inserted";
+    header("Location: users/my_property.php?property_id=" . urlencode($landlord_id));
+    exit;
+}
