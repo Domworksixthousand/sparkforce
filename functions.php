@@ -4030,7 +4030,7 @@ if (isset($_POST['save_parkingspace'])) {
     $square_area         = trim($_POST['parkingspace_square_area'] ?? '');
     $parkingspace_type   = $_POST['parkingspace_type'] ?? '';
     $other_info          = trim($_POST['parkingspace_other_info'] ?? '');
-    $raw_amenities       = $_POST['parkingspace_amenity'] ?? [];
+    $raw_amenities       = $_POST['amenity'] ?? [];
 
     $uploadDir = 'assets/uploads/';
     if (!is_dir($uploadDir)) {
@@ -4054,7 +4054,7 @@ if (isset($_POST['save_parkingspace'])) {
 
     if (empty($cover_photo)) {
         $_SESSION['error'] = "Cover photo is required";
-        header("Location: users/parkingspace_add.php?property_id=" . urlencode($landlord_id));
+        header("Location: users/ps_add.php?property_id=" . urlencode($landlord_id));
         exit;
     }
 
@@ -4078,7 +4078,7 @@ if (isset($_POST['save_parkingspace'])) {
 
     if (count($gallery_images) < 3 || count($gallery_images) > 10) {
         $_SESSION['error'] = "Please upload 3 to 10 photos for the gallery";
-        header("Location: users/parkingspace_add.php?property_id=" . urlencode($landlord_id));
+        header("Location: users/ps_add.php?property_id=" . urlencode($landlord_id));
         exit;
     }
 
@@ -4091,7 +4091,7 @@ if (isset($_POST['save_parkingspace'])) {
 
         if (in_array($amenity_id, $selected_amenities)) {
             $_SESSION['error'] = "Amenities Selected Must Not Be The Same";
-            header("Location: users/parkingspace_add.php?property_id=" . urlencode($landlord_id));
+            header("Location: users/ps_add.php?property_id=" . urlencode($landlord_id));
             exit;
         }
         $selected_amenities[] = $amenity_id;
@@ -4114,7 +4114,7 @@ if (isset($_POST['save_parkingspace'])) {
 
     if ($result_parkingspace_name->num_rows > 0) {
         $_SESSION['error'] = "$parkingspace_name Already Exists";
-        header("Location: users/parkingspace_add.php?property_id=" . urlencode($landlord_id));
+        header("Location: users/ps_add.php?property_id=" . urlencode($landlord_id));
         exit;
     }
 
@@ -4136,11 +4136,23 @@ if (isset($_POST['save_parkingspace'])) {
 
     // --- INSERT AMENITIES ---
     if (!empty($selected_amenities)) {
-        $insert_amen = $conn->prepare("INSERT INTO `rentspace_amenities` (`rent_id`, `amen_id`) VALUES (?, ?)");
+        $values = [];
+        $types = "";
+        $params = [];
+
         foreach ($selected_amenities as $amenity_id) {
-            $insert_amen->bind_param("si", $rent_id, $amenity_id);
-            $insert_amen->execute();
+            $values[] = "(?, ?)";
+            $types .= "ss";
+            $params[] = $rent_id;
+            $params[] = $amenity_id;
         }
+
+        $sql = "INSERT INTO `rentspace_amenities` (`rent_id`, `amen_id`) VALUES " . implode(", ", $values);
+        $insert_amen = $conn->prepare($sql);
+        
+        // Dynamic binding gamit ang spl_at_call o call_user_func_array
+        $insert_amen->bind_param($types, ...$params);
+        $insert_amen->execute();
     }
 
     // --- INSERT GALLERY ---

@@ -1,11 +1,89 @@
 <?php
 include 'my_property.php';
-
-if (isset($_GET['property_id'])) {
+if (isset($_GET['id']) && isset($_GET['property_id'])) {
+    $rent_id     = $_GET['id'] ?? '';
     $landlord_id = $_GET['property_id'] ?? '';
 } else {
-    header("Location: index.php");
+    echo "<script>location.href='index.php';</script>";
     exit;
+}
+
+// RENTSPACE DETAILS
+$get_rent = $conn->prepare("
+    SELECT name, price, image_cover, other_info, rate
+    FROM rentspace 
+    WHERE rent_id = ?
+");
+$get_rent->bind_param("s", $rent_id);
+$get_rent->execute();
+$rent_res = $get_rent->get_result();
+
+$name        = "";
+$price       = "";
+$image_cover = "";
+$other_info  = "";
+$rate        = "";
+
+if ($rent_row = $rent_res->fetch_assoc()) {
+    $name        = $rent_row['name'];
+    $price       = $rent_row['price'];
+    $image_cover = $rent_row['image_cover'];
+    $other_info  = $rent_row['other_info'];
+    $rate        = $rent_row['rate'];
+}
+
+
+
+// parking space
+$gt_ps = $conn->prepare("SELECT * FROM `parking_space` WHERE `rent_id` = ?");
+$gt_ps->bind_param("s", $rent_id);
+$gt_ps->execute();
+$result_ps = $gt_ps->get_result();
+
+$transient_id = "";
+$square_area  = "";
+$type         = "";
+$status       = "";
+
+if ($result_ps->num_rows > 0) {
+    $row_ps = $result_ps->fetch_assoc();
+    $ps_id         = $row_ps['ps_id']         ?? '';
+    $square_area          = $row_ps['square_area']          ?? '';
+    $type       = $row_ps['type']                 ?? '';
+    $status               = $row_ps['status']                ?? '';
+}
+
+// GALLERY IMAGES
+$get_gallery = $conn->prepare("SELECT * FROM `gallery2` WHERE `rent_id` = ?");
+$get_gallery->bind_param("s", $rent_id);
+$get_gallery->execute();
+$result_gallery = $get_gallery->get_result();
+
+$gallery_images = [];
+if ($result_gallery->num_rows > 0) {
+    while ($row_gallery = $result_gallery->fetch_assoc()) {
+        $gallery_images[] = $row_gallery['image'];
+    }
+}
+
+// AMENITIES FROM DATABASE
+$get_saved_amen = $conn->prepare("
+    SELECT a.amen_id, a.amenity, ra.rent_amen_id
+    FROM rentspace_amenities AS ra
+    INNER JOIN amenities AS a ON a.amen_id = ra.amen_id
+    WHERE ra.rent_id = ?
+");
+$get_saved_amen->bind_param("s", $rent_id);
+$get_saved_amen->execute();
+$saved_amen_res = $get_saved_amen->get_result();
+
+$saved_amenities = [];
+while ($row = $saved_amen_res->fetch_assoc()) {
+    $saved_amenities[] = [
+        "amen_id"      => $row['amen_id'],
+        "amenity"      => $row['amenity'],
+        "rent_amen_id" => $row['rent_amen_id']
+    ];
 }
 ?>
 
@@ -45,6 +123,8 @@ if (isset($_GET['property_id'])) {
     <!-- Modal Form Body -->
     <form action="../functions.php" method="POST" enctype="multipart/form-data" class="p-6 overflow-y-auto space-y-8" id="mainForm">
         <input type="hidden" name="landlord_id" value="<?php echo htmlspecialchars($landlord_id); ?>">
+        <input type="hidden" name="rent_id" value="<?php echo htmlspecialchars($rent_id); ?>">
+        <input type="hidden" name="ps_id" value="<?php echo htmlspecialchars($ps_id ?? $rent_id); ?>">
 
         <!-- ============================================ -->
         <!-- SECTION 1: TRANSIENT HOUSE INFORMATION -->
@@ -66,7 +146,7 @@ if (isset($_GET['property_id'])) {
                         <input type="text"
                                class="autoInput w-full pl-10 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                                name="parkingspace_name"
-                               value="<?php echo htmlspecialchars($_SESSION['parkingspace_name'] ?? ''); ?>"
+                               value="<?php echo htmlspecialchars($name); ?>"
                                placeholder="Enter Name / Number"
                                required />
                     </div>
@@ -79,7 +159,7 @@ if (isset($_GET['property_id'])) {
                         <input type="text"
                                class="numbers_only w-full pl-8 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                                name="parkingspace_price"
-                               value="<?php echo htmlspecialchars($_SESSION['parkingspace_price'] ?? ''); ?>"
+                               value="<?php echo htmlspecialchars($price); ?>"
                                placeholder="Enter Price / Hour"
                                required />
                     </div>
@@ -94,7 +174,7 @@ if (isset($_GET['property_id'])) {
                         <input type="text"
                                class="autoInput w-full pl-10 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                                name="parkingspace_rate"
-                               value="<?php echo htmlspecialchars($_SESSION['parkingspace_rate'] ?? ''); ?>"
+                               value="<?php echo htmlspecialchars($rate); ?>"
                                placeholder="Enter Rate"
                                required />
                     </div>
@@ -105,15 +185,15 @@ if (isset($_GET['property_id'])) {
             <div class="space-y-1.5 pt-2" id="cover-section">
                 <label class="block text-xs font-semibold text-slate-600">Cover Photo *</label>
 
-                <?php if (!empty($_SESSION['parkingspace_cover'])): ?>
-                    <input type="hidden" name="old_cover" value="<?php echo htmlspecialchars($_SESSION['parkingspace_cover']); ?>">
+                <?php if (!empty($image_cover)): ?>
+                    <input type="hidden" name="old_cover" value="<?php echo htmlspecialchars($image_cover); ?>">
                     <div class="flex items-center justify-between bg-emerald-50/60 border border-emerald-100 p-2.5 rounded-xl text-xs mb-2">
                         <div class="flex items-center gap-3">
-                            <img src="../assets/uploads/<?php echo htmlspecialchars($_SESSION['parkingspace_cover']); ?>"
+                            <img src="../assets/uploads/<?php echo htmlspecialchars($image_cover); ?>"
                                  class="w-10 h-10 object-cover rounded-lg border border-white shadow-xs"
                                  alt="Preview">
                             <span class="text-emerald-900">Previously selected:
-                                <strong class="underline font-medium"><?php echo htmlspecialchars($_SESSION['parkingspace_cover']); ?></strong>
+                                <strong class="underline font-medium"><?php echo htmlspecialchars($image_cover); ?></strong>
                             </span>
                         </div>
                         <span class="px-2 py-1 bg-emerald-600 text-white rounded-md text-[10px] font-bold uppercase tracking-wider">Retained</span>
@@ -135,7 +215,7 @@ if (isset($_GET['property_id'])) {
                            id="cover"
                            name="parkingspace_cover"
                            accept="image/jpeg, image/png, image/jpg"
-                           <?php echo !empty($_SESSION['parkingspace_cover']) ? '' : 'required'; ?> />
+                           <?php echo !empty($image_cover) ? '' : 'required'; ?> />
                 </label>
 
                 <div id="cover-preview-container" class="hidden mt-3 flex items-center justify-between bg-emerald-50/60 border border-emerald-100 p-2.5 rounded-xl text-xs">
@@ -157,7 +237,7 @@ if (isset($_GET['property_id'])) {
                 <div class="border border-slate-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500 transition-all">
                     <textarea
                         id="myEditor"
-                        name="parkingspace_other_info"><?php echo htmlspecialchars($_SESSION['parkingspace_other_info'] ?? ''); ?></textarea>
+                        name="parkingspace_other_info"><?php echo htmlspecialchars($other_info); ?></textarea>
                 </div>
             </div>
         </div>
@@ -178,32 +258,32 @@ if (isset($_GET['property_id'])) {
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>
                         </span>
                   <select class="w-full pl-10 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" name="parkingspace_type" required>
-                        <option value="" disabled <?php echo empty($_SESSION['type']) ? 'selected' : ''; ?>>Select Parking Type</option>
+                        <option value="<?php echo $type; ?>" ><?php echo $type; ?></option>
 
                         <!-- Indoor/Covered -->
                         <optgroup label="Indoor / Covered">
-                            <option value="Covered / Indoor Parking"        <?php echo (($_SESSION['type'] ?? '') == 'Covered / Indoor Parking')        ? 'selected' : ''; ?>>Covered / Indoor Parking</option>
-                            <option value="Basement Parking"                <?php echo (($_SESSION['type'] ?? '') == 'Basement Parking')                ? 'selected' : ''; ?>>Basement Parking</option>
-                            <option value="Multi-Level Parking"             <?php echo (($_SESSION['type'] ?? '') == 'Multi-Level Parking')             ? 'selected' : ''; ?>>Multi-Level Parking</option>
-                            <option value="Mechanical / Automated Parking"  <?php echo (($_SESSION['type'] ?? '') == 'Mechanical / Automated Parking')  ? 'selected' : ''; ?>>Mechanical / Automated Parking</option>
+                            <option value="Covered / Indoor Parking"        <?php echo (($type) == 'Covered / Indoor Parking')        ? 'selected' : ''; ?>>Covered / Indoor Parking</option>
+                            <option value="Basement Parking"                <?php echo (($type) == 'Basement Parking')                ? 'selected' : ''; ?>>Basement Parking</option>
+                            <option value="Multi-Level Parking"             <?php echo (($type) == 'Multi-Level Parking')             ? 'selected' : ''; ?>>Multi-Level Parking</option>
+                            <option value="Mechanical / Automated Parking"  <?php echo (($type) == 'Mechanical / Automated Parking')  ? 'selected' : ''; ?>>Mechanical / Automated Parking</option>
                         </optgroup>
 
                         <!-- Outdoor/Open -->
                         <optgroup label="Outdoor / Open">
-                            <option value="Outdoor / Open Parking"          <?php echo (($_SESSION['type'] ?? '') == 'Outdoor / Open Parking')          ? 'selected' : ''; ?>>Outdoor / Open Parking</option>
-                            <option value="Surface Lot Parking"             <?php echo (($_SESSION['type'] ?? '') == 'Surface Lot Parking')             ? 'selected' : ''; ?>>Surface Lot Parking</option>
-                            <option value="Street Parking"                  <?php echo (($_SESSION['type'] ?? '') == 'Street Parking')                  ? 'selected' : ''; ?>>Street Parking</option>
+                            <option value="Outdoor / Open Parking"          <?php echo (($type) == 'Outdoor / Open Parking')          ? 'selected' : ''; ?>>Outdoor / Open Parking</option>
+                            <option value="Surface Lot Parking"             <?php echo (($type) == 'Surface Lot Parking')             ? 'selected' : ''; ?>>Surface Lot Parking</option>
+                            <option value="Street Parking"                  <?php echo (($type) == 'Street Parking')                  ? 'selected' : ''; ?>>Street Parking</option>
                         </optgroup>
 
                         <!-- Special -->
                         <optgroup label="Special Parking">
-                            <option value="Motorcycle Parking"              <?php echo (($_SESSION['type'] ?? '') == 'Motorcycle Parking')              ? 'selected' : ''; ?>>Motorcycle Parking</option>
-                            <option value="Bicycle Parking"                 <?php echo (($_SESSION['type'] ?? '') == 'Bicycle Parking')                 ? 'selected' : ''; ?>>Bicycle Parking</option>
-                            <option value="EV Charging Parking"             <?php echo (($_SESSION['type'] ?? '') == 'EV Charging Parking')             ? 'selected' : ''; ?>>EV Charging Parking</option>
-                            <option value="Handicap / PWD Parking"          <?php echo (($_SESSION['type'] ?? '') == 'Handicap / PWD Parking')          ? 'selected' : ''; ?>>Handicap / PWD Parking</option>
-                            <option value="Valet Parking"                   <?php echo (($_SESSION['type'] ?? '') == 'Valet Parking')                   ? 'selected' : ''; ?>>Valet Parking</option>
-                            <option value="Reserved / Assigned Parking"     <?php echo (($_SESSION['type'] ?? '') == 'Reserved / Assigned Parking')     ? 'selected' : ''; ?>>Reserved / Assigned Parking</option>
-                            <option value="Tandem Parking"                  <?php echo (($_SESSION['type'] ?? '') == 'Tandem Parking')                  ? 'selected' : ''; ?>>Tandem Parking</option>
+                            <option value="Motorcycle Parking"              <?php echo (($type) == 'Motorcycle Parking')              ? 'selected' : ''; ?>>Motorcycle Parking</option>
+                            <option value="Bicycle Parking"                 <?php echo (($type) == 'Bicycle Parking')                 ? 'selected' : ''; ?>>Bicycle Parking</option>
+                            <option value="EV Charging Parking"             <?php echo (($type) == 'EV Charging Parking')             ? 'selected' : ''; ?>>EV Charging Parking</option>
+                            <option value="Handicap / PWD Parking"          <?php echo (($type) == 'Handicap / PWD Parking')          ? 'selected' : ''; ?>>Handicap / PWD Parking</option>
+                            <option value="Valet Parking"                   <?php echo (($type) == 'Valet Parking')                   ? 'selected' : ''; ?>>Valet Parking</option>
+                            <option value="Reserved / Assigned Parking"     <?php echo (($type) == 'Reserved / Assigned Parking')     ? 'selected' : ''; ?>>Reserved / Assigned Parking</option>
+                            <option value="Tandem Parking"                  <?php echo (($type) == 'Tandem Parking')                  ? 'selected' : ''; ?>>Tandem Parking</option>
                         </optgroup>
 
                     </select>
@@ -218,8 +298,8 @@ if (isset($_GET['property_id'])) {
                         </span>
                         <input type="text"
                                class="w-full pl-10 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-                               name="parkingspace_square_area"
-                               value="<?php echo htmlspecialchars($_SESSION['square_area'] ?? ''); ?>"
+                               name="square_area"
+                               value="<?php echo htmlspecialchars($square_area); ?>"
                                placeholder="Enter Parking Square Area"
                                required />
                     </div>
@@ -230,9 +310,9 @@ if (isset($_GET['property_id'])) {
             <div class="space-y-1.5 pt-2" id="gallery-section">
                 <label class="block text-xs font-semibold text-slate-600">Multiple Photos (Upload 3 to 10 Photos) *</label>
 
-                <?php if (!empty($_SESSION['gallery'])): ?>
+                <?php if (!empty($gallery_images)): ?>
                     <div class="grid grid-cols-4 sm:grid-cols-5 gap-2 mb-2">
-                        <?php foreach ($_SESSION['gallery'] as $img): ?>
+                        <?php foreach ($gallery_images as $img): ?>
                             <div class="relative">
                                 <img src="../assets/uploads/<?php echo htmlspecialchars($img); ?>"
                                      class="w-full h-16 object-cover rounded-lg border border-emerald-100">
@@ -241,7 +321,7 @@ if (isset($_GET['property_id'])) {
                     </div>
                     <div class="flex items-center gap-2 bg-emerald-50/60 border border-emerald-100 p-2.5 rounded-xl text-xs mb-2">
                         <span class="px-2 py-1 bg-emerald-600 text-white rounded-md text-[10px] font-bold uppercase tracking-wider shrink-0">Retained</span>
-                        <span class="text-emerald-900"><?php echo count($_SESSION['gallery']); ?> photo(s) retained. Upload new photos below to replace them.</span>
+                        <span class="text-emerald-900"><?php echo count($gallery_images); ?> photo(s) retained. Upload new photos below to replace them.</span>
                     </div>
                 <?php endif; ?>
 
@@ -259,7 +339,7 @@ if (isset($_GET['property_id'])) {
                            name="gallery[]"
                            accept="image/jpeg, image/png, image/jpg"
                            multiple
-                           <?php echo !empty($_SESSION['gallery']) ? '' : 'required'; ?> />
+                           <?php echo !empty($gallery_images) ? '' : 'required'; ?> />
                 </label>
 
                 <div id="gallery-preview-container" class="hidden mt-3 grid grid-cols-4 sm:grid-cols-5 gap-2"></div>
@@ -283,8 +363,13 @@ if (isset($_GET['property_id'])) {
             <div id="amenities-container" class="space-y-2">
                 <?php
                 $active = "yes";
-                $get_amen = $conn->prepare("SELECT * FROM amenities WHERE user_id=? AND active=?");
-                $get_amen->bind_param("ss", $user_id_login, $active);
+                if (isset($user_id_login) && !empty($user_id_login)) {
+                    $get_amen = $conn->prepare("SELECT * FROM amenities WHERE user_id=? AND active=?");
+                    $get_amen->bind_param("ss", $user_id_login, $active);
+                } else {
+                    $get_amen = $conn->prepare("SELECT * FROM amenities WHERE active=?");
+                    $get_amen->bind_param("s", $active);
+                }
                 $get_amen->execute();
                 $result = $get_amen->get_result();
 
@@ -293,16 +378,20 @@ if (isset($_GET['property_id'])) {
                     $amenities[] = $row;
                 }
 
-                if (empty($_SESSION['amenities'])) {
-                    $_SESSION['amenities'] = [""];
+                if (empty($saved_amenities)) {
+                    $saved_amenities = [["amen_id" => "", "amenity" => "", "rent_amen_id" => ""]];
                 }
 
                 $index = 0;
-                foreach ($_SESSION['amenities'] as $selectedAmen) {
+                foreach ($saved_amenities as $saved) {
+                    $selectedAmen = $saved['amen_id'];
                 ?>
                 <div class="amen-item flex items-center gap-2 bg-slate-50/50 border border-slate-200 rounded-xl p-2">
+                    <?php if (!empty($saved['rent_amen_id'])) { ?>
+                    <input type="hidden" name="parkingspace_rent_amen_id[]" value="<?php echo htmlspecialchars($saved['rent_amen_id']); ?>">
+                    <?php } ?>
                     <select class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                            name="amenity[]" required>
+                            name="parkingspace_amenity[]" required>
                         <option value="" disabled <?php echo empty($selectedAmen) ? 'selected' : ''; ?>>Select Amenity</option>
                         <?php foreach ($amenities as $amen) { ?>
                             <option value="<?php echo htmlspecialchars($amen['amen_id']); ?>"
@@ -328,10 +417,10 @@ if (isset($_GET['property_id'])) {
                class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-xl transition-colors">
                Cancel
             </a>
-            <button type="submit" name="save_parkingspace"
+            <button type="submit" name="update_parkingspace"
                     class="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                Save
+                Update
             </button>
         </div>
     </form>
@@ -449,7 +538,7 @@ tinymce.init({
     },
 
     init_instance_callback: function (editor) {
-        const content = <?php echo json_encode($_SESSION['parkingspace_other_info'] ?? ''); ?>;
+        const content = <?php echo json_encode($other_info); ?>;
         if (content) {
             editor.setContent(content);
         }
