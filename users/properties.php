@@ -216,7 +216,10 @@
                                     $locate = "house_details.php";
                                 }elseif($type === "Event Space"){
                                     $locate = "es_details.php";
+                                }elseif($type === "Transient House"){
+                                    $locate = "trasient_details.php";
                                 }
+
 
                                 $map_locations[] = [
                                     'id'           => $rent_id,

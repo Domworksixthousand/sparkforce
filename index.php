@@ -386,6 +386,8 @@
                        $locate = "es_details.php";
                   }elseif($type === "Commercial Space"){
                        $locate = "cs_details.php";
+                  }elseif($type === "Transient House"){
+                       $locate = "trasient_details.php";
                   }
 
                   echo '
