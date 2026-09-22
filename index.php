@@ -332,17 +332,24 @@
           if ($page < 1) { $page = 1; }
           $offset = ($page - 1) * $limit;
 
-        
-          $total_query = $conn->query("SELECT COUNT(*) AS total FROM rentspace");
+                  
+              $total_query = $conn->query("
+              SELECT COUNT(*) AS total 
+              FROM rentspace r
+              LEFT JOIN landlord l ON l.landlord_id = r.landlord_id
+              LEFT JOIN accounts acc ON l.user_id = acc.user_id
+              WHERE acc.status = 'Approved'
+          ");
           $total_row = $total_query->fetch_assoc();
           $total_rentals = $total_row['total'];
           $total_pages = ceil($total_rentals / $limit);
 
-        
           $get_rental = $conn->prepare("
-              SELECT r.*, l.province, l.municipality, l.barangay, l.property_name,r.rate
+              SELECT r.*, l.province, l.municipality, l.barangay, l.property_name, r.rate, acc.user_id, l.user_id, acc.status
               FROM rentspace r
               LEFT JOIN landlord l ON l.landlord_id = r.landlord_id
+              LEFT JOIN accounts acc ON l.user_id = acc.user_id
+              WHERE acc.status = 'Approved'
               LIMIT ? OFFSET ?
           ");
           $get_rental->bind_param("ii", $limit, $offset);

@@ -250,7 +250,7 @@ while ($row = $saved_amen_res->fetch_assoc()) {
                 <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400">Parking Specification</h3>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="space-y-1.5">
                     <label class="block text-xs font-semibold text-slate-600">Parking Types *</label>
                     <div class="relative flex items-center">
@@ -302,6 +302,26 @@ while ($row = $saved_amen_res->fetch_assoc()) {
                                value="<?php echo htmlspecialchars($square_area); ?>"
                                placeholder="Enter Parking Square Area"
                                required />
+                    </div>
+                </div>
+
+
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-semibold text-slate-600">Status *</label>
+                    <div class="relative flex items-center">
+                        <span class="absolute left-3.5 text-slate-400 pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10" />
+                                <path d="M12 16v-4" />
+                                <path d="M12 8h.01" />
+                            </svg>
+                        </span>
+                        <select class="w-full pl-10 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" name="status" required>
+                            <option value="" disabled <?= empty($status) ? 'selected' : '' ?>>Select Status</option>
+                            <option value="Occupied" <?= ($status ?? '') === 'Occupied' ? 'selected' : '' ?>>Occupied</option>
+                            <option value="Available" <?= ($status ?? '') === 'Available' ? 'selected' : '' ?>>Available</option>
+                            <option value="Out of Order" <?= ($status ?? '') === 'Out of Order' ? 'selected' : '' ?>>Out of Order</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -391,7 +411,7 @@ while ($row = $saved_amen_res->fetch_assoc()) {
                     <input type="hidden" name="parkingspace_rent_amen_id[]" value="<?php echo htmlspecialchars($saved['rent_amen_id']); ?>">
                     <?php } ?>
                     <select class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                            name="parkingspace_amenity[]" required>
+                            name="amenity[]" required>
                         <option value="" disabled <?php echo empty($selectedAmen) ? 'selected' : ''; ?>>Select Amenity</option>
                         <?php foreach ($amenities as $amen) { ?>
                             <option value="<?php echo htmlspecialchars($amen['amen_id']); ?>"

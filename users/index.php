@@ -47,8 +47,22 @@
               return 'boarding_details.php';
           case 'Apartment':
               return 'apartment_details.php';
+          case 'Condominium':
+            return 'condo_details.php';    
+          case 'house':
+            return 'house_details.php';   
+          case 'Commercial Space':
+            return 'cs_details.php';    
+          case 'Event Space':
+            return 'es_details.php';  
+          case 'Transient House':
+            return 'trasient_details.php';   
+          case 'Parking Space':
+            return 'ps_details.php'; 
+          case 'Vacant Lote':
+            return 'vl_details.php'; 
           default:
-              return 'property.php'; // fallback for unknown/future types
+              return 'properties.php'; 
       }
   }
 

@@ -3888,6 +3888,7 @@ if(isset($_POST['update_transient'])){
     $square_area         = trim($_POST['transient_square_area'] ?? '');
     $other_info          = trim($_POST['transient_other_info']  ?? '');
     $raw_amenities       = $_POST['amenity']     ?? [];
+    $status        = $_POST['status']          ?? '';
 
     $uploadDir = 'assets/uploads/';
     if (!is_dir($uploadDir)) {
@@ -3992,10 +3993,10 @@ if(isset($_POST['update_transient'])){
     // ============================================
     $update_transient = $conn->prepare("
         UPDATE `transient` 
-        SET `square_area` = ?, `type` = ?
+        SET `square_area` = ?, `type` = ?, `status` = ?
         WHERE `transient_id` = ?
     ");
-    $update_transient->bind_param("sss", $square_area, $transient_type, $transient_id);
+    $update_transient->bind_param("ssss", $square_area, $transient_type,$status,$transient_id);
     $update_transient->execute();
 
     // ============================================
@@ -4179,5 +4180,250 @@ if (isset($_POST['save_parkingspace'])) {
 
     $_SESSION['success'] = "Parking Space Successfully Inserted";
     header("Location: users/my_property.php?property_id=" . urlencode($landlord_id));
+    exit;
+}
+
+
+
+if(isset($_POST['update_parkingspace'])){
+
+    $landlord_id          = $_POST['landlord_id']          ?? '';
+    $ps_id                = $_POST['ps_id']                ?? '';
+    $rent_id              = $_POST['rent_id']               ?? '';
+    $parkingspace_name    = trim($_POST['parkingspace_name']   ?? '');
+    $parkingspace_price   = trim($_POST['parkingspace_price']  ?? '');
+    $parkingspace_rate    = trim($_POST['parkingspace_rate']   ?? '');
+    $parkingspace_type    = $_POST['parkingspace_type']        ?? '';
+    $square_area          = trim($_POST['square_area'] ?? '');
+    $other_info           = trim($_POST['parkingspace_other_info']  ?? '');
+    $raw_amenities        = $_POST['amenity']     ?? [];
+
+    $uploadDir = 'assets/uploads/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+
+    if (isset($_FILES['parkingspace_cover']) && $_FILES['parkingspace_cover']['error'] === UPLOAD_ERR_OK) {
+        $fileTmpPath   = $_FILES['parkingspace_cover']['tmp_name'];
+        $fileExtension = strtolower(pathinfo($_FILES['parkingspace_cover']['name'], PATHINFO_EXTENSION));
+        $new_cover     = time() . '_parkingspace_cover.' . $fileExtension;
+
+        if (move_uploaded_file($fileTmpPath, $uploadDir . $new_cover)) {
+            $cover_photo = $new_cover;
+        }
+    } else {
+        $cover_photo = $_POST['old_cover'] ?? '';
+    }
+
+    if (empty($cover_photo)) {
+        $_SESSION['error'] = "Cover photo is required";
+        header("Location: users/ps_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
+        exit;
+    }
+
+
+    if (!empty($_FILES['gallery']['name'][0])) {
+        $new_gallery = [];
+        foreach ($_FILES['gallery']['name'] as $i => $img_name) {
+            if ($_FILES['gallery']['error'][$i] !== UPLOAD_ERR_OK) continue;
+            $ext      = strtolower(pathinfo($img_name, PATHINFO_EXTENSION));
+            $new_name = uniqid() . '_parkingspace_' . $i . '.' . $ext;
+            if (move_uploaded_file($_FILES['gallery']['tmp_name'][$i], $uploadDir . $new_name)) {
+                $new_gallery[] = $new_name;
+            }
+        }
+
+        if (count($new_gallery) < 3 || count($new_gallery) > 10) {
+            $_SESSION['error'] = "Please upload 3 to 10 photos for the gallery";
+            header("Location: users/ps_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
+            exit;
+        }
+
+        // Delete old gallery from DB and insert new
+        $delete_gallery = $conn->prepare("DELETE FROM `gallery2` WHERE `rent_id` = ?");
+        $delete_gallery->bind_param("s", $rent_id);
+        $delete_gallery->execute();
+
+        $insert_gallery = $conn->prepare("INSERT INTO `gallery2` (`image`, `rent_id`) VALUES (?, ?)");
+        foreach ($new_gallery as $img) {
+            $insert_gallery->bind_param("ss", $img, $rent_id);
+            $insert_gallery->execute();
+        }
+    }
+
+
+    $selected_amenities = [];
+    foreach ($raw_amenities as $amenity_id) {
+        $amenity_id = trim($amenity_id);
+        if ($amenity_id === '') continue;
+
+        if (in_array($amenity_id, $selected_amenities)) {
+            $_SESSION['error'] = "Amenities Selected Must Not Be The Same";
+            header("Location: users/ps_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
+            exit;
+        }
+        $selected_amenities[] = $amenity_id;
+    }
+
+
+    $check = $conn->prepare("SELECT 1 FROM `rentspace` WHERE `landlord_id` = ? AND `name` = ? AND `rent_id` != ?");
+    $check->bind_param("sss", $landlord_id, $parkingspace_name, $rent_id);
+    $check->execute();
+    if ($check->get_result()->num_rows > 0) {
+        $_SESSION['error'] = "$parkingspace_name Already Exists";
+        header("Location: users/ps_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
+        exit;
+    }
+
+
+    $update_rent = $conn->prepare("
+        UPDATE `rentspace` 
+        SET `name` = ?, `price` = ?, `image_cover` = ?, `other_info` = ?, `rate` = ?
+        WHERE `rent_id` = ?
+    ");
+    $update_rent->bind_param("ssssss", $parkingspace_name, $parkingspace_price, $cover_photo, $other_info, $parkingspace_rate, $rent_id);
+    $update_rent->execute();
+
+
+    $update_parkingspace = $conn->prepare("
+        UPDATE `parking_space` 
+        SET `square_area` = ?, `type` = ?
+        WHERE `ps_id` = ?
+    ");
+    $update_parkingspace->bind_param("sss", $square_area, $parkingspace_type, $ps_id);
+    $update_parkingspace->execute();
+
+
+    // --- Update Amenities: delete old, insert new (transaction-safe) ---
+    $conn->begin_transaction();
+    try {
+        $delete_amen = $conn->prepare("DELETE FROM `rentspace_amenities` WHERE `rent_id` = ?");
+        $delete_amen->bind_param("s", $rent_id);
+        $delete_amen->execute();
+
+        if (!empty($selected_amenities)) {
+            $insert_amen = $conn->prepare("INSERT INTO `rentspace_amenities` (`rent_id`, `amen_id`) VALUES (?, ?)");
+            foreach ($selected_amenities as $amenity_id) {
+                $insert_amen->bind_param("si", $rent_id, $amenity_id);
+                $insert_amen->execute();
+            }
+        }
+
+        $conn->commit();
+    } catch (mysqli_sql_exception $e) {
+        $conn->rollback();
+        $_SESSION['error'] = "Failed to update amenities. Please try again.";
+        header("Location: users/ps_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
+        exit;
+    }
+
+
+    $_SESSION['success'] = "Parking Space Successfully Updated";
+    header("Location: users/my_property.php?property_id=" . urlencode($landlord_id));
+    exit;
+}
+
+if (isset($_POST['update_parkingspace'])) {
+
+    $rent_id     = $_POST['rent_id'] ?? '';
+    $landlord_id = $_POST['landlord_id'] ?? '';
+
+    $name        = trim($_POST['parkingspace_name'] ?? '');
+    $price       = trim($_POST['parkingspace_price'] ?? '');
+    $rate        = trim($_POST['parkingspace_rate'] ?? '');
+    $other_info  = $_POST['parkingspace_other_info'] ?? '';
+    $type        = trim($_POST['parkingspace_type'] ?? '');
+    $square_area = trim($_POST['square_area'] ?? '');
+    $status      = trim($_POST['status'] ?? '');
+
+    // ---------- COVER PHOTO ----------
+    $old_cover   = $_POST['old_cover'] ?? '';
+    $image_cover = $old_cover;
+
+    if (isset($_FILES['parkingspace_cover']) && $_FILES['parkingspace_cover']['error'] === UPLOAD_ERR_OK) {
+        $cover_name = time() . '_' . basename($_FILES['parkingspace_cover']['name']);
+        $cover_dest = 'assets/uploads/' . $cover_name;
+
+        if (move_uploaded_file($_FILES['parkingspace_cover']['tmp_name'], $cover_dest)) {
+            if (!empty($old_cover) && file_exists('assets/uploads/' . $old_cover)) {
+                unlink('assets/uploads/' . $old_cover);
+            }
+            $image_cover = $cover_name;
+        }
+    }
+
+    // ---------- UPDATE SHARED RENTSPACE RECORD ----------
+    $update_rent = $conn->prepare("
+        UPDATE rentspace
+        SET name = ?, price = ?, image_cover = ?, other_info = ?, rate = ?
+        WHERE rent_id = ?
+    ");
+    $update_rent->bind_param("sdssss", $name, $price, $image_cover, $other_info, $rate, $rent_id);
+    $update_rent->execute();
+
+    // ---------- UPDATE / UPSERT PARKING SPACE SPECS ----------
+    $update_ps = $conn->prepare("
+        UPDATE parking_space
+        SET square_area = ?, type = ?, status = ?
+        WHERE rent_id = ?
+    ");
+    $update_ps->bind_param("ssss", $square_area, $type, $status, $rent_id);
+    $update_ps->execute();
+
+    if ($update_ps->affected_rows === 0) {
+        // walang existing row (edge case) — insert instead
+        $insert_ps = $conn->prepare("
+            INSERT INTO parking_space (rent_id, square_area, type, status)
+            VALUES (?, ?, ?, ?)
+        ");
+        $insert_ps->bind_param("ssss", $rent_id, $square_area, $type, $status);
+        $insert_ps->execute();
+    }
+
+    // ---------- GALLERY (replace only if may bagong na-upload) ----------
+    if (!empty($_FILES['gallery']['name'][0])) {
+        $get_old_gallery = $conn->prepare("SELECT image FROM gallery2 WHERE rent_id = ?");
+        $get_old_gallery->bind_param("s", $rent_id);
+        $get_old_gallery->execute();
+        $old_gallery_res = $get_old_gallery->get_result();
+        while ($g = $old_gallery_res->fetch_assoc()) {
+            $old_path = 'assets/uploads/' . $g['image'];
+            if (file_exists($old_path)) unlink($old_path);
+        }
+
+        $del_gallery = $conn->prepare("DELETE FROM gallery2 WHERE rent_id = ?");
+        $del_gallery->bind_param("s", $rent_id);
+        $del_gallery->execute();
+
+        $insert_gallery = $conn->prepare("INSERT INTO gallery2 (rent_id, image) VALUES (?, ?)");
+        foreach ($_FILES['gallery']['tmp_name'] as $i => $tmp_name) {
+            if ($_FILES['gallery']['error'][$i] === UPLOAD_ERR_OK) {
+                $gallery_name = time() . '_' . $i . '_' . basename($_FILES['gallery']['name'][$i]);
+                $gallery_dest = 'assets/uploads/' . $gallery_name;
+                if (move_uploaded_file($tmp_name, $gallery_dest)) {
+                    $insert_gallery->bind_param("ss", $rent_id, $gallery_name);
+                    $insert_gallery->execute();
+                }
+            }
+        }
+    }
+
+    // ---------- AMENITIES (delete then re-insert) ----------
+    $del_amen = $conn->prepare("DELETE FROM rentspace_amenities WHERE rent_id = ?");
+    $del_amen->bind_param("s", $rent_id);
+    $del_amen->execute();
+
+    if (!empty($_POST['amenity'])) {
+        $insert_amen = $conn->prepare("INSERT INTO rentspace_amenities (rent_id, amen_id) VALUES (?, ?)");
+        foreach ($_POST['amenity'] as $amen_id) {
+            $amen_id = trim($amen_id);
+            if ($amen_id !== '') {
+                $insert_amen->bind_param("ss", $rent_id, $amen_id);
+                $insert_amen->execute();
+            }
+        }
+    }
+
+    header("Location: users/my_property.php?property_id=" . urlencode($landlord_id) . "&updated=1");
     exit;
 }

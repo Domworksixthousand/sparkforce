@@ -29,6 +29,7 @@
 
   <?php 
       include '../alerts.php'; 
+      include '../banned_modal.php'; 
   ?>
 
   <div class="drawer lg:drawer-open ">

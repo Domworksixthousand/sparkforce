@@ -24,24 +24,21 @@
 </head>
 <body class="bg-base-100 min-h-screen flex flex-col">
 
-  <?php include '../alerts.php'; ?>
+<?php
+    include '../alerts.php'; 
+    include '../banned_modal.php'; 
+?>
 
   <div class="drawer lg:drawer-open flex-1">
     <input id="my-drawer" type="checkbox" class="drawer-toggle" />
     <div class="drawer-content flex flex-col h-screen overflow-hidden">
-      
-      <!-- NAVBAR -->
       <nav class="navbar w-full bg-[#0fab9e] px-4 shrink-0">
         <label for="my-drawer" aria-label="open sidebar" class="btn btn-square btn-ghost lg:hidden">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor" class="size-5 text-white"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
         </label>
         <div class="flex-1 font-bold text-white">Properties</div>
       </nav>
-
-      <!-- MAIN CONTENT WRAPPER -->
       <main class="flex-1 flex flex-col overflow-hidden">
-
-        <!-- UPPER HEADER BUTTONS (MOBILE & TABLET ONLY) -->
         <div class="flex justify-end p-4 gap-2 lg:hidden bg-white border-b border-slate-200">
             <button type="button" id="openMobileMapBtn" class="btn bg-[#009966] hover:bg-[#007a52] text-white btn-sm rounded-lg flex items-center gap-1.5">
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
@@ -52,8 +49,6 @@
                 Filter
             </button>
         </div>
-        
-        <!-- HEADER SEARCH & FILTER BAR (DESKTOP ONLY) -->
         <header class="bg-white border-b border-slate-200 z-30 shadow-sm shrink-0 hidden lg:block">
             <form action="" method="GET" id="headerFilterForm" class="max-w-7xl mx-auto px-4 py-3">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-center">
@@ -68,8 +63,6 @@
                             </svg>
                         </div>
                     </div>
-
-                    <!-- Property Type -->
                     <div>
                         <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Property Type</label>
                         <select name="property_type" class="w-full bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-xs font-medium focus:outline-none focus:border-emerald-500 focus:bg-white transition-all cursor-pointer">
@@ -132,11 +125,12 @@
                         $min_p       = isset($_GET['min_price']) && is_numeric($_GET['min_price']) ? floatval($_GET['min_price']) : 0;
                         $max_p       = isset($_GET['max_price']) && is_numeric($_GET['max_price']) ? floatval($_GET['max_price']) : 0;
 
-                        $query = "
-                            SELECT r.*, l.province, l.municipality, l.barangay, l.property_name, l.latitude, l.longitude,r.rate
+                       $query = "
+                            SELECT r.*, l.province, l.municipality, l.barangay, l.property_name, l.latitude, l.longitude, r.rate, acc.user_id, l.user_id, acc.status
                             FROM rentspace r
                             LEFT JOIN landlord l ON l.landlord_id = r.landlord_id
-                            WHERE 1=1
+                            LEFT JOIN accounts acc ON l.user_id = acc.user_id
+                            WHERE 1=1 AND acc.status = 'Approved'
                         ";
 
                         $params = [];
@@ -202,7 +196,7 @@
                                     : '../assets/images/background_cover.png';
 
                      
-                                $locate = ($type === "Boarding House / Bedspace") ? "boarding_details.php" : "apartment_details.php";
+                              
 
                                 if($type === "Boarding House / Bedspace"){
                                     $locate = "boarding_details.php";
@@ -218,6 +212,8 @@
                                     $locate = "es_details.php";
                                 }elseif($type === "Transient House"){
                                     $locate = "trasient_details.php";
+                                }elseif($type === "Parking Space"){
+                                    $locate = "ps_details.php";
                                 }
 
 

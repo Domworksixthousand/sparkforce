@@ -21,7 +21,10 @@
 </head> 
 <body class="bg-base-100 min-h-screen">
 
-  <?php include '../alerts.php'; ?>
+  <?php 
+    include '../alerts.php';
+    include '../banned_modal.php'; 
+  ?>
 
   <div class="drawer lg:drawer-open">
     <input id="my-drawer" type="checkbox" class="drawer-toggle" />

@@ -95,6 +95,7 @@
 
   <?php 
     include '../alerts.php'; 
+    include '../banned_modal.php'; 
   ?>
 
 
