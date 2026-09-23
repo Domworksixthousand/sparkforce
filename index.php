@@ -395,6 +395,8 @@
                        $locate = "cs_details.php";
                   }elseif($type === "Transient House"){
                        $locate = "trasient_details.php";
+                  }elseif($type === "Parking Space"){
+                       $locate = "ps_details.php";
                   }
 
                   echo '

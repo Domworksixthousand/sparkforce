@@ -50,13 +50,14 @@ function get_account_display($conn, $user_id) {
 
     if ($result && $result->num_rows > 0) {
         $row = $result->fetch_assoc();
+  
         $parts = array_filter([
             $row['firstname']  ?? '',
             $row['middlename'] ?? '',
             $row['lastname']   ?? '',
             $row['suffix']     ?? '',
         ], fn($p) => trim($p) !== '');
-
+            $status = $row['status'];
         return [
             'fullname' => implode(' ', $parts),
             // Build the FULL usable path here, once, so every caller
@@ -66,6 +67,7 @@ function get_account_display($conn, $user_id) {
                 ? '../assets/uploads/' . $row['profile']
                 : '../assets/images/logo-icon.png',
             'status'   => $row['status'] ?? null,
+            
         ];
     }
     return null;
@@ -268,24 +270,25 @@ function h($v) { return htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8'); }
 
    <div class="modal-action mt-6">
       <?php
-      if($user_status === "Approved"){
-           if ($total_reported > 1 ) {
+      if($status !== "Banned"){    
+        if($user_status === "Approved"){
+            if ($total_reported > 1 ) {
+                ?>
+                <a href="report_ban_form.php?report_id=<?= h($report_id) ?>" class="btn btn-error">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-x-icon lucide-shield-x"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m14.5 9.5-5 5"/><path d="m9.5 9.5 5 5"/></svg>
+                    Ban Account
+                </a>
+                <?php
+            } else {
               ?>
-              <a href="report_ban_form.php?report_id=<?= h($report_id) ?>" class="btn btn-error">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-x-icon lucide-shield-x"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m14.5 9.5-5 5"/><path d="m9.5 9.5 5 5"/></svg>
-                  Ban Account
+              <a href="warning_form.php?report_id=<?= h($report_id) ?>" class="btn btn-warning text-black">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-triangle-alert-icon lucide-triangle-alert"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                  Send Warning
               </a>
               <?php
-          } else {
-            ?>
-            <a href="warning_form.php?report_id=<?= h($report_id) ?>" class="btn btn-warning text-black">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-triangle-alert-icon lucide-triangle-alert"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
-                Send Warning
-            </a>
-            <?php
+          }
         }
-      }
-     
+     }
       ?>
   </div>
 
