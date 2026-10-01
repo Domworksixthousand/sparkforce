@@ -1901,7 +1901,7 @@ if(isset($_POST['delete_room'])){
         $delete = $conn->prepare("DELETE  FROM `boarding_house` WHERE `rent_id` = ?");
         $delete->bind_param("s", $rent_id);
         $delete->execute();
-    }
+    } 
 
     $delete = $conn->prepare("DELETE FROM `rentspace` WHERE `rent_id` = ?");
     $delete->bind_param("s",$rent_id);

@@ -71,6 +71,11 @@
     $location_edit = "ps_edit.php";
     $location_info = "ps_info.php";
     $placeholder = "Search  Parking Space Name / Number";
+  }elseif($type === "Vacant Lot"){
+    $location_add = "vl_add.php";
+    $location_edit = "vl_edit.php";
+    $location_info = "vl_info.php";
+    $placeholder = "Search Vacant Lot  Name / Number";
   }
 
  ?>
