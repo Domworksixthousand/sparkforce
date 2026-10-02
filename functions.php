@@ -4358,7 +4358,7 @@ if (isset($_POST['update_parkingspace'])) {
         SET name = ?, price = ?, image_cover = ?, other_info = ?, rate = ?
         WHERE rent_id = ?
     ");
-    $update_rent->bind_param("sdssss", $name, $price, $image_cover, $other_info, $rate, $rent_id);
+    $update_rent->bind_param("sissss", $name, $price, $image_cover, $other_info, $rate, $rent_id);
     $update_rent->execute();
 
     // ---------- UPDATE / UPSERT PARKING SPACE SPECS ----------
@@ -4424,6 +4424,334 @@ if (isset($_POST['update_parkingspace'])) {
         }
     }
 
+    header("Location: users/my_property.php?property_id=" . urlencode($landlord_id) . "&updated=1");
+    exit;
+}
+
+if (isset($_POST['save_vacantlot'])) {
+
+    $landlord_id             = $_POST['landlord_id'] ?? '';
+    $vacantlot_rate          = trim($_POST['vacantlot_rate'] ?? '');
+    $vacantlot_name          = trim($_POST['vacantlot_name'] ?? '');
+    $vacantlot_price         = trim($_POST['vacantlot_price'] ?? '');
+    $vacantlot_square_area   = trim($_POST['vacantlot_square_area'] ?? '');
+    $vacantlot_type          = $_POST['vacantlot_type'] ?? '';
+    $vacantlot_other_info    = trim($_POST['vacantlot_other_info'] ?? '');
+    $vacantlot_raw_amenities = $_POST['amenity'] ?? [];
+
+    foreach($vacantlot_raw_amenities as $amen){
+        echo "$amen <br>";
+    }
+
+    // --- STORE IN SESSION FOR FORM RE-POPULATION (before any validation) ---
+    $_SESSION['vacantlot_name']        = $vacantlot_name;
+    $_SESSION['vacantlot_price']       = $vacantlot_price;
+    $_SESSION['vacantlot_rate']        = $vacantlot_rate;
+    $_SESSION['vacantlot_square_area'] = $vacantlot_square_area;
+    $_SESSION['vacantlot_type']        = $vacantlot_type;
+    $_SESSION['vacantlot_other_info']  = $vacantlot_other_info;
+    $_SESSION['amenity']   = $vacantlot_raw_amenities;
+
+    $uploadDir = 'assets/uploads/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+
+    // --- COVER PHOTO ---
+    if (isset($_FILES['vacantlot_cover']) && $_FILES['vacantlot_cover']['error'] === UPLOAD_ERR_OK) {
+        $fileTmpPath   = $_FILES['vacantlot_cover']['tmp_name'];
+        $fileExtension = strtolower(pathinfo($_FILES['vacantlot_cover']['name'], PATHINFO_EXTENSION));
+        $new_cover     = time() . '_vacantlot_cover.' . $fileExtension;
+
+        if (move_uploaded_file($fileTmpPath, $uploadDir . $new_cover)) {
+            $_SESSION['vacantlot_cover'] = $new_cover;
+        }
+    } elseif (!empty($_POST['old_cover'])) {
+        $_SESSION['vacantlot_cover'] = $_POST['old_cover'];
+    }
+
+    $vacantlot_cover = $_SESSION['vacantlot_cover'] ?? '';
+
+    if (empty($vacantlot_cover)) {
+        $_SESSION['error'] = "Cover photo is required";
+        header("Location: users/vl_add.php?property_id=" . urlencode($landlord_id));
+        exit;
+    }
+
+    // --- GALLERY PHOTOS ---
+    if (!empty($_FILES['vacantlot_gallery']['name'][0])) {
+        $vacantlot_new_gallery = [];
+        foreach ($_FILES['vacantlot_gallery']['name'] as $i => $img_name) {
+            if ($_FILES['vacantlot_gallery']['error'][$i] !== UPLOAD_ERR_OK)
+                continue;
+            $ext      = strtolower(pathinfo($img_name, PATHINFO_EXTENSION));
+            $new_name = uniqid() . '_vacantlot_' . $i . '.' . $ext;
+            if (move_uploaded_file($_FILES['vacantlot_gallery']['tmp_name'][$i], $uploadDir . $new_name)) {
+                $vacantlot_new_gallery[] = $new_name;
+            }
+        }
+        if (!empty($vacantlot_new_gallery)) {
+            $_SESSION['vacantlot_gallery'] = $vacantlot_new_gallery;
+        }
+    }
+    $vacantlot_gallery = $_SESSION['vacantlot_gallery'] ?? [];
+
+    if (count($vacantlot_gallery) < 3 || count($vacantlot_gallery) > 10) {
+        $_SESSION['error'] = "Please upload 3 to 10 photos for the gallery";
+        header("Location: users/vl_add.php?property_id=" . urlencode($landlord_id));
+        exit;
+    }
+
+    // --- VALIDATE AMENITIES ---
+    $vacantlot_amenities = [];
+    foreach ($vacantlot_raw_amenities as $amenity_id) {
+        $amenity_id = trim($amenity_id);
+        if ($amenity_id === '')
+            continue;
+
+        if (in_array($amenity_id, $vacantlot_amenities)) {
+            $_SESSION['error'] = "Amenities Selected Must Not Be The Same";
+            header("Location: users/vl_add.php?property_id=" . urlencode($landlord_id));
+            exit;
+        }
+        $vacantlot_amenities[] = $amenity_id;
+    }
+
+    // --- CHECK DUPLICATE ---
+    $check_vacantlot = $conn->prepare("SELECT 1 FROM `rentspace` WHERE `landlord_id` = ? AND `name` = ?");
+    $check_vacantlot->bind_param("ss", $landlord_id, $vacantlot_name);
+    $check_vacantlot->execute();
+    $result_vacantlot_name = $check_vacantlot->get_result();
+
+    if ($result_vacantlot_name->num_rows > 0) {
+        $_SESSION['error'] = htmlspecialchars($vacantlot_name) . " Already Exists";
+        header("Location: users/vl_add.php?property_id=" . urlencode($landlord_id));
+        exit;
+    }
+
+    // --- GENERATE UNIQUE IDS ---
+    $vacantlot_status    = "Available";
+    $vacantlot_rent_id   = "VL" . rand(1000, 9999);
+    $vacantlot_rent_type = "Vacant Lot";
+    $vacantlot_id        = "VLP" . rand(10000, 99999);
+
+    // --- INSERT MAIN RENTSPACE TABLE ---
+    $insert_vacantlot_rent = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`, `rate`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $insert_vacantlot_rent->bind_param(
+        "sssssssss",
+        $vacantlot_rent_id, $vacantlot_name, $landlord_id, $user_id_login,
+        $vacantlot_rent_type, $vacantlot_price, $vacantlot_cover,
+        $vacantlot_other_info, $vacantlot_rate
+    );
+    $insert_vacantlot_rent->execute();
+
+    // --- INSERT VACANT_LOT TABLE ---
+    $insert_vacantlot = $conn->prepare("INSERT INTO `vacant_lot` (`vl_id`, `square_area`, `type`, `status`, `rent_id`) VALUES (?, ?, ?, ?, ?)");
+    $insert_vacantlot->bind_param("sssss", $vacantlot_id, $vacantlot_square_area, $vacantlot_type, $vacantlot_status, $vacantlot_rent_id);
+    $insert_vacantlot->execute();
+
+    // --- INSERT AMENITIES ---
+    if (!empty($vacantlot_amenities)) {
+        $values = [];
+        $types  = "";
+        $params = [];
+
+        foreach ($vacantlot_amenities as $amenity_id) {
+            $values[] = "(?, ?)";
+            $types   .= "ss";
+            $params[] = $vacantlot_rent_id;
+            $params[] = $amenity_id;
+        }
+
+        $sql = "INSERT INTO `rentspace_amenities` (`rent_id`, `amen_id`) VALUES " . implode(", ", $values);
+        $insert_vacantlot_amen = $conn->prepare($sql);
+        $insert_vacantlot_amen->bind_param($types, ...$params);
+        $insert_vacantlot_amen->execute();
+    }
+
+    // --- INSERT GALLERY ---
+    if (!empty($vacantlot_gallery)) {
+        $insert_vacantlot_gallery = $conn->prepare("INSERT INTO `gallery2` (`image`, `rent_id`) VALUES (?, ?)");
+        foreach ($vacantlot_gallery as $img) {
+            $insert_vacantlot_gallery->bind_param("ss", $img, $vacantlot_rent_id);
+            $insert_vacantlot_gallery->execute();
+        }
+    }
+
+    // --- CLEAR SESSION FORM DATA ---
+    unset(
+        $_SESSION['vacantlot_name'],
+        $_SESSION['vacantlot_price'],
+        $_SESSION['vacantlot_rate'],
+        $_SESSION['vacantlot_square_area'],
+        $_SESSION['vacantlot_type'],
+        $_SESSION['vacantlot_other_info'],
+        $_SESSION['vacantlot_cover'],
+        $_SESSION['vacantlot_gallery'],
+        $_SESSION['vacantlot_amenities']
+    );
+
+    $_SESSION['success'] = "Vacant Lot Successfully Inserted";
+    header("Location: users/my_property.php?property_id=" . urlencode($landlord_id));
+    exit;
+}
+
+
+if (isset($_POST['update_vacantlot'])) {
+
+    $vacantlot_rent_id      = $_POST['rent_id'] ?? '';
+    $landlord_id            = $_POST['landlord_id'] ?? '';
+    $vacantlot_name         = trim($_POST['vacantlot_name'] ?? '');
+    $vacantlot_price        = trim($_POST['vacantlot_price'] ?? '');
+    $vacantlot_rate         = trim($_POST['vacantlot_rate'] ?? '');
+    $vacantlot_other_info   = $_POST['vacantlot_other_info'] ?? '';
+    $vacantlot_type         = trim($_POST['vacantlot_type'] ?? '');
+    $vacantlot_square_area  = trim($_POST['vacantlot_square_area'] ?? '');
+    $vacantlot_status       = trim($_POST['vacantlot_status'] ?? '');
+    $vacantlot_raw_amenities = $_POST['vacantlot_amenity'] ?? [];
+
+    $vacantlot_back = "users/vl_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($vacantlot_rent_id);
+    $uploadDir = 'assets/uploads/';
+
+    // ---------- DUPLICATE NAME CHECK (exclude itself) ----------
+    $check_vacantlot = $conn->prepare("SELECT 1 FROM rentspace WHERE landlord_id = ? AND name = ? AND rent_id != ?");
+    $check_vacantlot->bind_param("sss", $landlord_id, $vacantlot_name, $vacantlot_rent_id);
+    $check_vacantlot->execute();
+    if ($check_vacantlot->get_result()->num_rows > 0) {
+        $_SESSION['error'] = htmlspecialchars($vacantlot_name) . " Already Exists";
+        header("Location: $vacantlot_back");
+        exit;
+    }
+
+    // ---------- VALIDATE AMENITIES ----------
+    $vacantlot_amenities = [];
+    foreach ($vacantlot_raw_amenities as $amenity_id) {
+        $amenity_id = trim($amenity_id);
+        if ($amenity_id === '') continue;
+        if (in_array($amenity_id, $vacantlot_amenities)) {
+            $_SESSION['error'] = "Amenities Selected Must Not Be The Same";
+            header("Location: $vacantlot_back");
+            exit;
+        }
+        $vacantlot_amenities[] = $amenity_id;
+    }
+
+    // ---------- COVER PHOTO ----------
+    $vacantlot_old_cover = $_POST['old_cover'] ?? '';
+    $vacantlot_cover     = $vacantlot_old_cover;
+
+    if (isset($_FILES['vacantlot_cover']) && $_FILES['vacantlot_cover']['error'] === UPLOAD_ERR_OK) {
+        $cover_name = time() . '_' . basename($_FILES['vacantlot_cover']['name']);
+        if (move_uploaded_file($_FILES['vacantlot_cover']['tmp_name'], $uploadDir . $cover_name)) {
+            if (!empty($vacantlot_old_cover) && file_exists($uploadDir . $vacantlot_old_cover)) {
+                unlink($uploadDir . $vacantlot_old_cover);
+            }
+            $vacantlot_cover = $cover_name;
+        }
+    }
+
+    if (empty($vacantlot_cover)) {
+        $_SESSION['error'] = "Cover photo is required";
+        header("Location: $vacantlot_back");
+        exit;
+    }
+
+    // ---------- GALLERY (replace only if new files uploaded) ----------
+    if (!empty($_FILES['vacantlot_gallery']['name'][0])) {
+        $vacantlot_new_gallery = [];
+        foreach ($_FILES['vacantlot_gallery']['tmp_name'] as $i => $tmp_name) {
+            if ($_FILES['vacantlot_gallery']['error'][$i] !== UPLOAD_ERR_OK) continue;
+            $gallery_name = time() . '_' . $i . '_' . basename($_FILES['vacantlot_gallery']['name'][$i]);
+            if (move_uploaded_file($tmp_name, $uploadDir . $gallery_name)) {
+                $vacantlot_new_gallery[] = $gallery_name;
+            }
+        }
+
+        if (count($vacantlot_new_gallery) < 3 || count($vacantlot_new_gallery) > 10) {
+            foreach ($vacantlot_new_gallery as $f) {
+                if (file_exists($uploadDir . $f)) unlink($uploadDir . $f);
+            }
+            $_SESSION['error'] = "Please upload 3 to 10 photos for the gallery";
+            header("Location: $vacantlot_back");
+            exit;
+        }
+
+        // delete old files + rows only after new ones are safe
+        $get_old_gallery = $conn->prepare("SELECT image FROM gallery2 WHERE rent_id = ?");
+        $get_old_gallery->bind_param("s", $vacantlot_rent_id);
+        $get_old_gallery->execute();
+        $old_gallery_res = $get_old_gallery->get_result();
+        while ($g = $old_gallery_res->fetch_assoc()) {
+            if (file_exists($uploadDir . $g['image'])) unlink($uploadDir . $g['image']);
+        }
+
+        $del_gallery = $conn->prepare("DELETE FROM gallery2 WHERE rent_id = ?");
+        $del_gallery->bind_param("s", $vacantlot_rent_id);
+        $del_gallery->execute();
+
+        $insert_vacantlot_gallery = $conn->prepare("INSERT INTO gallery2 (rent_id, image) VALUES (?, ?)");
+        foreach ($vacantlot_new_gallery as $img) {
+            $insert_vacantlot_gallery->bind_param("ss", $vacantlot_rent_id, $img);
+            $insert_vacantlot_gallery->execute();
+        }
+    }
+
+    // ---------- UPDATE RENTSPACE ----------
+    $update_vacantlot_rent = $conn->prepare("
+        UPDATE rentspace
+        SET name = ?, price = ?, image_cover = ?, other_info = ?, rate = ?
+        WHERE rent_id = ?
+    ");
+    $update_vacantlot_rent->bind_param("ssssss", $vacantlot_name, $vacantlot_price, $vacantlot_cover, $vacantlot_other_info, $vacantlot_rate, $vacantlot_rent_id);
+    $update_vacantlot_rent->execute();
+
+    // ---------- UPDATE VACANT_LOT (check existence, NOT affected_rows) ----------
+    $check_vl_row = $conn->prepare("SELECT 1 FROM vacant_lot WHERE rent_id = ?");
+    $check_vl_row->bind_param("s", $vacantlot_rent_id);
+    $check_vl_row->execute();
+
+    if ($check_vl_row->get_result()->num_rows > 0) {
+        $update_vacantlot = $conn->prepare("
+            UPDATE vacant_lot
+            SET square_area = ?, type = ?, status = ?
+            WHERE rent_id = ?
+        ");
+        $update_vacantlot->bind_param("ssss", $vacantlot_square_area, $vacantlot_type, $vacantlot_status, $vacantlot_rent_id);
+        $update_vacantlot->execute();
+    } else {
+        // edge case: no existing row — insert with a generated vl_id
+        $vacantlot_id = "VLP" . rand(10000, 99999);
+        $insert_vacantlot = $conn->prepare("
+            INSERT INTO vacant_lot (vl_id, square_area, type, status, rent_id)
+            VALUES (?, ?, ?, ?, ?)
+        ");
+        $insert_vacantlot->bind_param("sssss", $vacantlot_id, $vacantlot_square_area, $vacantlot_type, $vacantlot_status, $vacantlot_rent_id);
+        $insert_vacantlot->execute();
+    }
+
+    // ---------- AMENITIES (delete then re-insert) ----------
+    $conn->begin_transaction();
+    try {
+        $del_amen = $conn->prepare("DELETE FROM rentspace_amenities WHERE rent_id = ?");
+        $del_amen->bind_param("s", $vacantlot_rent_id);
+        $del_amen->execute();
+
+        if (!empty($vacantlot_amenities)) {
+            $insert_vacantlot_amen = $conn->prepare("INSERT INTO rentspace_amenities (rent_id, amen_id) VALUES (?, ?)");
+            foreach ($vacantlot_amenities as $amenity_id) {
+                $insert_vacantlot_amen->bind_param("ss", $vacantlot_rent_id, $amenity_id);
+                $insert_vacantlot_amen->execute();
+            }
+        }
+        $conn->commit();
+    } catch (mysqli_sql_exception $e) {
+        $conn->rollback();
+        $_SESSION['error'] = "Failed to update amenities. Please try again.";
+        header("Location: $vacantlot_back");
+        exit;
+    }
+
+    $_SESSION['success'] = "Vacant Lot Successfully Updated";
     header("Location: users/my_property.php?property_id=" . urlencode($landlord_id) . "&updated=1");
     exit;
 }

@@ -1,11 +1,89 @@
 <?php
 include 'my_property.php';
-
-if (isset($_GET['property_id'])) {
+if (isset($_GET['id']) && isset($_GET['property_id'])) {
+    $rent_id     = $_GET['id'] ?? '';
     $landlord_id = $_GET['property_id'] ?? '';
 } else {
-    header("Location: index.php");
+    echo "<script>location.href='index.php';</script>";
     exit;
+}
+
+// RENTSPACE DETAILS
+$get_rent = $conn->prepare("
+    SELECT name, price, image_cover, other_info, rate
+    FROM rentspace 
+    WHERE rent_id = ?
+");
+$get_rent->bind_param("s", $rent_id);
+$get_rent->execute();
+$rent_res = $get_rent->get_result();
+
+$name        = "";
+$price       = "";
+$image_cover = "";
+$other_info  = "";
+$rate        = "";
+
+if ($rent_row = $rent_res->fetch_assoc()) {
+    $name        = $rent_row['name'];
+    $price       = $rent_row['price'];
+    $image_cover = $rent_row['image_cover'];
+    $other_info  = $rent_row['other_info'];
+    $rate        = $rent_row['rate'];
+}
+
+
+
+// vacant lot
+$gt_vl = $conn->prepare("SELECT * FROM `vacant_lot` WHERE `rent_id` = ?");
+$gt_vl->bind_param("s", $rent_id);
+$gt_vl->execute();
+$result_vl = $gt_vl->get_result();
+
+$vl_id = "";
+$square_area  = "";
+$type         = "";
+$status       = "";
+
+if ($result_vl->num_rows > 0) {
+    $row_vl = $result_vl->fetch_assoc();
+    $vl_id         = $row_vl['vl_id']         ?? '';
+    $square_area          = $row_vl['square_area']          ?? '';
+    $type       = $row_vl['type']                 ?? '';
+    $status               = $row_vl['status']                ?? '';
+}
+
+// GALLERY IMAGES
+$get_gallery = $conn->prepare("SELECT * FROM `gallery2` WHERE `rent_id` = ?");
+$get_gallery->bind_param("s", $rent_id);
+$get_gallery->execute();
+$result_gallery = $get_gallery->get_result();
+
+$gallery_images = [];
+if ($result_gallery->num_rows > 0) {
+    while ($row_gallery = $result_gallery->fetch_assoc()) {
+        $gallery_images[] = $row_gallery['image'];
+    }
+}
+
+// AMENITIES FROM DATABASE
+$get_saved_amen = $conn->prepare("
+    SELECT a.amen_id, a.amenity, ra.rent_amen_id
+    FROM rentspace_amenities AS ra
+    INNER JOIN amenities AS a ON a.amen_id = ra.amen_id
+    WHERE ra.rent_id = ?
+");
+$get_saved_amen->bind_param("s", $rent_id);
+$get_saved_amen->execute();
+$saved_amen_res = $get_saved_amen->get_result();
+
+$saved_amenities = [];
+while ($row = $saved_amen_res->fetch_assoc()) {
+    $saved_amenities[] = [
+        "amen_id"      => $row['amen_id'],
+        "amenity"      => $row['amenity'],
+        "rent_amen_id" => $row['rent_amen_id']
+    ];
 }
 ?>
 
@@ -13,7 +91,9 @@ if (isset($_GET['property_id'])) {
 
 <!-- Professional Modal Wrapper & Backdrop -->
 <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto animate-fade-in">
+
   <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden transform transition-all">
+
     <!-- Modal Header -->
     <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 sticky top-0 z-10 backdrop-blur-md">
       <div class="flex items-center gap-3">
@@ -28,7 +108,7 @@ if (isset($_GET['property_id'])) {
         </div>
         <div>
           <h2 class="text-lg font-bold text-slate-800">Vacant Lot Configuration</h2>
-          <p class="text-xs text-slate-500">Manage vacant lot details, pricing, photos,  specs, and amenities.</p>
+          <p class="text-xs text-slate-500">Manage Vacant Lot Space details, pricing, photos,  specs, and amenities.</p>
         </div>
       </div>
 
@@ -43,18 +123,20 @@ if (isset($_GET['property_id'])) {
     <!-- Modal Form Body -->
     <form action="../functions.php" method="POST" enctype="multipart/form-data" class="p-6 overflow-y-auto space-y-8" id="mainForm">
         <input type="hidden" name="landlord_id" value="<?php echo htmlspecialchars($landlord_id); ?>">
+        <input type="hidden" name="rent_id" value="<?php echo htmlspecialchars($rent_id); ?>">
+        <input type="hidden" name="vl_id" value="<?php echo htmlspecialchars($vl_id); ?>">
 
         <!-- ============================================ -->
         <!-- SECTION 1: TRANSIENT HOUSE INFORMATION -->
         <!-- ============================================ -->
         <div class="space-y-4">
             <div class="border-b border-slate-100 pb-2">
-                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400">Vacont Lot Information</h3>
+                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400">Vacant Lot Information</h3>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="space-y-1.5">
-                    <label class="block text-xs font-semibold text-slate-600">Vacont Lot Name / Number *</label>
+                    <label class="block text-xs font-semibold text-slate-600">Vacant Lot Name / Number *</label>
                     <div class="relative flex items-center">
                         <span class="absolute left-3.5 text-slate-400 pointer-events-none">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -64,7 +146,7 @@ if (isset($_GET['property_id'])) {
                         <input type="text"
                                class="autoInput w-full pl-10 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                                name="vacantlot_name"
-                               value="<?php echo htmlspecialchars($_SESSION['vacantlot_name'] ?? ''); ?>"
+                               value="<?php echo htmlspecialchars($name); ?>"
                                placeholder="Enter Name / Number"
                                required />
                     </div>
@@ -77,7 +159,7 @@ if (isset($_GET['property_id'])) {
                         <input type="text"
                                class="numbers_only w-full pl-8 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                                name="vacantlot_price"
-                               value="<?php echo htmlspecialchars($_SESSION['vacantlot_price'] ?? ''); ?>"
+                               value="<?php echo htmlspecialchars($price); ?>"
                                placeholder="Enter Price / Hour"
                                required />
                     </div>
@@ -92,7 +174,7 @@ if (isset($_GET['property_id'])) {
                         <input type="text"
                                class="autoInput w-full pl-10 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                                name="vacantlot_rate"
-                               value="<?php echo htmlspecialchars($_SESSION['vacantlot_rate'] ?? ''); ?>"
+                               value="<?php echo htmlspecialchars($rate); ?>"
                                placeholder="Enter Rate"
                                required />
                     </div>
@@ -103,15 +185,15 @@ if (isset($_GET['property_id'])) {
             <div class="space-y-1.5 pt-2" id="cover-section">
                 <label class="block text-xs font-semibold text-slate-600">Cover Photo *</label>
 
-                <?php if (!empty($_SESSION['vacantlot_cover'])): ?>
-                    <input type="hidden" name="old_cover" value="<?php echo htmlspecialchars($_SESSION['vacantlot_cover']); ?>">
+                <?php if (!empty($image_cover)): ?>
+                    <input type="hidden" name="old_cover" value="<?php echo htmlspecialchars($image_cover); ?>">
                     <div class="flex items-center justify-between bg-emerald-50/60 border border-emerald-100 p-2.5 rounded-xl text-xs mb-2">
                         <div class="flex items-center gap-3">
-                            <img src="../assets/uploads/<?php echo htmlspecialchars($_SESSION['vacantlot_cover']); ?>"
+                            <img src="../assets/uploads/<?php echo htmlspecialchars($image_cover); ?>"
                                  class="w-10 h-10 object-cover rounded-lg border border-white shadow-xs"
                                  alt="Preview">
                             <span class="text-emerald-900">Previously selected:
-                                <strong class="underline font-medium"><?php echo htmlspecialchars($_SESSION['vacantlot_cover']); ?></strong>
+                                <strong class="underline font-medium"><?php echo htmlspecialchars($image_cover); ?></strong>
                             </span>
                         </div>
                         <span class="px-2 py-1 bg-emerald-600 text-white rounded-md text-[10px] font-bold uppercase tracking-wider">Retained</span>
@@ -133,7 +215,7 @@ if (isset($_GET['property_id'])) {
                            id="cover"
                            name="vacantlot_cover"
                            accept="image/jpeg, image/png, image/jpg"
-                           <?php echo !empty($_SESSION['vacantlot_cover']) ? '' : 'required'; ?> />
+                           <?php echo !empty($image_cover) ? '' : 'required'; ?> />
                 </label>
 
                 <div id="cover-preview-container" class="hidden mt-3 flex items-center justify-between bg-emerald-50/60 border border-emerald-100 p-2.5 rounded-xl text-xs">
@@ -155,7 +237,7 @@ if (isset($_GET['property_id'])) {
                 <div class="border border-slate-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500 transition-all">
                     <textarea
                         id="myEditor"
-                        name="vacantlot_other_info"><?php echo htmlspecialchars($_SESSION['vacantlot_other_info'] ?? ''); ?></textarea>
+                        name="vacantlot_other_info"><?php echo htmlspecialchars($other_info); ?></textarea>
                 </div>
             </div>
         </div>
@@ -165,30 +247,27 @@ if (isset($_GET['property_id'])) {
         <!-- ============================================ -->
         <div class="space-y-4">
             <div class="border-b border-slate-100 pb-2">
-                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400">Vacont Lot Specification</h3>
+                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400">Parking Specification</h3>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="space-y-1.5">
-                    <label class="block text-xs font-semibold text-slate-600">Vacant Lot Types *</label>
+                    <label class="block text-xs font-semibold text-slate-600">Parking Types *</label>
                     <div class="relative flex items-center">
                         <span class="absolute left-3.5 text-slate-400 pointer-events-none">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>
                         </span>
                   <select class="w-full pl-10 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" name="vacantlot_type" required>
-                        <option value="" disabled <?php echo empty($_SESSION['vacantlot_type']) ? 'selected' : ''; ?>>Select Vacant Lot Type</option>
+                        <option value="<?php echo $type; ?>" ><?php echo $type; ?></option>
 
-                        <!-- Indoor/Covered -->
-                        <optgroup label="Vacont Lot Types">
-                            <option value="Residential Vacant Lots"        <?php echo (($_SESSION['vacantlot_type'] ?? '') == 'Residential Vacant Lots')        ? 'selected' : ''; ?>>Residential Vacant Lots</option>
-                            <option value="Commercial / Industrial Vacant Lots"                <?php echo (($_SESSION['vacantlot_type'] ?? '') == 'Commercial / Industrial Vacant Lots')                ? 'selected' : ''; ?>>Commercial / Industrial Vacant Lots</option>
-                            <option value="Agricultural / Open Rural Lots"             <?php echo (($_SESSION['vacantlot_type'] ?? '') == 'Agricultural / Open Rural Lots')             ? 'selected' : ''; ?>>Agricultural / Open Rural Lots</option>
-                            <option value="Corner / Junction Vacant Lots"  <?php echo (($_SESSION['vacantlot_type'] ?? '') == 'Corner / Junction Vacant Lots')  ? 'selected' : ''; ?>>Corner / Junction Vacant Lots</option>
-                            <option value="Infill Vacant Lots"  <?php echo (($_SESSION['vacantlot_type'] ?? '') == 'Infill Vacant Lots')  ? 'selected' : ''; ?>>Infill Vacant Lots</option>
-                            <option value="Environmental / Public Reserve Lots"  <?php echo (($_SESSION['vacantlot_type'] ?? '') == 'Environmental / Public Reserve Lots')  ? 'selected' : ''; ?>>Environmental / Public Reserve Lots</option>  
+                       <optgroup label="Vacont Lot Types">
+                            <option value="Residential Vacant Lots"        <?php echo (($type ?? '') == 'Residential Vacant Lots')        ? 'selected' : ''; ?>>Residential Vacant Lots</option>
+                            <option value="Commercial / Industrial Vacant Lots"                <?php echo (($type ?? '') == 'Commercial / Industrial Vacant Lots')                ? 'selected' : ''; ?>>Commercial / Industrial Vacant Lots</option>
+                            <option value="Agricultural / Open Rural Lots"             <?php echo (($type ?? '') == 'Agricultural / Open Rural Lots')             ? 'selected' : ''; ?>>Agricultural / Open Rural Lots</option>
+                            <option value="Corner / Junction Vacant Lots"  <?php echo (($type ?? '') == 'Corner / Junction Vacant Lots')  ? 'selected' : ''; ?>>Corner / Junction Vacant Lots</option>
+                            <option value="Infill Vacant Lots"  <?php echo (($type ?? '') == 'Infill Vacant Lots')  ? 'selected' : ''; ?>>Infill Vacant Lots</option>
+                            <option value="Environmental / Public Reserve Lots"  <?php echo (($type ?? '') == 'Environmental / Public Reserve Lots')  ? 'selected' : ''; ?>>Environmental / Public Reserve Lots</option>  
                         </optgroup>
-
-                      
 
                     </select>
                     </div>
@@ -202,10 +281,30 @@ if (isset($_GET['property_id'])) {
                         </span>
                         <input type="text"
                                class="w-full pl-10 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-                               name="vacantlot_square_area"
-                               value="<?php echo htmlspecialchars($_SESSION['vacantlot_square_area'] ?? ''); ?>"
+                               name="square_area"
+                               value="<?php echo htmlspecialchars($square_area); ?>"
                                placeholder="Enter Parking Square Area"
                                required />
+                    </div>
+                </div>
+
+
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-semibold text-slate-600">Status *</label>
+                    <div class="relative flex items-center">
+                        <span class="absolute left-3.5 text-slate-400 pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10" />
+                                <path d="M12 16v-4" />
+                                <path d="M12 8h.01" />
+                            </svg>
+                        </span>
+                        <select class="w-full pl-10 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" name="status" required>
+                            <option value="" disabled <?= empty($status) ? 'selected' : '' ?>>Select Status</option>
+                            <option value="Occupied" <?= ($status ?? '') === 'Occupied' ? 'selected' : '' ?>>Occupied</option>
+                            <option value="Available" <?= ($status ?? '') === 'Available' ? 'selected' : '' ?>>Available</option>
+                            <option value="Out of Order" <?= ($status ?? '') === 'Out of Order' ? 'selected' : '' ?>>Out of Order</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -214,9 +313,9 @@ if (isset($_GET['property_id'])) {
             <div class="space-y-1.5 pt-2" id="gallery-section">
                 <label class="block text-xs font-semibold text-slate-600">Multiple Photos (Upload 3 to 10 Photos) *</label>
 
-                <?php if (!empty($_SESSION['vacantlot_gallery'])): ?>
+                <?php if (!empty($gallery_images)): ?>
                     <div class="grid grid-cols-4 sm:grid-cols-5 gap-2 mb-2">
-                        <?php foreach ($_SESSION['vacantlot_gallery'] as $img): ?>
+                        <?php foreach ($gallery_images as $img): ?>
                             <div class="relative">
                                 <img src="../assets/uploads/<?php echo htmlspecialchars($img); ?>"
                                      class="w-full h-16 object-cover rounded-lg border border-emerald-100">
@@ -225,7 +324,7 @@ if (isset($_GET['property_id'])) {
                     </div>
                     <div class="flex items-center gap-2 bg-emerald-50/60 border border-emerald-100 p-2.5 rounded-xl text-xs mb-2">
                         <span class="px-2 py-1 bg-emerald-600 text-white rounded-md text-[10px] font-bold uppercase tracking-wider shrink-0">Retained</span>
-                        <span class="text-emerald-900"><?php echo count($_SESSION['vacantlot_gallery']); ?> photo(s) retained. Upload new photos below to replace them.</span>
+                        <span class="text-emerald-900"><?php echo count($gallery_images); ?> photo(s) retained. Upload new photos below to replace them.</span>
                     </div>
                 <?php endif; ?>
 
@@ -239,11 +338,11 @@ if (isset($_GET['property_id'])) {
                     </div>
                     <input type="file"
                            class="hidden"
-                           id="vacantlot_gallery"
-                           name="vacantlot_gallery[]"
+                           id="gallery"
+                           name="gallery[]"
                            accept="image/jpeg, image/png, image/jpg"
                            multiple
-                           <?php echo !empty($_SESSION['vacantlot_gallery']) ? '' : 'required'; ?> />
+                           <?php echo !empty($gallery_images) ? '' : 'required'; ?> />
                 </label>
 
                 <div id="gallery-preview-container" class="hidden mt-3 grid grid-cols-4 sm:grid-cols-5 gap-2"></div>
@@ -264,58 +363,67 @@ if (isset($_GET['property_id'])) {
                 </button>
             </div>
 
-           <div id="amenities-container" class="space-y-2">
-        <?php
-        $active = "yes";
-        $get_amen = $conn->prepare("SELECT * FROM amenities WHERE user_id=? AND active=?");
-        $get_amen->bind_param("ss", $user_id_login, $active);
-        $get_amen->execute();
-        $result = $get_amen->get_result();
+            <div id="amenities-container" class="space-y-2">
+                <?php
+                $active = "yes";
+                if (isset($user_id_login) && !empty($user_id_login)) {
+                    $get_amen = $conn->prepare("SELECT * FROM amenities WHERE user_id=? AND active=?");
+                    $get_amen->bind_param("ss", $user_id_login, $active);
+                } else {
+                    $get_amen = $conn->prepare("SELECT * FROM amenities WHERE active=?");
+                    $get_amen->bind_param("s", $active);
+                }
+                $get_amen->execute();
+                $result = $get_amen->get_result();
 
-        $amenities = [];
-        while ($row = $result->fetch_assoc()) {
-            $amenities[] = $row;
-        }
+                $amenities = [];
+                while ($row = $result->fetch_assoc()) {
+                    $amenities[] = $row;
+                }
 
-        if (empty($_SESSION['amenity'])) {
-            $_SESSION['amenity'] = [""];
-        }
+                if (empty($saved_amenities)) {
+                    $saved_amenities = [["amen_id" => "", "amenity" => "", "rent_amen_id" => ""]];
+                }
 
-        $index = 0;
-        foreach ($_SESSION['vacantlot_amenities'] as $selectedAmen) {
-        ?>
-        <div class="amen-item flex items-center gap-2 bg-slate-50/50 border border-slate-200 rounded-xl p-2">
-            <select class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                    name="amenity[]" required>
-                <option value="" disabled <?php echo empty($selectedAmen) ? 'selected' : ''; ?>>Select Amenity</option>
-                <?php foreach ($amenities as $amen) { ?>
-                    <option value="<?php echo htmlspecialchars($amen['amen_id']); ?>"
-                        <?php echo ($selectedAmen == $amen['amen_id']) ? 'selected' : ''; ?>>
-                        <?php echo htmlspecialchars($amen['amenity']); ?>
-                    </option>
-                <?php } ?>
-            </select>
+                $index = 0;
+                foreach ($saved_amenities as $saved) {
+                    $selectedAmen = $saved['amen_id'];
+                ?>
+                <div class="amen-item flex items-center gap-2 bg-slate-50/50 border border-slate-200 rounded-xl p-2">
+                    <?php if (!empty($saved['rent_amen_id'])) { ?>
+                    <input type="hidden" name="parkingspace_rent_amen_id[]" value="<?php echo htmlspecialchars($saved['rent_amen_id']); ?>">
+                    <?php } ?>
+                    <select class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                            name="amenity[]" required>
+                        <option value="" disabled <?php echo empty($selectedAmen) ? 'selected' : ''; ?>>Select Amenity</option>
+                        <?php foreach ($amenities as $amen) { ?>
+                            <option value="<?php echo htmlspecialchars($amen['amen_id']); ?>"
+                                <?php echo ($selectedAmen == $amen['amen_id']) ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($amen['amenity']); ?>
+                            </option>
+                        <?php } ?>
+                    </select>
 
-            <?php if ($index > 0) { ?>
-            <button type="button" class="remove-amen-btn p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition-colors shrink-0" title="Remove">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-            </button>
-            <?php } ?>
-        </div>
-        <?php $index++; } ?>
-    </div>
+                    <?php if ($index > 0) { ?>
+                    <button type="button" class="remove-amen-btn p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition-colors shrink-0" title="Remove">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                    <?php } ?>
+                </div>
+                <?php $index++; } ?>
+            </div>
         </div>
 
         <!-- Submit -->
         <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3 sticky bottom-0 bg-white py-3 -mx-6 px-6">
             <a href="my_property.php?property_id=<?php echo urlencode($landlord_id); ?>"
                class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-xl transition-colors">
-               Cancel 
+               Cancel
             </a>
-            <button type="submit" name="save_vacantlot"
+            <button type="submit" name="update_vacantlot"
                     class="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                Save
+                Update
             </button>
         </div>
     </form>
@@ -433,7 +541,7 @@ tinymce.init({
     },
 
     init_instance_callback: function (editor) {
-        const content = <?php echo json_encode($_SESSION['parkingspace_other_info'] ?? ''); ?>;
+        const content = <?php echo json_encode($other_info); ?>;
         if (content) {
             editor.setContent(content);
         }
