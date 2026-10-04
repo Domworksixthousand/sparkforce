@@ -115,6 +115,7 @@
                       <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Suffix</p>
                       <p class="text-sm font-semibold text-gray-800"><?php echo !empty($suffixko) ? $suffixko : 'None'; ?></p>
                     </div>
+                    
                   </div>
                 </div>
 

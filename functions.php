@@ -907,6 +907,7 @@ if (isset($_POST['change_credentials'])) {
     $password = $_POST['password'] ?? '';
     $repeat_password = $_POST['repeat_password'] ?? '';
 
+
     if (empty($username) && empty($password)) {
         header("location:users/change_credentials.php");
         exit;
@@ -1927,6 +1928,22 @@ if(isset($_POST['delete_room'])){
         $delete->execute();
     }elseif($type === "Commercial Space"){
         $delete = $conn->prepare("DELETE  FROM `commercial_space` WHERE `rent_id` = ?");
+        $delete->bind_param("s", $rent_id);
+        $delete->execute();
+    }elseif($type === "Event Space"){
+        $delete = $conn->prepare("DELETE  FROM `event_space` WHERE `rent_id` = ?");
+        $delete->bind_param("s", $rent_id);
+        $delete->execute();
+    }elseif($type === "Transient House"){
+        $delete = $conn->prepare("DELETE  FROM `transient` WHERE `rent_id` = ?");
+        $delete->bind_param("s", $rent_id);
+        $delete->execute();
+    }elseif($type === "Parking Space"){
+        $delete = $conn->prepare("DELETE  FROM `parking_space` WHERE `rent_id` = ?");
+        $delete->bind_param("s", $rent_id);
+        $delete->execute();
+    }elseif($type === "Vacant Lot"){
+        $delete = $conn->prepare("DELETE  FROM `vacant_lot` WHERE `rent_id` = ?");
         $delete->bind_param("s", $rent_id);
         $delete->execute();
     }
