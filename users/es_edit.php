@@ -53,20 +53,19 @@ if ($result_execute_house->num_rows > 0) {
     }
 }
 
-// 3. GALLERY IMAGES
-$house = [];
+// GALLERY IMAGES
 $get_gallery = $conn->prepare("SELECT * FROM `gallery2` WHERE `rent_id` = ?");
 $get_gallery->bind_param("s", $rent_id);
 $get_gallery->execute();
 $result_gallery = $get_gallery->get_result();
 
-if ($result_gallery->num_rows > 0) {
-    while ($row_gallery = $result_gallery->fetch_assoc()) {
+if($result_gallery->num_rows > 0){
+    while($row_gallery = mysqli_fetch_assoc($result_gallery)){
         $house[] = $row_gallery['image'];
     }
 }
 
-// 4. GET ALL SAVED AMENITIES FOR THIS RENT_ID
+// AMENITIES FROM DATABASE
 $get_amen = $conn->prepare("
     SELECT a.amen_id, a.amenity, ra.rent_amen_id
     FROM rentspace_amenities AS ra
@@ -77,32 +76,16 @@ $get_amen->bind_param("s", $rent_id);
 $get_amen->execute();
 $amen_res = $get_amen->get_result();
 
-$selected_amen_ids = [];
+$saved_amenities = [];
 while ($row = $amen_res->fetch_assoc()) {
-    $selected_amen_ids[] = $row['amen_id'];
+    $saved_amenities[] = [
+        "amen_id"      => $row['amen_id'],
+        "amenity"      => $row['amenity'],
+        "rent_amen_id" => $row['rent_amen_id']
+    ];
 }
 
-if (empty($selected_amen_ids)) {
-    $selected_amen_ids = [""];
-}
-
-// 5. GET ALL AVAILABLE AMENITIES FROM DATABASE (Masterlist)
-$active = "yes";
-if (isset($user_id_login) && !empty($user_id_login)) {
-    $get_amen_all = $conn->prepare("SELECT * FROM amenities WHERE user_id=? AND active=?");
-    $get_amen_all->bind_param("ss", $user_id_login, $active);
-} else {
-    $get_amen_all = $conn->prepare("SELECT * FROM amenities WHERE active=?");
-    $get_amen_all->bind_param("s", $active);
-}
-
-$get_amen_all->execute();
-$result_all = $get_amen_all->get_result();
-
-$all_amenities = [];
-while ($row = $result_all->fetch_assoc()) {
-    $all_amenities[] = $row;
-}
+$selected_amen_ids = empty($saved_amenities) ? [""] : array_column($saved_amenities, 'amen_id');
 ?>
 
 <script src="https://cdn.tiny.cloud/1/ssew95wvyspsqckuynqjy38ov5ktrks0qbp94mxchgh1ucty/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
@@ -365,38 +348,90 @@ while ($row = $result_all->fetch_assoc()) {
         <div class="space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-2">
                 <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400">Room Amenities</h3>
-                <button type="button" id="addamenBtn2"
+                <button type="button" id="addamenBtn"
                         class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     Add Amenities
                 </button>
             </div>
 
-            <div id="amenities-container2" class="space-y-2">
-                <?php
-                $index = 0;
-                foreach ($selected_amen_ids as $selectedAmen) {
+            <?php
+            $active = "yes";
+            if (!empty($user_id_login)) {
+                $get_amen = $conn->prepare("SELECT * FROM amenities WHERE user_id=? AND active=?");
+                $get_amen->bind_param("ss", $user_id_login, $active);
+            } else {
+                $get_amen = $conn->prepare("SELECT * FROM amenities WHERE active=?");
+                $get_amen->bind_param("s", $active);
+            }
+            $get_amen->execute();
+            $result = $get_amen->get_result();
+
+            $amenities = [];
+            $amenity_ids_in_list = [];
+            while ($row = $result->fetch_assoc()) {
+                $amenities[] = $row;
+                $amenity_ids_in_list[] = (string)$row['amen_id'];
+            }
+
+            // Make sure the room's already-saved amenities are always in the dropdown,
+            // even if they are inactive / created by another user. Otherwise the select
+            // shows "Select Amenity", submits empty, and the saved amenity gets dropped.
+            foreach ($saved_amenities as $sv) {
+                if (!in_array((string)$sv['amen_id'], $amenity_ids_in_list, true)) {
+                    $amenities[] = ['amen_id' => $sv['amen_id'], 'amenity' => $sv['amenity']];
+                    $amenity_ids_in_list[] = (string)$sv['amen_id'];
+                }
+            }
+
+            // DIRECT mula sa DB; blangkong row lang kung wala pang saved
+            $rows = !empty($saved_amenities)
+                ? $saved_amenities
+                : [['amen_id' => '', 'rent_amen_id' => '']];
+            ?>
+
+            <div id="amenities-container" class="space-y-2">
+                <?php foreach ($rows as $saved) {
+                    $selectedAmen = $saved['amen_id'];
                 ?>
                 <div class="amen-item flex items-center gap-2 bg-slate-50/50 border border-slate-200 rounded-xl p-2">
+                    <input type="hidden" name="rentspace_amenities_id[]" value="<?php echo htmlspecialchars($saved['rent_amen_id']); ?>">
+
                     <select class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                            name="cs_amenity[]" required>
-                        <option value="" disabled <?php echo empty($selectedAmen) ? 'selected' : ''; ?>>Select Amenity</option>
-                        <?php foreach ($all_amenities as $amen) { ?>
+                            name="amenity[]">
+                        <option value="" <?php echo $selectedAmen === '' ? 'selected' : ''; ?>>Select Amenity</option>
+                        <?php foreach ($amenities as $amen) { ?>
                             <option value="<?php echo htmlspecialchars($amen['amen_id']); ?>"
-                                <?php echo ($selectedAmen == $amen['amen_id']) ? 'selected' : ''; ?>>
+                                <?php echo ((string)$selectedAmen === (string)$amen['amen_id']) ? 'selected' : ''; ?>>
                                 <?php echo htmlspecialchars($amen['amenity']); ?>
                             </option>
                         <?php } ?>
                     </select>
 
-                    <?php if ($index > 0) { ?>
                     <button type="button" class="remove-amen-btn p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition-colors shrink-0" title="Remove">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                     </button>
-                    <?php } ?>
                 </div>
-                <?php $index++; } ?>
+                <?php } ?>
             </div>
+
+            <template id="amen-template">
+                <div class="amen-item flex items-center gap-2 bg-slate-50/50 border border-slate-200 rounded-xl p-2">
+                    <input type="hidden" name="rentspace_amenities_id[]" value="">
+                    <select class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                            name="amenity[]">
+                        <option value="" selected>Select Amenity</option>
+                        <?php foreach ($amenities as $amen) { ?>
+                            <option value="<?php echo htmlspecialchars($amen['amen_id']); ?>">
+                                <?php echo htmlspecialchars($amen['amenity']); ?>
+                            </option>
+                        <?php } ?>
+                    </select>
+                    <button type="button" class="remove-amen-btn p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition-colors shrink-0" title="Remove">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
+            </template>
         </div>
 
         <!-- Submit -->

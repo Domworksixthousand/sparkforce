@@ -1572,7 +1572,11 @@ if (isset($_POST['save_boarding'])) {
     $price       = trim($_POST['price'] ?? '');
     $other_info  = trim($_POST['other_info'] ?? '');
     $old_cover   = trim($_POST['old_cover'] ?? '');
-     $rate   = trim($_POST['board_rate'] ?? '');
+    $rate        = trim($_POST['board_rate'] ?? '');
+
+    // AMENITIES: raw input, saved to session right away (key must be 'amenity', the form reads this)
+    $boarding_raw_amenities = $_POST['amenity'] ?? [];
+    $_SESSION['amenity']    = $boarding_raw_amenities;
 
     // 1. BED SESSION / PROCESSING
     $beds = [];
@@ -1613,26 +1617,6 @@ if (isset($_POST['save_boarding'])) {
     // I-save ang beds sa session para hindi mawala kapag nagka-error
     $_SESSION['beds'] = $beds;
 
-    // 2. VALIDATE AMENITIES INPUT (Duplicates Check)
-    $selected_amenities = [];
-    if (!empty($_POST['amenity']) && is_array($_POST['amenity'])) {
-        foreach ($_POST['amenity'] as $amenity_id) {
-            $amenity_id = trim($amenity_id);
-
-            if ($amenity_id !== '') {
-                if (in_array($amenity_id, $selected_amenities)) {
-                    $_SESSION['error'] = "Amenities Selected Must Not Be The Same";
-                    header("Location: users/boarding_house_add.php?property_id=" . urlencode($landlord_id));
-                    exit;
-                }
-                $selected_amenities[] = $amenity_id;
-            }
-        }
-    }
-    
-    // I-save ang amenities sa session
-    $_SESSION['amenities'] = $_POST['amenity'] ?? [];
-
     $rent_id = $room_name . rand(1000, 9999);
     $type    = "Boarding House / Bedspace";
 
@@ -1664,7 +1648,21 @@ if (isset($_POST['save_boarding'])) {
     $_SESSION['price']      = $price;
     $_SESSION['other_info'] = $other_info;
     $_SESSION['fileName']   = $final_cover;
-      $_SESSION['board_rate']   = $rate;
+
+    // --- VALIDATE AMENITIES (after session is saved, so the form is re-filled on error) ---
+    $selected_amenities = [];
+    foreach ($boarding_raw_amenities as $amenity_id) {
+        $amenity_id = trim($amenity_id);
+        if ($amenity_id === '')
+            continue;
+
+        if (in_array($amenity_id, $selected_amenities)) {
+            $_SESSION['error'] = "Amenities Selected Must Not Be The Same";
+            header("Location: users/boarding_house_add.php?property_id=" . urlencode($landlord_id));
+            exit;
+        }
+        $selected_amenities[] = $amenity_id;
+    }
 
     // 4. CHECK DUPLICATE ROOM NAME
     $check_room = $conn->prepare("SELECT 1 FROM `rentspace` WHERE `landlord_id` = ? AND `name` = ?");
@@ -1680,7 +1678,7 @@ if (isset($_POST['save_boarding'])) {
 
     // 5. INSERT INTO RENTSPACE (Ginagamit na dito ang $final_cover)
     $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`,`rate`) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)");
-    $insert->bind_param("sssssisss", $rent_id, $room_name, $landlord_id, $user_id_login, $type, $price, $final_cover, $other_info,$rate);
+    $insert->bind_param("sssssisss", $rent_id, $room_name, $landlord_id, $user_id_login, $type, $price, $final_cover, $other_info, $rate);
     $insert->execute();
 
     // INSERT AMENITIES
@@ -1714,7 +1712,15 @@ if (isset($_POST['save_boarding'])) {
     }
 
     // Linisin ang mga session variables kapag naging matagumpay ang pag-save
-    unset($_SESSION['name'], $_SESSION['board_rate'], $_SESSION['price'], $_SESSION['other_info'], $_SESSION['fileName'], $_SESSION['beds'], $_SESSION['amenities'],$_SESSION['rate']);
+    unset(
+        $_SESSION['name'],
+        $_SESSION['board_rate'],
+        $_SESSION['price'],
+        $_SESSION['other_info'],
+        $_SESSION['fileName'],
+        $_SESSION['beds'],
+        $_SESSION['amenity']
+    );
 
     $_SESSION['success'] = "Successfully Inserted";
     header("Location: users/my_property.php?property_id=" . urlencode($landlord_id));
@@ -1866,11 +1872,13 @@ if (isset($_POST['edit_boarding'])) {
     }
 
     // 7. UPDATE AMENITIES IN DATABASE
-    if (!empty($selected_amenities)) {
-        $delete_amen = $conn->prepare("DELETE FROM `rentspace_amenities` WHERE `rent_id` = ?");
-        $delete_amen->bind_param("s", $rent_id);
-        $delete_amen->execute();
+    // Always delete the old ones first, even if the new list is empty
+    // (otherwise removing all amenities would never be saved).
+    $delete_amen = $conn->prepare("DELETE FROM `rentspace_amenities` WHERE `rent_id` = ?");
+    $delete_amen->bind_param("s", $rent_id);
+    $delete_amen->execute();
 
+    if (!empty($selected_amenities)) {
         $insert_amen = $conn->prepare("INSERT INTO `rentspace_amenities` (`rent_id`, `amen_id`) VALUES (?, ?)");
         foreach ($selected_amenities as $amenity_id) {
             $insert_amen->bind_param("ss", $rent_id, $amenity_id);
@@ -1901,7 +1909,27 @@ if(isset($_POST['delete_room'])){
         $delete = $conn->prepare("DELETE  FROM `boarding_house` WHERE `rent_id` = ?");
         $delete->bind_param("s", $rent_id);
         $delete->execute();
-    } 
+    }elseif($type === "Apartment"){
+        $delete = $conn->prepare("DELETE  FROM `apartment` WHERE `rent_id` = ?");
+        $delete->bind_param("s", $rent_id);
+        $delete->execute();
+    }elseif($type === "Apartment"){
+        $delete = $conn->prepare("DELETE  FROM `apartment` WHERE `rent_id` = ?");
+        $delete->bind_param("s", $rent_id);
+        $delete->execute();
+    }elseif($type === "Condominium"){
+        $delete = $conn->prepare("DELETE  FROM `condo` WHERE `rent_id` = ?");
+        $delete->bind_param("s", $rent_id);
+        $delete->execute();
+    }elseif($type === "House"){
+        $delete = $conn->prepare("DELETE  FROM `house` WHERE `rent_id` = ?");
+        $delete->bind_param("s", $rent_id);
+        $delete->execute();
+    }elseif($type === "Commercial Space"){
+        $delete = $conn->prepare("DELETE  FROM `commercial_space` WHERE `rent_id` = ?");
+        $delete->bind_param("s", $rent_id);
+        $delete->execute();
+    }
 
     $delete = $conn->prepare("DELETE FROM `rentspace` WHERE `rent_id` = ?");
     $delete->bind_param("s",$rent_id);
@@ -1921,19 +1949,15 @@ if(isset($_POST['delete_room'])){
 
 if (isset($_POST['save_apartment'])) {
 
-
     $landlord_id    = $_POST['landlord_id'] ?? '';
     $room_name      = trim($_POST['apartment_name'] ?? '');
     $price          = trim($_POST['apartment_price'] ?? '');
     $other_info     = trim($_POST['apartment_other_info'] ?? '');
     $apartment_type = $_POST['type'] ?? '';
     $apartment_rate = $_POST['apartment_rate'] ?? '';
-    $raw_amenities  = $_POST['apartment_amenity'] ?? [];
+    $raw_amenities  = $_POST['amenity'] ?? [];
 
-    foreach($raw_amenities as $yeah){
-        echo "$yeah <br>";
-    }
- 
+    // (tinanggal na ang debug echo — sinisira nito ang header() redirect)
 
     $status       = "Available";
     $rent_id      = $room_name . rand(1000, 9999);
@@ -1945,7 +1969,15 @@ if (isset($_POST['save_apartment'])) {
         mkdir($uploadDir, 0755, true);
     }
 
+    // --- I-SAVE MUNA SA SESSION (bago ang kahit anong validation/exit) ---
+    $_SESSION['apartment_name']       = $room_name;
+    $_SESSION['apartment_rate']       = $apartment_rate;
+    $_SESSION['apartment_price']      = $price;
+    $_SESSION['apartment_other_info'] = $other_info;
+    $_SESSION['type']                 = $apartment_type;
+    $_SESSION['amenity']              = $raw_amenities;   // 'amenity' ang binabasa ng form
 
+    // --- VALIDATE AMENITIES (pagkatapos ma-save ang session) ---
     $selected_amenities = [];
     foreach ($raw_amenities as $amenity_id) {
         $amenity_id = trim($amenity_id);
@@ -1958,12 +1990,7 @@ if (isset($_POST['save_apartment'])) {
         }
         $selected_amenities[] = $amenity_id;
     }
-    $_SESSION['apartment_name']       = $room_name;
-    $_SESSION['apartment_rate']       = $apartment_rate;
-    $_SESSION['apartment_price']      = $price;
-    $_SESSION['apartment_other_info'] = $other_info;
-    $_SESSION['type']                 = $apartment_type;
-    $_SESSION['amenities']            = $raw_amenities ?? [];
+
     if (isset($_FILES['apartment_cover']) && $_FILES['apartment_cover']['error'] === UPLOAD_ERR_OK) {
         $fileTmpPath   = $_FILES['apartment_cover']['tmp_name'];
         $fileExtension = strtolower(pathinfo($_FILES['apartment_cover']['name'], PATHINFO_EXTENSION));
@@ -2024,7 +2051,7 @@ if (isset($_POST['save_apartment'])) {
     if (!empty($selected_amenities)) {
         $insert_amen = $conn->prepare("INSERT INTO `rentspace_amenities` (`rent_id`, `amen_id`) VALUES (?, ?)");
         foreach ($selected_amenities as $amenity_id) {
-            $insert_amen->bind_param("si", $rent_id, $amenity_id);
+            $insert_amen->bind_param("ss", $rent_id, $amenity_id);   // "ss" (dating "si")
             $insert_amen->execute();
         }
     }
@@ -2050,7 +2077,7 @@ if (isset($_POST['save_apartment'])) {
         $_SESSION['apartment_cover'],
         $_SESSION['gallery'],
         $_SESSION['type'],
-        $_SESSION['amenities'],
+        $_SESSION['amenity'],
         $_SESSION['apartment_rate']
     );
 
@@ -2058,7 +2085,6 @@ if (isset($_POST['save_apartment'])) {
     header("Location: users/my_property.php?property_id=" . urlencode($landlord_id));
     exit;
 }
-
 
 
 if (isset($_POST['edit_apartment'])) {
@@ -2070,15 +2096,35 @@ if (isset($_POST['edit_apartment'])) {
     $apartment_other   = trim($_POST['apartment_other_info'] ?? '');
     $apartment_type    = trim($_POST['type'] ?? '');
     $old_cover         = $_POST['old_cover'] ?? '';
-    $amenities         = $_POST['apartment_amenity'] ?? [];
-    $status         = $_POST['status'] ?? '';
-    $apartment_rate         = $_POST['apartment_rate'] ?? '';
+    $amenities         = $_POST['amenity'] ?? [];
+    $status            = $_POST['status'] ?? '';
+    $apartment_rate    = $_POST['apartment_rate'] ?? '';
+
+    // (tinanggal na ang debug echo — sinisira nito ang header() redirect)
 
     if ($rent_id === '' || $apartment_id === '') {
         header("location: users/index.php");
         exit;
     }
 
+    // ------------------------------------------------------------
+    // VALIDATE AMENITIES MUNA (bago ang kahit anong UPDATE/DELETE),
+    // para kapag nag-error, wala pang nababago sa database.
+    // ------------------------------------------------------------
+    $amenities_clean = array_values(array_filter(
+        array_map('trim', $amenities),
+        fn($id) => $id !== ''
+    ));
+
+    if (count($amenities_clean) !== count(array_unique($amenities_clean))) {
+        $_SESSION['error'] = "You selected the same amenity more than once. Please choose different amenities.";
+        header("location: users/apartment_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
+        exit;
+    }
+
+    // ------------------------------------------------------------
+    // COVER PHOTO
+    // ------------------------------------------------------------
     $image_cover = $old_cover;
 
     if (!empty($_FILES['apartment_cover']['name'])) {
@@ -2102,7 +2148,9 @@ if (isset($_POST['edit_apartment'])) {
         }
     }
 
-    
+    // ------------------------------------------------------------
+    // UPDATE RENTSPACE
+    // ------------------------------------------------------------
     $update_rent = $conn->prepare("
         UPDATE rentspace
         SET name = ?, price = ?, image_cover = ?, other_info = ?,rate = ?
@@ -2119,6 +2167,9 @@ if (isset($_POST['edit_apartment'])) {
     );
     $update_rent->execute();
 
+    // ------------------------------------------------------------
+    // UPDATE APARTMENT
+    // ------------------------------------------------------------
     $update_apartment = $conn->prepare("
         UPDATE apartment
         SET apartment_type = ?, status = ?
@@ -2127,7 +2178,9 @@ if (isset($_POST['edit_apartment'])) {
     $update_apartment->bind_param("ssss", $apartment_type,$status,$apartment_id, $rent_id);
     $update_apartment->execute();
 
- 
+    // ------------------------------------------------------------
+    // GALLERY (palitan lang kung may bagong in-upload)
+    // ------------------------------------------------------------
     if (!empty($_FILES['gallery']['name'][0])) {
 
         $get_old = $conn->prepare("SELECT image FROM gallery2 WHERE rent_id = ?");
@@ -2157,27 +2210,33 @@ if (isset($_POST['edit_apartment'])) {
         }
     }
 
-    $amenities_clean = array_filter($amenities, fn($id) => $id !== '');
-
-if (count($amenities_clean) !== count(array_unique($amenities_clean))) {
-    $_SESSION['error'] = "You selected the same amenity more than once. Please choose different amenities.";
-    header("location: users/apartment_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
-    exit;
-}
-
-
+    // ------------------------------------------------------------
+    // AMENITIES: laging i-delete muna ang luma (kahit walang bago),
+    // tapos i-insert ang malinis na listahan.
+    // ------------------------------------------------------------
     $del_amen = $conn->prepare("DELETE FROM rentspace_amenities WHERE rent_id = ?");
     $del_amen->bind_param("s", $rent_id);
     $del_amen->execute();
 
-    if (!empty($amenities)) {
+    error_log('EDIT APT - amenities received: ' . print_r($amenities, true));
+
+    $amen_failed = [];
+    if (!empty($amenities_clean)) {
         $insert_amen = $conn->prepare("INSERT INTO rentspace_amenities (rent_id, amen_id) VALUES (?, ?)");
-        foreach ($amenities as $amen_id) {
-            if ($amen_id !== '') {
-                $insert_amen->bind_param("ss", $rent_id, $amen_id);
-                $insert_amen->execute();
+        foreach ($amenities_clean as $amen_id) {
+            $insert_amen->bind_param("ss", $rent_id, $amen_id);
+            if (!$insert_amen->execute()) {
+                // lalabas sa PHP error log kung bakit nag-fail
+                error_log('EDIT APT - amenity insert failed (' . $amen_id . '): ' . $insert_amen->error);
+                $amen_failed[] = $amen_id;
             }
         }
+    }
+
+    if (!empty($amen_failed)) {
+        $_SESSION['error'] = count($amen_failed) . " amenity(ies) failed to save. Check the PHP error log.";
+        header("location: users/apartment_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($rent_id));
+        exit;
     }
 
     $_SESSION['success'] = "Successfully Updated";
@@ -2342,7 +2401,7 @@ if (isset($_POST['save_condo'])) {
     $condition      = $_POST['condition'] ?? '';
     $flooring       = $_POST['flooring'] ?? '';
     $other_info     = trim($_POST['cs_other_info'] ?? '');
-    $raw_amenities  = $_POST['cs_amenity'] ?? [];
+    $raw_amenities  = $_POST['amenity'] ?? [];
 
     $status       = "Available";
     $rent_id      = $condo_name . rand(1000, 9999);
@@ -2378,7 +2437,7 @@ if (isset($_POST['save_condo'])) {
     $_SESSION['flooring']      = $flooring;
     $_SESSION['cs_other_info'] = $other_info;
     $_SESSION['cs_rate']       = $condo_rate;
-    $_SESSION['amenities']     = $raw_amenities ?? [];
+    $_SESSION['amenity']     = $raw_amenities ?? [];
 
     // --- COVER PHOTO ---
     if (isset($_FILES['cs_cover']) && $_FILES['cs_cover']['error'] === UPLOAD_ERR_OK) {
@@ -2478,7 +2537,7 @@ if (isset($_POST['save_condo'])) {
         $_SESSION['cs_other_info'],
         $_SESSION['cs_cover'],
         $_SESSION['gallery'],
-        $_SESSION['amenities'],
+        $_SESSION['amenity'],
         $_SESSION['cs_rate']
     );
 
@@ -2505,7 +2564,7 @@ if (isset($_POST['edit_condo'])) {
     $status                = $_POST['status'] ?? '';
     $rent_id                = $_POST['id'] ?? '';
     
-    $amenities             = $_POST['apartment_amenity'] ?? [];
+    $amenities             = $_POST['amenity'] ?? [];
 
      // Validate amenities — no duplicates
     $selected_amenities = [];
@@ -2641,7 +2700,7 @@ if (isset($_POST['save_house'])) {
     $flooring       = $_POST['flooring'] ?? '';
     $parking        = $_POST['parking'] ?? '';
     $other_info     = trim($_POST['apartment_other_info'] ?? '');
-    $raw_amenities  = $_POST['apartment_amenity'] ?? [];
+    $raw_amenities  = $_POST['amenity'] ?? [];
 
     $uploadDir = 'assets/uploads/';
     if (!is_dir($uploadDir)) {
@@ -2707,6 +2766,7 @@ if (isset($_POST['save_house'])) {
     $_SESSION['amenities']            = $raw_amenities;
     $_SESSION['house_cover']            = $cover_photo;
     $_SESSION['house_rate']            = $house_rate;
+    $_SESSION['amenity']     = $raw_amenities ?? [];
 
     
     $status   = "Available";
@@ -2786,7 +2846,7 @@ if (isset($_POST['save_house'])) {
         $_SESSION['apartment_other_info'],
         $_SESSION['house_cover'],
         $_SESSION['gallery'],
-        $_SESSION['amenities'],
+        $_SESSION['amenity'],
         $_SESSION['house_rate']
     );
 
@@ -2810,7 +2870,7 @@ if (isset($_POST['edit_house'])) {
     $parking        = $_POST['parking'] ?? '';
     $status        = $_POST['status'] ?? '';
     $other_info     = trim($_POST['apartment_other_info'] ?? '');
-    $raw_amenities  = $_POST['apartment_amenity'] ?? [];
+    $raw_amenities  = $_POST['amenity'] ?? [];
     $uploadDir = 'assets/uploads/';
     if (!is_dir($uploadDir)) {
         mkdir($uploadDir, 0755, true);
@@ -2939,7 +2999,7 @@ if (isset($_POST['save_cs'])) {
     $cs_type       = $_POST['type'] ?? '';
     $other_info    = trim($_POST['cs_other_info'] ?? '');
     $cs_rate    = trim($_POST['cs_rate'] ?? '');
-    $raw_amenities = $_POST['cs_amenity'] ?? [];
+    $raw_amenities = $_POST['amenity'] ?? [];
 
     $uploadDir = 'assets/uploads/';
     if (!is_dir($uploadDir)) {
@@ -3003,7 +3063,7 @@ if (isset($_POST['save_cs'])) {
     $_SESSION['cs_other_info'] = $other_info;
     $_SESSION['amenities']     = $raw_amenities;
     $_SESSION['cs_cover']      = $cover_photo;
-    $_SESSION['cs_rate']      = $cs_rate;
+    $_SESSION['amenity']      = $cs_rate;
 
     $status = "Available";
     $rent_id = "CS" . rand(1000, 9999);
@@ -3073,7 +3133,7 @@ if (isset($_POST['save_cs'])) {
         $_SESSION['cs_other_info'],
         $_SESSION['cs_cover'],
         $_SESSION['gallery'],
-        $_SESSION['amenities'],
+        $_SESSION['amenity'],
          $_SESSION['cs_rate']
     );
 
@@ -3093,7 +3153,7 @@ if (isset($_POST['update_cs'])) {
     $square_area    = trim($_POST['square_area'] ?? '');
     $house_type     = $_POST['type'] ?? '';
     $other_info     = trim($_POST['cs_other_info'] ?? '');
-    $raw_amenities  = $_POST['cs_amenity'] ?? [];
+    $raw_amenities  = $_POST['amenity'] ?? [];
     $status     = $_POST['status'] ?? '';
 
     $uploadDir = 'assets/uploads/';
@@ -3227,7 +3287,7 @@ if(isset($_POST['save_es'])){
         $square_area = trim($_POST['square_area'] ?? '');
         $es_type = $_POST['type'] ?? '';
         $other_info = trim($_POST['es_other_info'] ?? '');
-        $raw_amenities = $_POST['es_amenity'] ?? [];
+        $raw_amenities = $_POST['amenity'] ?? [];
 
 
         $uploadDir = 'assets/uploads/';
@@ -3307,7 +3367,7 @@ if(isset($_POST['save_es'])){
         $_SESSION['square_area']   = $square_area;
         $_SESSION['type']          = $es_type;
         $_SESSION['es_other_info'] = $other_info;
-        $_SESSION['amenities']     = $raw_amenities;
+        $_SESSION['amenity']     = $raw_amenities;
         $_SESSION['es_rate']     = $es_rate;
 
  
@@ -3366,7 +3426,7 @@ if(isset($_POST['save_es'])){
             $_SESSION['es_other_info'],
             $_SESSION['es_cover'],
             $_SESSION['gallery'],
-            $_SESSION['amenities'],
+            $_SESSION['amenity'],
             $_SESSION['es_rate']
         );
 
@@ -3389,7 +3449,7 @@ if (isset($_POST['update_es'])) {
     $es_type     = $_POST['type'] ?? '';
     $status      = $_POST['status'] ?? '';
     $other_info  = trim($_POST['cs_other_info'] ?? '');
-    $raw_amenities = $_POST['cs_amenity'] ?? [];
+    $raw_amenities = $_POST['amenity'] ?? [];
 
     $uploadDir = 'assets/uploads/';
     if (!is_dir($uploadDir)) {
@@ -3736,7 +3796,7 @@ if (isset($_POST['save_transient'])) {
     $square_area     = trim($_POST['transient_square_area'] ?? '');
     $transient_type  = $_POST['transient_type'] ?? '';
     $other_info      = trim($_POST['transient_other_info'] ?? '');
-    $raw_amenities   = $_POST['transient_amenity'] ?? [];
+    $raw_amenities   = $_POST['amenity'] ?? [];
 
     $uploadDir = 'assets/uploads/';
     if (!is_dir($uploadDir)) {
@@ -3809,7 +3869,7 @@ if (isset($_POST['save_transient'])) {
     $_SESSION['square_area']          = $square_area;
     $_SESSION['type']                 = $transient_type;
     $_SESSION['transient_other_info'] = $other_info;
-    $_SESSION['amenities']            = $raw_amenities;
+    $_SESSION['amenity']            = $raw_amenities;
     $_SESSION['transient_rate']       = $transient_rate;
 
     // --- CHECK DUPLICATE ---
@@ -3867,7 +3927,7 @@ if (isset($_POST['save_transient'])) {
         $_SESSION['transient_other_info'],
         $_SESSION['transient_cover'],
         $_SESSION['gallery'],
-        $_SESSION['amenities'],
+        $_SESSION['amenity'],
         $_SESSION['transient_rate']
     );
 
@@ -4104,7 +4164,7 @@ if (isset($_POST['save_parkingspace'])) {
     $_SESSION['square_area']             = $square_area;
     $_SESSION['type']                    = $parkingspace_type;
     $_SESSION['parkingspace_other_info'] = $other_info;
-    $_SESSION['amenities']               = $raw_amenities;
+    $_SESSION['amenity']               = $raw_amenities;
     $_SESSION['parkingspace_rate']       = $parkingspace_rate;
 
     // --- CHECK DUPLICATE ---
@@ -4174,7 +4234,7 @@ if (isset($_POST['save_parkingspace'])) {
         $_SESSION['parkingspace_other_info'],
         $_SESSION['parkingspace_cover'],
         $_SESSION['gallery'],
-        $_SESSION['amenities'],
+        $_SESSION['amenity'],
         $_SESSION['parkingspace_rate']
     );
 
@@ -4606,8 +4666,8 @@ if (isset($_POST['update_vacantlot'])) {
     $vacantlot_rate         = trim($_POST['vacantlot_rate'] ?? '');
     $vacantlot_other_info   = $_POST['vacantlot_other_info'] ?? '';
     $vacantlot_type         = trim($_POST['vacantlot_type'] ?? '');
-    $vacantlot_square_area  = trim($_POST['vacantlot_square_area'] ?? '');
-    $vacantlot_status       = trim($_POST['vacantlot_status'] ?? '');
+    $vacantlot_square_area  = trim($_POST['square_area'] ?? '');
+    $vacantlot_status       = trim($_POST['status'] ?? '');
     $vacantlot_raw_amenities = $_POST['vacantlot_amenity'] ?? [];
 
     $vacantlot_back = "users/vl_edit.php?property_id=" . urlencode($landlord_id) . "&id=" . urlencode($vacantlot_rent_id);

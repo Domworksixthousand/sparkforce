@@ -370,47 +370,82 @@ while ($row = $amen_res->fetch_assoc()) {
 
             <?php
             $active = "yes";
-            $get_amen2 = $conn->prepare("SELECT DISTINCT amen_id, amenity FROM amenities WHERE user_id=? AND active=?");
-            $get_amen2->bind_param("ss", $user_id_login, $active);
-            $get_amen2->execute();
-            $result2 = $get_amen2->get_result();
+            if (!empty($user_id_login)) {
+                $get_amen = $conn->prepare("SELECT * FROM amenities WHERE user_id=? AND active=?");
+                $get_amen->bind_param("ss", $user_id_login, $active);
+            } else {
+                $get_amen = $conn->prepare("SELECT * FROM amenities WHERE active=?");
+                $get_amen->bind_param("s", $active);
+            }
+            $get_amen->execute();
+            $result = $get_amen->get_result();
 
             $amenities = [];
-            while ($row = $result2->fetch_assoc()) {
-                if (!empty($row['amen_id'])) {
-                    $amenities[$row['amen_id']] = $row['amenity'];
+            $amenity_ids_in_list = [];
+            while ($row = $result->fetch_assoc()) {
+                $amenities[] = $row;
+                $amenity_ids_in_list[] = (string)$row['amen_id'];
+            }
+
+            // Make sure the room's already-saved amenities are always in the dropdown,
+            // even if they are inactive / created by another user. Otherwise the select
+            // shows "Select Amenity", submits empty, and the saved amenity gets dropped.
+            foreach ($saved_amenities as $sv) {
+                if (!in_array((string)$sv['amen_id'], $amenity_ids_in_list, true)) {
+                    $amenities[] = ['amen_id' => $sv['amen_id'], 'amenity' => $sv['amenity']];
+                    $amenity_ids_in_list[] = (string)$sv['amen_id'];
                 }
             }
 
-            $selectedAmenities = !empty($saved_amenities) ? $saved_amenities : [""];
+            // DIRECT mula sa DB; blangkong row lang kung wala pang saved
+            $rows = !empty($saved_amenities)
+                ? $saved_amenities
+                : [['amen_id' => '', 'rent_amen_id' => '']];
             ?>
 
             <div id="amenities-container" class="space-y-2">
-                <?php if (!empty($amenities)): ?>
-                    <?php foreach ($selectedAmenities as $index => $selectedAmen): ?>
-                    <?php $currentAmenId = is_array($selectedAmen) ? ($selectedAmen['amen_id'] ?? '') : $selectedAmen; ?>
-                    <div class="amen-item flex items-center gap-2 bg-slate-50/50 border border-slate-200 rounded-xl p-2">
-                        <select class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                                name="amenity[]" required>
-                            <option value="" disabled <?= empty($currentAmenId) ? 'selected' : ''; ?>>-- Select Amenity --</option>
-                            <?php foreach ($amenities as $id => $amenName): ?>
-                                <option value="<?= htmlspecialchars($id); ?>" <?= ($currentAmenId == $id) ? 'selected' : ''; ?>>
-                                    <?= htmlspecialchars($amenName); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                <?php foreach ($rows as $saved) {
+                    $selectedAmen = $saved['amen_id'];
+                ?>
+                <div class="amen-item flex items-center gap-2 bg-slate-50/50 border border-slate-200 rounded-xl p-2">
+                    <input type="hidden" name="rentspace_amenities_id[]" value="<?php echo htmlspecialchars($saved['rent_amen_id']); ?>">
 
-                        <?php if ($index > 0): ?>
-                        <button type="button" class="remove-amen-btn p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition-colors shrink-0" title="Remove">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                        </button>
-                        <?php endif; ?>
-                    </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
+                    <select class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                            name="amenity[]">
+                        <option value="" <?php echo $selectedAmen === '' ? 'selected' : ''; ?>>Select Amenity</option>
+                        <?php foreach ($amenities as $amen) { ?>
+                            <option value="<?php echo htmlspecialchars($amen['amen_id']); ?>"
+                                <?php echo ((string)$selectedAmen === (string)$amen['amen_id']) ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($amen['amenity']); ?>
+                            </option>
+                        <?php } ?>
+                    </select>
+
+                    <button type="button" class="remove-amen-btn p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition-colors shrink-0" title="Remove">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
+                <?php } ?>
             </div>
-        </div>
 
+            <template id="amen-template">
+                <div class="amen-item flex items-center gap-2 bg-slate-50/50 border border-slate-200 rounded-xl p-2">
+                    <input type="hidden" name="rentspace_amenities_id[]" value="">
+                    <select class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                            name="amenity[]">
+                        <option value="" selected>Select Amenity</option>
+                        <?php foreach ($amenities as $amen) { ?>
+                            <option value="<?php echo htmlspecialchars($amen['amen_id']); ?>">
+                                <?php echo htmlspecialchars($amen['amenity']); ?>
+                            </option>
+                        <?php } ?>
+                    </select>
+                    <button type="button" class="remove-amen-btn p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition-colors shrink-0" title="Remove">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
+            </template>
+        </div>
         <!-- ============================================ -->
         <!-- ACTION BUTTONS -->
         <!-- ============================================ -->

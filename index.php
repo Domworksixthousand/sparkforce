@@ -397,6 +397,8 @@
                        $locate = "trasient_details.php";
                   }elseif($type === "Parking Space"){
                        $locate = "ps_details.php";
+                  }elseif($type === "Vacant Lot"){
+                       $locate = "vl_details.php";
                   }
 
                   echo '

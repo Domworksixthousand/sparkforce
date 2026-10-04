@@ -269,40 +269,21 @@ document.addEventListener("DOMContentLoaded", function () {
 
 //amenities count
 document.addEventListener("DOMContentLoaded", function () {
-   
-    const addAmenBtn = document.getElementById('addamenBtn');
+    const addAmenBtn   = document.getElementById('addamenBtn');
     const amenContainer = document.getElementById('amenities-container');
+    const amenTemplate = document.getElementById('amen-template');
 
-    if (addAmenBtn && amenContainer) {
+    if (addAmenBtn && amenContainer && amenTemplate) {
         addAmenBtn.addEventListener('click', function () {
-            const firstSelect = amenContainer.querySelector('select');
-            const optionsHTML = firstSelect ? firstSelect.innerHTML : '';
+            amenContainer.appendChild(amenTemplate.content.cloneNode(true));
+        });
 
-            const amenHTML = `
-                <div class="amen-item flex items-center gap-2 bg-slate-50/50 border border-slate-200 rounded-xl p-2">
-                    <select class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20" name="amenity[]" required>
-                        ${optionsHTML}
-                    </select>
-                    <button type="button" class="remove-amen-btn p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition-colors shrink-0" title="Remove">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                    </button>
-                </div>
-            `;
-
-            amenContainer.insertAdjacentHTML('beforeend', amenHTML);
-            bindRemoveAmen();
+        // Event delegation: gumagana pati sa mga bagong dagdag na row
+        amenContainer.addEventListener('click', function (e) {
+            const btn = e.target.closest('.remove-amen-btn');
+            if (btn) btn.closest('.amen-item').remove();
         });
     }
-
-
-    function bindRemoveAmen() {
-        document.querySelectorAll('.remove-amen-btn').forEach(btn => {
-            btn.onclick = function () {
-                this.closest('.amen-item').remove();
-            };
-        });
-    }
-    bindRemoveAmen(); 
 });
 
 //edit boarding house 

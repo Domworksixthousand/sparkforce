@@ -40,7 +40,13 @@ if (isset($_GET['property_id'])) {
       </a>
     </div>
 
-
+    <!-- Error Alert (dinagdag; wala ito dati kaya hindi lumalabas ang errors) -->
+    <?php if (!empty($_SESSION['error'])): ?>
+    <div class="mx-6 mt-4 flex items-center gap-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium px-4 py-3 rounded-xl">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <?php echo htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?>
+    </div>
+    <?php endif; ?>
 
     <!-- Modal Form Body -->
     <form action="../functions.php" method="POST" enctype="multipart/form-data" class="p-6 overflow-y-auto space-y-8" id="mainForm">
@@ -211,7 +217,7 @@ if (isset($_GET['property_id'])) {
             <div class="space-y-1.5 pt-2" id="gallery-section">
                 <label class="block text-xs font-semibold text-slate-600">Multiple Photos (Upload 3 to 10 Photos) *</label>
 
-                <?php if (!empty($_SESSION['gallery'])): ?>
+                <?php if (!empty($_SESSION['gallery']) && is_array($_SESSION['gallery'])): ?>
                     <div class="grid grid-cols-4 sm:grid-cols-5 gap-2 mb-2">
                         <?php foreach ($_SESSION['gallery'] as $img): ?>
                             <div class="relative">
@@ -240,7 +246,7 @@ if (isset($_GET['property_id'])) {
                            name="gallery[]"
                            accept="image/jpeg, image/png, image/jpg"
                            multiple
-                           <?php echo !empty($_SESSION['gallery']) ? '' : 'required'; ?> />
+                           <?php echo (!empty($_SESSION['gallery']) && is_array($_SESSION['gallery'])) ? '' : 'required'; ?> />
                 </label>
 
                 <div id="gallery-preview-container" class="hidden mt-3 grid grid-cols-4 sm:grid-cols-5 gap-2"></div>
@@ -254,53 +260,75 @@ if (isset($_GET['property_id'])) {
         <div class="space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-2">
                 <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400">Room Amenities</h3>
-                <button type="button" id="addamenBtn3"
+                <button type="button" id="addamenBtn"
                         class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     Add Amenities
                 </button>
             </div>
 
-            <div id="amenities-container3" class="space-y-2">
-                <?php
-                $active = "yes";
-                $get_amen = $conn->prepare("SELECT * FROM amenities WHERE user_id=? AND active=?");
-                $get_amen->bind_param("ss", $user_id_login, $active);
-                $get_amen->execute();
-                $result = $get_amen->get_result();
+            <?php
+            $active = "yes";
+            $get_amen = $conn->prepare("SELECT * FROM amenities WHERE user_id=? AND active=?");
+            $get_amen->bind_param("ss", $user_id_login, $active);
+            $get_amen->execute();
+            $result = $get_amen->get_result();
 
-                $amenities = [];
-                while ($row = $result->fetch_assoc()) {
-                    $amenities[] = $row;
-                }
+            $amenities = [];
+            while ($row = $result->fetch_assoc()) {
+                $amenities[] = $row;
+            }
 
-                if (empty($_SESSION['amenities'])) {
-                    $_SESSION['amenities'] = [""];
-                }
+            // Laging ARRAY lang ang tatanggapin. Dati, string ang laman ng
+            // $_SESSION['amenity'] (galing sa ibang page) kaya nag-error ang foreach.
+            // Una ang 'es_amenity'; fallback sa 'amenity' kung array ito.
+            if (!empty($_SESSION['es_amenity']) && is_array($_SESSION['es_amenity'])) {
+                $selectedList = $_SESSION['es_amenity'];
+            } elseif (!empty($_SESSION['amenity']) && is_array($_SESSION['amenity'])) {
+                $selectedList = $_SESSION['amenity'];
+            } else {
+                $selectedList = [""];
+            }
+            ?>
 
-                $index = 0;
-                foreach ($_SESSION['amenities'] as $selectedAmen) {
-                ?>
+            <!-- ROWS: nasa loob ng loop -->
+            <div id="amenities-container" class="space-y-2">
+                <?php foreach ($selectedList as $selectedAmen) { ?>
                 <div class="amen-item flex items-center gap-2 bg-slate-50/50 border border-slate-200 rounded-xl p-2">
                     <select class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                            name="es_amenity[]" required>
+                            name="amenity[]">
                         <option value="" disabled <?php echo empty($selectedAmen) ? 'selected' : ''; ?>>Select Amenity</option>
                         <?php foreach ($amenities as $amen) { ?>
                             <option value="<?php echo htmlspecialchars($amen['amen_id']); ?>"
-                                <?php echo ($selectedAmen == $amen['amen_id']) ? 'selected' : ''; ?>>
+                                <?php echo ((string)$selectedAmen === (string)$amen['amen_id']) ? 'selected' : ''; ?>>
                                 <?php echo htmlspecialchars($amen['amenity']); ?>
                             </option>
                         <?php } ?>
                     </select>
-
-                    <?php if ($index > 0) { ?>
                     <button type="button" class="remove-amen-btn p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition-colors shrink-0" title="Remove">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                     </button>
-                    <?php } ?>
                 </div>
-                <?php $index++; } ?>
+                <?php } ?>
             </div>
+
+            <!-- TEMPLATE: isang beses lang, nasa labas ng loop -->
+            <template id="amen-template">
+                <div class="amen-item flex items-center gap-2 bg-slate-50/50 border border-slate-200 rounded-xl p-2">
+                    <select class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                            name="amenity[]">
+                        <option value="" disabled selected>Select Amenity</option>
+                        <?php foreach ($amenities as $amen) { ?>
+                            <option value="<?php echo htmlspecialchars($amen['amen_id']); ?>">
+                                <?php echo htmlspecialchars($amen['amenity']); ?>
+                            </option>
+                        <?php } ?>
+                    </select>
+                    <button type="button" class="remove-amen-btn p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition-colors shrink-0" title="Remove">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
+            </template>
         </div>
 
         <!-- Submit -->
@@ -521,39 +549,11 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // ============================================
-    // ADD / REMOVE AMENITY ROWS
-    // ============================================
-    const amenContainer = document.getElementById('amenities-container3');
-    const addAmenBtn = document.getElementById('addamenBtn3');
-
-    if (addAmenBtn && amenContainer) {
-        addAmenBtn.addEventListener('click', function () {
-            const firstRow = amenContainer.querySelector('.amen-item');
-            const newRow = firstRow.cloneNode(true);
-
-            const select = newRow.querySelector('select');
-            if (select) select.selectedIndex = 0;
-
-            if (!newRow.querySelector('.remove-amen-btn')) {
-                const removeBtn = document.createElement('button');
-                removeBtn.type = 'button';
-                removeBtn.className = 'remove-amen-btn p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs transition-colors shrink-0';
-                removeBtn.title = 'Remove';
-                removeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
-                newRow.appendChild(removeBtn);
-            }
-
-            amenContainer.appendChild(newRow);
-        });
-
-        amenContainer.addEventListener('click', function (e) {
-            const removeBtn = e.target.closest('.remove-amen-btn');
-            if (removeBtn) {
-                removeBtn.closest('.amen-item').remove();
-            }
-        });
-    }
+    // NOTE: Tinanggal ko ang lumang "ADD / REMOVE AMENITY ROWS" block dito.
+    // Hinahanap nito ang #amenities-container3 / #addamenBtn3 na walang katugmang
+    // element kaya hindi ito tumatakbo. Ang "Add Amenities" at "Remove" ay
+    // hinahawakan ng shared script (gamit ang #addamenBtn, #amenities-container
+    // at #amen-template), gaya ng ibang forms.
 
 });
 </script>
