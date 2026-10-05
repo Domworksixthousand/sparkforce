@@ -903,12 +903,13 @@ if(isset($_POST['change_profile'])){
 }
 
 if (isset($_POST['change_credentials'])) {
-    $username = $_POST['username'] ?? '';
-    $password = $_POST['password'] ?? '';
-    $repeat_password = $_POST['repeat_password'] ?? '';
+    $username = $_POST['username1'] ?? '';
+    $password = $_POST['password1'] ?? '';
+    $repeat_password = $_POST['repeat_password1'] ?? '';
 
 
     if (empty($username) && empty($password)) {
+        $_SESSION['error'] = "hoy";
         header("location:users/change_credentials.php");
         exit;
     } elseif (!empty($username) && empty($password)) {

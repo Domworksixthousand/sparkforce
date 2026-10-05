@@ -70,6 +70,7 @@
             $id_numberko = htmlspecialchars($row_admin['id_number'] ?? '');
             $id_photoko = htmlspecialchars($row_admin['id_photo'] ?? '');
             $occupationko = htmlspecialchars($row_admin['occupation'] ?? '');
+            $statusko = htmlspecialchars($row_admin['status'] ?? '');
         
             $profileko = $row_admin['profile'] ?? '';
 

@@ -858,3 +858,25 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+  const deleteBtn = document.getElementById("delete_account");
+  if (!deleteBtn) return;
+
+  deleteBtn.addEventListener("click", function () {
+    CoolAlert.show({
+      icon: "question",
+      title: "Important!",
+      text: "Are you sure you want to permanently delete your account?",
+      confirmButtonText: "Confirm",
+      showCancelButton: true,
+      cancelButtonText: "Cancel",
+      allowOutsideClick: false
+    }).then(function (result) {
+      if (result.isConfirmed) {
+        // dito ang delete action
+        window.location.href = "delete_account.php";
+      }
+    });
+  });
+});

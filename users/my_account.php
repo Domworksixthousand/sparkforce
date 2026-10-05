@@ -2,8 +2,9 @@
 
 <?php
   include '../config.php'; 
-  if(!isset($_SESSION['user_login'])){
-    echo "<script>location.href='../index.php';</script>";
+  if (!isset($_SESSION['user_login']) || $statusko === "Deactivate") {
+      echo "<script>location.href='../index.php';</script>";
+      exit; 
   }
 
  ?>
@@ -205,6 +206,31 @@
                     </div>
                     <div >
                       <button onclick="location.href='change_credentials.php'" class="btn btn-success">Change Credentials</button>
+                    </div>
+                  </div>
+                </div>
+
+                   <!-- TAB 4:  -->
+                <label class="tab flex items-center gap-2 cursor-pointer pb-3 h-auto">
+                  <input type="radio" name="my_tabs_3" class="peer hidden" />
+                  <svg xmlns="http://www.w3.org/2000/svg"  width="18" height="18"  class="text-gray-400 peer-checked:text-emerald-600 transition-colors"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings preview-icon"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg>
+                  <span class="font-medium text-gray-500 peer-checked:text-emerald-600 peer-checked:font-bold transition-all text-sm sm:text-base">Others</span>
+                </label>
+                
+                <div class="tab-content bg-base-100 border-base-300 rounded-b-2xl p-6 lg:p-8">
+                  <div class="border-b border-gray-100 pb-4 mb-6">
+                    <h4 class="font-bold text-gray-800 text-lg">Account Status</h4>
+                    <p class="text-xs text-gray-400 mt-1">Manage account status.</p>
+                  </div>
+                  <div class="text-center py-12">
+                    <div class="bg-gray-50/50 p-4 rounded-xl border border-gray-100 flex items-center gap-3 mb-4">
+                      <div class="p-2.5 bg-emerald-50 rounded-lg text-emerald-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-round-cog-icon lucide-user-round-cog"><path d="m14.305 19.53.923-.382"/><path d="m15.228 16.852-.923-.383"/><path d="m16.852 15.228-.383-.923"/><path d="m16.852 20.772-.383.924"/><path d="m19.148 15.228.383-.923"/><path d="m19.53 21.696-.382-.924"/><path d="M2 21a8 8 0 0 1 10.434-7.62"/><path d="m20.772 16.852.924-.383"/><path d="m20.772 19.148.924.383"/><circle cx="10" cy="8" r="5"/><circle cx="18" cy="18" r="3"/></svg>
+                      </div>
+                      <div class="flex items-center gap-2 ">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Delete Account Permanetly ?</p>
+                        <button class="btn btn-error" id="delete_account">Yes</button>
+                      </div>             
                     </div>
                   </div>
                 </div>

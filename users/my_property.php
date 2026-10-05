@@ -1,8 +1,8 @@
 <?php
   include '../config.php'; 
-  if(!isset($_SESSION['user_login'])){
-    echo "<script>location.href='../index.php';</script>";
-    exit; // stop execution here so nothing below runs on an invalid session
+   if (!isset($_SESSION['user_login']) || $statusko === "Deactivate") {
+      echo "<script>location.href='../index.php';</script>";
+      exit; 
   }
 
   $user_id_login = $_SESSION['user_login'];

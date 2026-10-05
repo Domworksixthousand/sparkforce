@@ -2,8 +2,9 @@
 
 <?php
   include '../config.php'; 
-  if(!isset($_SESSION['user_login'])){
-    echo "<script>location.href='../index.php';</script>";
+  if (!isset($_SESSION['user_login']) || $statusko === "Deactivate") {
+      echo "<script>location.href='../index.php';</script>";
+      exit; 
   }
 
  ?>
