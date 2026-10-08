@@ -57,8 +57,8 @@
                     
                     <!-- Action Buttons -->
                     <div class="flex gap-2">
-                    <button type="button" onclick="location.href='start_chat.php'" class="btn btn-circle text-white btn-success btn-xs text-base-content/70 hover:text-base-content">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m7-7H5"/></svg>
+                    <button type="button"  class="btn btn-circle text-white btn-success btn-xs text-base-content/70 hover:text-base-content tooltip tooltip-left" data-tip="Find User">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="size-4 ms-[2px]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m7-7H5"/></svg>
                     </button>
                     </div>
                 </div>
