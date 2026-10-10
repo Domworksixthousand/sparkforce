@@ -28,7 +28,8 @@ unset(
     <form id="request_visit_form" action="../functions.php" method="post" class="space-y-4" novalidate>
       <input type="hidden" name="send_request" value="1">
 
-      <label class="form-control w-full">
+      <div class="mb-3">
+        <label class="form-control w-full">
         <span class="label"><span class="label-text font-medium">Property name</span></span>
         <select name="landlord_id" id="property_list" class="select select-bordered w-full" required>
           <option value="" disabled <?= $rv_old['landlord_id'] === '' ? 'selected' : '' ?>>Select a property</option>
@@ -50,6 +51,7 @@ unset(
           <span class="label-text-alt text-error">Please select a property.</span>
         </span>
       </label>
+      </div>
 
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label class="form-control w-full">
