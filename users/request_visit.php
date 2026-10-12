@@ -10,19 +10,23 @@
 
   // Status -> badge class (table + details dialog) and calendar color
   function rv_badge($status) {
-      if ($status === 'Approved') return 'bg-emerald-500 text-white';
-      if ($status === 'Pending')  return 'bg-amber-500 text-white';
+      if ($status === 'Approved')  return 'bg-emerald-500 text-white';
+      if ($status === 'Completed') return 'bg-sky-500 text-white';
+      if ($status === 'Pending')   return 'bg-amber-500 text-white';
       return 'bg-red-500 text-white';
   }
   function rv_color($status) {
-      if ($status === 'Approved') return '#059669';
-      if ($status === 'Pending')  return '#d97706';
+      if ($status === 'Approved')  return '#059669';
+      if ($status === 'Completed') return '#0284c7';
+      if ($status === 'Pending')   return '#d97706';
       return '#dc2626';
   }
 
-  // ONE query: requests I sent  +  requests other users sent to MY properties
+  // ONE query: requests I sent + requests other users sent to MY properties
+  // "rated" = 1 kung nag-comment/rate na ako sa req_id na ito
   $get = $conn->prepare("
-    SELECT rv.user_id AS requester_id, rv.status, rv.date_sched, rv.time_sched, rv.message,
+    SELECT rv.req_id, rv.user_id AS requester_id, rv.status, rv.date_sched, rv.time_sched, rv.message,
+           (SELECT COUNT(*) FROM `comment_rate` cr WHERE cr.req_id = rv.req_id AND cr.user_id = ?) AS rated,
            l.landlord_id, l.type, l.property_name, l.province, l.municipality, l.barangay,
            a.firstname, a.lastname
     FROM `request_visit` rv
@@ -31,7 +35,7 @@
     WHERE rv.user_id = ? OR l.user_id = ?
     ORDER BY rv.date_sched DESC, rv.time_sched DESC
   ");
-  $get->bind_param("ss", $user_id_login, $user_id_login);
+  $get->bind_param("sss", $user_id_login, $user_id_login, $user_id_login);
   $get->execute();
   $result_get = $get->get_result();
 
@@ -46,6 +50,7 @@
       $schedule  = date('F j, Y', $ts) . ' · ' . date('g:i A', $ts);
       $message   = trim((string)$row['message']) !== '' ? $row['message'] : '—';
       $status    = $row['status'];
+      $rated     = ((int)$row['rated'] > 0);
 
       $visits[] = [
           'owner'     => $owner,
@@ -58,6 +63,8 @@
           'badge'     => rv_badge($status),
           'date_raw'  => date('Y-m-d', $ts),
           'landlord'  => $row['landlord_id'],
+          'req_id'    => $row['req_id'],
+          'rated'     => $rated,
       ];
 
       // FullCalendar event (array index == row idx)
@@ -68,17 +75,23 @@
           'backgroundColor' => rv_color($status),
           'borderColor'     => rv_color($status),
           'extendedProps'   => [
-              'idx'       => count($visits) - 1,
-              'owner'     => $owner,
-              'type'      => $row['type'],
-              'property'  => $row['property_name'],
-              'address'   => $address,
-              'requester' => $requester,
-              'schedule'  => $schedule,
-              'status'    => $status,
-              'badge'     => rv_badge($status),
-              'message'   => $message,
-              'link'      => 'property_requests_info.php?id=' . urlencode($row['landlord_id']) . '&location_back=request_visit.php',
+              'idx'          => count($visits) - 1,
+              'req_id'       => $row['req_id'],      // <-- kailangan ito ng JS
+              'rated'        => $rated,              // <-- kailangan ito ng JS
+              'requester_id' => $row['requester_id'],
+              'landlord_id'  => $row['landlord_id'],
+              'date_sched'   => $row['date_sched'],
+              'time_sched'   => $row['time_sched'],
+              'owner'        => $owner,
+              'type'         => $row['type'],
+              'property'     => $row['property_name'],
+              'address'      => $address,
+              'requester'    => $requester,
+              'schedule'     => $schedule,
+              'status'       => $status,
+              'badge'        => rv_badge($status),
+              'message'      => $message,
+              'link'         => 'property_requests_info.php?id=' . urlencode($row['landlord_id']) . '&location_back=request_visit.php',
           ],
       ];
   }
@@ -230,12 +243,14 @@
                         <button type="button" onclick="openVisitDetails(<?= $i ?>)" class="btn btn-xs sm:btn-sm btn-ghost border border-base-300 gap-1">
                           Details
                         </button>
-                        <?php if ($v['owner'] === 'mine'): ?>
-                          <a href="property_requests_info.php?id=<?= urlencode($v['landlord']) ?>&location_back=request_visit.php"
-                             class="btn btn-xs sm:btn-sm bg-[#0fab9e] hover:bg-[#0d9488] text-white gap-1 border-none shadow-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <?php if ($v['owner'] === 'mine' && $v['status'] === 'Completed' && !$v['rated']): ?>
+                          <button type="button" onclick="openCommentRate(<?= $i ?>)"
+                                  class="btn btn-xs sm:btn-sm bg-[#0fab9e] hover:bg-[#0d9488] text-white gap-1 border-none shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.48 3.5a.56.56 0 011.04 0l2.12 5.11 5.52.44c.5.04.7.66.32.99l-4.2 3.6 1.28 5.38a.56.56 0 01-.84.61L12 16.78l-4.72 2.85a.56.56 0 01-.84-.61l1.28-5.38-4.2-3.6a.56.56 0 01.32-.99l5.52-.44 2.12-5.11z"/></svg>
                             Comment &amp; Rate
-                          </a>
+                          </button>
+                        <?php elseif ($v['owner'] === 'mine' && $v['status'] === 'Completed' && $v['rated']): ?>
+                          <span class="badge badge-ghost border border-base-300 text-xs">Rated</span>
                         <?php endif; ?>
                       </div>
                     </td>
@@ -267,8 +282,9 @@
           <!-- Legend -->
           <div class="flex items-center gap-5 flex-wrap mt-5 pt-4 border-t border-base-300 text-xs text-base-content/70">
             <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background:#059669"></span>Approved</span>
+            <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background:#0284c7"></span>Completed</span>
             <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background:#d97706"></span>Pending</span>
-            <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background:#dc2626"></span>Declined / Other</span>
+            <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background:#dc2626"></span>Disapproved / Other</span>
           </div>
         </div>
 
@@ -336,8 +352,21 @@
           <div class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 whitespace-pre-line break-words" id="vd_message"></div>
         </div>
 
-        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-          <a id="vd_link" href="#" class="hidden px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-lg shadow-emerald-600/20 transition-all">Comment &amp; Rate</a>
+        <div class="flex flex-wrap items-center justify-end gap-3 pt-3 border-t border-slate-100">
+
+          <!-- Owner action buttons (shown/hidden by JS based on status) -->
+          <div id="vd_actions" class="hidden items-center gap-2 mr-auto">
+            <button type="button" id="vd_btn_approve" onclick="updateVisitStatus('Approved')"
+                    class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-lg shadow-emerald-600/20 transition-all">Approve</button>
+            <button type="button" id="vd_btn_disapprove" onclick="updateVisitStatus('Disapproved')"
+                    class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-xl shadow-lg shadow-red-500/20 transition-all">Disapprove</button>
+            <button type="button" id="vd_btn_complete" onclick="updateVisitStatus('Completed')"
+                    class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-lg shadow-sky-600/20 transition-all">Completed</button>
+          </div>
+
+          <!-- Opens the Comment & Rate modal -->
+          <button type="button" id="vd_link" onclick="openCommentRateFromDetails()"
+                  class="hidden px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-lg shadow-emerald-600/20 transition-all">Comment &amp; Rate</button>
           <form method="dialog">
             <button class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-xl transition-colors">Close</button>
           </form>
@@ -345,6 +374,57 @@
       </div>
     </div>
 
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+
+  <!-- ============================================ -->
+  <!-- COMMENT & RATE MODAL (isa lang) -->
+  <!-- ============================================ -->
+  <dialog id="comment_rate_modal" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box w-full max-w-md p-0 overflow-hidden rounded-2xl shadow-2xl border border-slate-100">
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+        <div>
+          <h3 class="text-base font-bold text-slate-800">Comment &amp; Rate</h3>
+          <p class="text-xs text-slate-500" id="cr_property"></p>
+          <p class="text-[11px] text-slate-400">req_id: <span id="cr_reqid" class="font-mono font-bold"></span></p>
+        </div>
+        <form method="dialog">
+          <button class="w-8 h-8 rounded-full bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-500 flex items-center justify-center" aria-label="Close">✕</button>
+        </form>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <div>
+          <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Your Rating</p>
+          <div id="cr_stars" class="flex items-center gap-1">
+            <?php for ($s = 1; $s <= 5; $s++): ?>
+              <button type="button" data-val="<?= $s ?>" class="cr-star p-0.5 transition-transform hover:scale-110" aria-label="<?= $s ?> star">
+                <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              </button>
+            <?php endfor; ?>
+            <span id="cr_rate_label" class="ml-2 text-sm font-semibold text-slate-600"></span>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-1">Comment</p>
+          <textarea id="cr_comment" maxlength="255" rows="4" placeholder="Share your experience..."
+                    class="textarea textarea-bordered w-full rounded-xl text-sm"></textarea>
+          <p class="text-right text-[11px] text-slate-400 mt-1"><span id="cr_count">0</span>/255</p>
+        </div>
+
+        <!-- Error shown INSIDE the modal -->
+        <p id="cr_error" class="hidden text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2"></p>
+
+        <div class="flex justify-end gap-3 pt-3 border-t border-slate-100">
+          <form method="dialog">
+            <button class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-xl">Cancel</button>
+          </form>
+          <button type="button" id="cr_submit" onclick="submitCommentRate()"
+                  class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-lg shadow-emerald-600/20">Submit</button>
+        </div>
+      </div>
+    </div>
     <form method="dialog" class="modal-backdrop"><button>close</button></form>
   </dialog>
 
@@ -370,11 +450,12 @@
     const calView     = document.getElementById('calendar_view');
     const toggleBtns  = Array.from(document.querySelectorAll('#view_toggle button'));
 
-    let baseRows = [];     // owner + search
-    let filtered = [];     // owner + search + date  (table)
+    let baseRows = [];
+    let filtered = [];
     let page = 1;
     let view = 'table';
     let calendar = null;
+    let currentRequest = null;
 
     // ---------- FILTERING ----------
     function matchesBase(row) {
@@ -493,6 +574,8 @@
       const p = events[idx].extendedProps;
       const set = (id, val) => document.getElementById(id).textContent = val;
 
+      currentRequest = p;
+
       set('vd_property',  p.property);
       set('vd_type',      p.type);
       set('vd_schedule',  p.schedule);
@@ -506,10 +589,201 @@
       st.className = 'inline-block px-3 py-1 rounded-full text-xs font-bold shadow-sm shrink-0 ' + p.badge;
 
       const link = document.getElementById('vd_link');
-      if (p.owner === 'mine') { link.href = p.link; link.classList.remove('hidden'); }
-      else { link.classList.add('hidden'); }
+      link.classList.toggle('hidden', !(p.owner === 'mine' && p.status === 'Completed' && !p.rated));
+
+      const actions  = document.getElementById('vd_actions');
+      const btnAppr  = document.getElementById('vd_btn_approve');
+      const btnDis   = document.getElementById('vd_btn_disapprove');
+      const btnDone  = document.getElementById('vd_btn_complete');
+
+      const showAppr = p.owner === 'others' && p.status === 'Pending';
+      const showDone = p.owner === 'others' && p.status === 'Approved';
+
+      btnAppr.classList.toggle('hidden', !showAppr);
+      btnDis.classList.toggle('hidden', !showAppr);
+      btnDone.classList.toggle('hidden', !showDone);
+      actions.classList.toggle('hidden', !(showAppr || showDone));
+      actions.classList.toggle('flex', showAppr || showDone);
 
       document.getElementById('visit_details').showModal();
+    };
+
+    // ---------- ALERT HELPERS ----------
+    // showModal() puts a <dialog> in the browser's top layer, so z-index can never
+    // beat it. Fix: render the alert INSIDE the open dialog via `target`.
+    function alertTarget() {
+      return document.querySelector('dialog[open]') || document.body;
+    }
+
+    function askConfirm(title, text, confirmText) {
+      if (window.CoolAlert && typeof CoolAlert.show === 'function') {
+        return Promise.resolve(CoolAlert.show({
+          icon: 'question',
+          title: title,
+          text: text,
+          showCancelButton: true,
+          confirmButtonText: confirmText,
+          cancelButtonText: 'Cancel',
+          reverseButtons: true,
+          target: alertTarget(),
+          customClass: { container: 'z-[9999]' }
+        })).then(function (r) { return !!(r && (r.isConfirmed || r.value === true)); });
+      }
+      return Promise.resolve(window.confirm(text));
+    }
+
+    function errorToast(msg) {
+      if (window.CoolAlert && typeof CoolAlert.show === 'function') {
+        CoolAlert.show({
+          toast: true, icon: 'error', title: 'SOMETHING WRONG', text: msg,
+          position: 'top-right', timer: 8000, timerProgressBar: true,
+          target: alertTarget(),
+          customClass: { container: 'z-[9999]' }
+        });
+      } else { alert(msg); }
+    }
+
+    // ---------- UPDATE STATUS ----------
+    const STATUS_CONFIRM = {
+      'Approved':    { title: 'Approve request?',    text: 'Are you sure you want to approve this visit request?',      btn: 'Yes, approve' },
+      'Disapproved': { title: 'Disapprove request?', text: 'Are you sure you want to disapprove this visit request?',   btn: 'Yes, disapprove' },
+      'Completed':   { title: 'Mark as completed?',  text: 'Are you sure you want to update this visit to completed?',  btn: 'Yes, complete' }
+    };
+
+    window.updateVisitStatus = function (newStatus) {
+      if (!currentRequest) return;
+      const cfg = STATUS_CONFIRM[newStatus];
+      if (!cfg) return;
+
+      const req = currentRequest;
+
+      // close the details modal first so the alert is not hidden behind it
+      document.getElementById('visit_details').close();
+
+      askConfirm(cfg.title, cfg.text, cfg.btn).then(function (ok) {
+        if (!ok) return;
+
+        const fd = new FormData();
+        fd.append('requester_id', req.requester_id);
+        fd.append('landlord_id',  req.landlord_id);
+        fd.append('date_sched',   req.date_sched);
+        fd.append('time_sched',   req.time_sched);
+        fd.append('status', newStatus);
+
+        fetch('update_visit_status.php', { method: 'POST', body: fd })
+          .then(r => r.text())
+          .then(txt => {
+            try { JSON.parse(txt); }
+            catch (e) { errorToast('Server error: ' + txt.substring(0, 200)); return; }
+            location.reload(); // alerts.php shows the toast
+          })
+          .catch(() => errorToast('Network error. Please try again.'));
+      });
+    };
+
+    // ---------- COMMENT & RATE ----------
+    let crTarget = null;
+    let crRate = 0;
+    const crStars   = Array.from(document.querySelectorAll('#cr_stars .cr-star'));
+    const crLabel   = document.getElementById('cr_rate_label');
+    const crComment = document.getElementById('cr_comment');
+    const crCount   = document.getElementById('cr_count');
+    const crErrorEl = document.getElementById('cr_error');
+    const RATE_TEXT = ['', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent'];
+
+    // Error shown inside the modal (never hidden behind it)
+    function crError(msg) {
+      crErrorEl.textContent = msg;
+      crErrorEl.classList.remove('hidden');
+    }
+    function crClearError() {
+      crErrorEl.textContent = '';
+      crErrorEl.classList.add('hidden');
+    }
+
+    function paintStars(n) {
+      crStars.forEach((b, i) => {
+        b.querySelector('polygon').setAttribute('fill', i < n ? '#f59e0b' : 'none');
+      });
+    }
+
+    crStars.forEach(b => {
+      b.addEventListener('mouseenter', () => paintStars(Number(b.dataset.val)));
+      b.addEventListener('mouseleave', () => paintStars(crRate));
+      b.addEventListener('click', () => {
+        crRate = Number(b.dataset.val);
+        paintStars(crRate);
+        crLabel.textContent = crRate + ' / 5 · ' + RATE_TEXT[crRate];
+        crClearError();
+      });
+    });
+
+    crComment.addEventListener('input', () => {
+      crCount.textContent = crComment.value.length;
+      crClearError();
+    });
+
+    function openCommentRateModal(p) {
+      crTarget = p;
+      crRate = 0;
+      paintStars(0);
+      crLabel.textContent = '';
+      crComment.value = '';
+      crCount.textContent = '0';
+      crClearError();
+      document.getElementById('cr_submit').disabled = false;
+      document.getElementById('cr_property').textContent = p.property;
+      // palabas ng req_id para makita kung nakukuha
+      document.getElementById('cr_reqid').textContent = p.req_id || 'WALA (undefined)';
+      console.log('req_id:', p.req_id, 'landlord_id:', p.landlord_id);
+      document.getElementById('comment_rate_modal').showModal();
+    }
+
+    window.openCommentRate = function (idx) {
+      const p = events[idx].extendedProps;
+      if (p.owner !== 'mine' || p.status !== 'Completed' || p.rated) return;
+      openCommentRateModal(p);
+    };
+
+    window.openCommentRateFromDetails = function () {
+      if (!currentRequest) return;
+      const p = currentRequest;
+      if (p.owner !== 'mine' || p.status !== 'Completed' || p.rated) return;
+      document.getElementById('visit_details').close();
+      openCommentRateModal(p);
+    };
+
+    window.submitCommentRate = function () {
+      crClearError();
+      const comment = crComment.value.trim();
+      if (crRate < 1)      { crError('Please select a star rating.'); return; }
+      if (comment === '')  { crError('Please write a comment.'); return; }
+      if (!crTarget || !crTarget.req_id) { crError('This request has no req_id. Please contact the admin.'); return; }
+
+      const btn = document.getElementById('cr_submit');
+      btn.disabled = true;
+
+      const fd = new FormData();
+      fd.append('req_id', crTarget.req_id);
+      fd.append('landlord_id', crTarget.landlord_id);
+      fd.append('rate', crRate);
+      fd.append('comment', comment);
+
+      fetch('save_comment_rate.php', { method: 'POST', body: fd })
+        .then(r => r.text())
+        .then(txt => {
+          let res;
+          try { res = JSON.parse(txt); }
+          catch (e) { btn.disabled = false; crError('Server error: ' + txt.substring(0, 200)); return; }
+          if (res.success) {
+            document.getElementById('comment_rate_modal').close();
+            location.reload(); // alerts.php shows the success toast
+          } else {
+            btn.disabled = false;
+            crError(res.message);
+          }
+        })
+        .catch(() => { btn.disabled = false; crError('Network error. Please try again.'); });
     };
 
     // ---------- EVENTS ----------

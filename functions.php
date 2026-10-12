@@ -4884,8 +4884,8 @@ if (isset($_POST['send_request'])) {
         exit;
     }
 
-    $insert = $conn->prepare("INSERT INTO `request_visit` (`status`, `landlord_id`, `user_id`, `date_sched`, `time_sched`, `message`) VALUES (?,?,?,?,?,?)");
-    $insert->bind_param("ssssss", $status, $landlord_id, $user_id_login, $visit_date, $visit_time, $message);
+    $insert = $conn->prepare("INSERT INTO `request_visit` (`status`, `landlord_id`, `user_id`, `date_sched`, `time_sched`, `message`,`date_request`,`time_request`) VALUES (?,?,?,?,?,?,?,?)");
+    $insert->bind_param("ssssssss", $status, $landlord_id, $user_id_login, $visit_date, $visit_time, $message, $datetoday, $timetoday1);
     $insert->execute();
     $insert->close();
 
