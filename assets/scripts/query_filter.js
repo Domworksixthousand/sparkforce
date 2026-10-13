@@ -139,6 +139,8 @@ document.addEventListener("DOMContentLoaded", ()=> {
 
 });
 
+
+
 //get
     //get
 document.addEventListener("DOMContentLoaded", ()=> {
@@ -163,6 +165,50 @@ document.addEventListener("DOMContentLoaded", ()=> {
     fetchData();
 
 });
+
+document.addEventListener("DOMContentLoaded", ()=> {
+
+        function fetchData() {
+        $.ajax({
+            url: "request_count.php",
+            method: "GET",
+            success: function(data) {
+                $("#get_request_count").html(data);
+            },
+            error: function() {
+                $("#get_request_count").html("Error loading data");
+            }
+        });
+    }
+
+
+    setInterval(fetchData, 2000);
+
+
+    fetchData();
+
+});
+
+
+
+  document.addEventListener("DOMContentLoaded", function(){
+      async function pollData() {
+        try {
+            let response = await fetch('noti_messages.php'); 
+            let result = await response.text();
+            
+            document.getElementById('get_mess').innerHTML = result;
+        } catch (error) {
+            console.error('Polling Error:', error);
+        }
+    }
+
+  
+    pollData();
+    setInterval(pollData, 3000);
+  });
+
+
 //get_report
  document.addEventListener("DOMContentLoaded", ()=> {
     function fetchData() {

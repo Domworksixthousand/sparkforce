@@ -37,7 +37,12 @@
              <li>
                 <a href="request_visit.php" class="flex items-center gap-3 active">
                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class="text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin-check preview-icon"><path d="M19.43 12.935c.357-.967.57-1.955.57-2.935a8 8 0 0 0-16 0c0 4.993 5.539 10.193 7.399 11.799a1 1 0 0 0 1.202 0 32.197 32.197 0 0 0 .813-.728"/><circle cx="12" cy="10" r="3"/><path d="m16 18 2 2 4-4"/></svg>
-                <span class="text-white">Request Visit</span>
+                    <span class="text-white flex gap-1">
+                        Request Visit
+                         <div id="get_request_count">
+                            <!--get messages-->
+                        </div>
+                    </span>
                 </a>
             </li>
             <li>
@@ -122,19 +127,4 @@
         </ul>
       </div>
 
-<script>
-    async function pollData() {
-        try {
-            let response = await fetch('noti_messages.php'); 
-            let result = await response.text();
-            
-            document.getElementById('get_mess').innerHTML = result;
-        } catch (error) {
-            console.error('Polling Error:', error);
-        }
-    }
-
-  
-    pollData();
-    setInterval(pollData, 3000);
-</script>
+<script src="../assets/scripts/query_filter.js"></script>
