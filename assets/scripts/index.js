@@ -132,19 +132,30 @@
 
 
 // 9. Navbar Scroll Visual Effect Trigger
-const navbar = document.querySelector('.navbar');
-if (navbar) {
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 20) {
-            navbar.classList.remove('glass');
-            navbar.classList.add('bg-[#0d9488]');
-        } else {
-            navbar.classList.add('glass');
-            navbar.classList.remove('bg-[#0d9488]');
-        }
-    });
-}
+  const navbar = document.querySelector('.navbar');
+  const dropdown_signup = document.querySelector('.signup-dropdown'); // Changed to querySelector
 
+  if (navbar) {
+      window.addEventListener('scroll', () => {
+          if (window.scrollY > 20) {
+              navbar.classList.remove('glass');
+              navbar.classList.add('bg-[#0d9488]');
+              
+              if (dropdown_signup) {
+                  dropdown_signup.classList.remove('glass');
+                  dropdown_signup.classList.add('bg-[#0d9488]');
+              }
+          } else {
+              navbar.classList.add('glass');
+              navbar.classList.remove('bg-[#0d9488]');
+              
+              if (dropdown_signup) {
+                  dropdown_signup.classList.add('glass');
+                  dropdown_signup.classList.remove('bg-[#0d9488]');
+              }
+          }
+      });
+  }
 
 function toggleRepeatPassword() {
     const passwordField = document.getElementById("repeat_password");
@@ -649,30 +660,6 @@ document.addEventListener("DOMContentLoaded", function(){
 });
 
 
-//real time messages
-document.addEventListener("DOMContentLoaded", function(){
-  const chatUserId = window.chatUserId;
-
-  async function pollMessages() {
-    try {
-      let res = await fetch(`fetch_chat.php?id=${chatUserId}`);
-      let html = await res.text();
-
-      const messageBody = document.getElementById('message_body');
-      messageBody.innerHTML = html;
-
-      // Auto scroll to bottom on new message
-      messageBody.scrollTop = messageBody.scrollHeight;
-    } catch (e) {
-      console.error('Polling Error:', e);
-    }
-  }
-
-  window.pollMessages = pollMessages;
-
-  pollMessages();
-  setInterval(pollMessages, 3000);
-});
 
 
 

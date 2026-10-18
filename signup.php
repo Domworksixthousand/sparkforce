@@ -9,7 +9,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google-site-verification" content="u9XxwAs-OvAizH_6uuclWJ-izjdAxNuADcmPGo0UdQE" />
-    <title>RENTSPACE - Sign Up</title>
+    <title>RENTHUB - Sign Up</title>
     <link rel="shortcut icon" href="assets/images/logo-icon.png" type="image/x-icon"> 
     <link rel="stylesheet" href="assets/styles/daisy_ui.css">
     <link rel="stylesheet" href="assets/styles/index.css">
@@ -35,7 +35,7 @@
             <div class="bg-[linear-gradient(to_right,#2A7B9B_0%,#57C785_100%,#EDDD53_100%)] min-h-screen w-[40%] hidden md:flex flex flex-col justify-center items-center text-center p-8 sticky top-0 self-start">
                 <img src="assets/images/logo-icon.png" class="w-[60px] mb-3 drop-shadow-md mb-5" alt="RentSpace Logo">
                 <h1 class="cursive-text text-white font-black tracking-wider text-[1rem] mb-4 drop-shadow-sm">
-                    RENTSPACE
+                    RENTHUB
                 </h1>
                 <div class="w-16 h-[3px] bg-white/50 rounded-full mb-6"></div>
                 <p class="text-white text-base md:text-lg font-medium leading-relaxed max-w-sm opacity-95">
@@ -44,9 +44,11 @@
             </div>
            <!--right-->
            <form action="functions.php" method="POST" id="myForm" class="min-h-screen w-[100%] py-[20px] lg:py-[100px] px-[10px] lg:px-[150px] " enctype="multipart/form-data">
-                <div class="flex flex-col gap-3 justify-center items-center ">
-                    <img src="assets/images/logo-icon.png" class="w-[60px] mb-3 drop-shadow-md mb-5 text md:hidden" alt="RentSpace Logo">
-                    <h2 class="text-xl font-bold mb-[50px]">CREATE ACCOUNT</h2>
+                <div class="flex flex-col  justify-center items-center  mb-[50px]">
+                    <img src="assets/images/logo-icon.png" class="w-[60px]  drop-shadow-md mb-5 text md:hidden" alt="RentSpace Logo">
+                    <h2 class="text-[30px] font-bold ">CREATE ACCOUNT</h2>
+                    <small class="text-gray-500 mb-1">Create account as Tenant</small>
+                    <div class="w-16 h-[3px] bg-[#14b8a6]/90 rounded-full mb-6"></div>
                 </div>
                 <p class="mb-3">Personal Information</p>
                 <div class="w-[100%] flex flex-col lg:flex-row gap-3 mb-5">
@@ -320,7 +322,13 @@
                         </button>
                     </div>
                     <div class="divider">OR</div>
-                    <p><a href="forgot_password.php" class="link">Forgot Password?</a> / <a href="signin.php" class="link">Already have Account?</a></p>
+                   <p>
+                        <a href="forgot_password.php" class="link text-primary">Forgot Password?</a>
+                        /
+                        <a href="signin.php" class="link text-primary">Already have Account?</a>
+                         /
+                        <a href="signup_owner.php" class="link text-primary">Sign up as Owner</a>
+                    </p>
                 </div>
            </form>
         </section>
@@ -365,7 +373,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-6">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
             </svg>
-            RENTSPACE Terms, Privacy & Account Ban Policy
+            RENTHUB Terms, Privacy & Account Ban Policy
         </h3>
         <div class="space-y-4 text-sm text-gray-600 max-h-[60vh] overflow-y-auto pr-2">
             <div>
@@ -375,12 +383,12 @@
             
             <div>
                 <h4 class="font-bold text-base-content mb-1">2. Data & Identity Verification</h4>
-                <p>By uploading an ID Type, ID Number, and ID Photo, the user gives RENTSPACE the explicit right to process and verify their identity. This data is handled securely and used solely to protect the platform against rental fraud, scams, and identity theft.</p>
+                <p>By uploading an ID Type, ID Number, and ID Photo, the user gives RENTHUB the explicit right to process and verify their identity. This data is handled securely and used solely to protect the platform against rental fraud, scams, and identity theft.</p>
             </div>
             
             <div class="p-3 bg-error/10 border border-error/20 rounded-lg">
                 <h4 class="font-bold text-error mb-1">3. Immediate Account Ban for Violations</h4>
-                <p class="mb-2">RENTSPACE enforces a strict zero-tolerance policy for illegal, malicious, or deceptive behaviors. Your account will be **permanently banned, suspended, or terminated immediately without prior notice** if caught engaging in:</p>
+                <p class="mb-2">RENTHUB enforces a strict zero-tolerance policy for illegal, malicious, or deceptive behaviors. Your account will be **permanently banned, suspended, or terminated immediately without prior notice** if caught engaging in:</p>
                 <ul class="list-disc list-inside space-y-1 ml-2 font-medium">
                     <li>Posting fake rental listings or misleading property details.</li>
                     <li>Financial scams, payment fraud, extortion, or phishing.</li>
@@ -390,7 +398,7 @@
             </div>
             <div>
                 <h4 class="font-bold text-base-content mb-1">4. Liability & Platform Rights</h4>
-                <p>The user assumes full responsibility for all activities, bookings, and messages sent through their account. If an account is banned for a policy violation, the user forfeits access to their profile and any active listings. RENTSPACE reserves the right to report fraudulent activities directly to local law enforcement.</p>
+                <p>The user assumes full responsibility for all activities, bookings, and messages sent through their account. If an account is banned for a policy violation, the user forfeits access to their profile and any active listings. RENTHUB reserves the right to report fraudulent activities directly to local law enforcement.</p>
             </div>
         </div>
         <div class="modal-action border-t border-base-300 pt-3">

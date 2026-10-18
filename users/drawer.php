@@ -127,4 +127,4 @@
         </ul>
       </div>
 
-<script src="../assets/scripts/query_filter.js"></script>
+    <script src="../assets/scripts/query_filter.js"></script>

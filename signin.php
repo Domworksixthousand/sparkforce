@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google-site-verification" content="u9XxwAs-OvAizH_6uuclWJ-izjdAxNuADcmPGo0UdQE" />
-    <title>RENTSPACE - signin</title>
+    <title>RENTHUB - signin</title>
     <link rel="shortcut icon" href="assets/images/logo-icon.png" type="image/x-icon"> 
     <link rel="stylesheet" href="assets/styles/daisy_ui.css">
     <link rel="stylesheet" href="assets/styles/index.css">
@@ -27,7 +27,7 @@
             <div class="flex flex-col justify-center items-center">
                 <img src="assets/images/logo-icon.png" class="w-[60px] mb-5 drop-shadow-md" alt="RentSpace Logo">
                 <h1 class="cursive-text text-white font-black tracking-wider text-[1rem] mb-4 drop-shadow-sm">
-                    RENTSPACE
+                    RENTHUB
                 </h1>
                 <div class="w-16 h-[3px] bg-green-800/50 rounded-full mb-6"></div>
             </div>

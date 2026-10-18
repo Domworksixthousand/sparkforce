@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google-site-verification" content="u9XxwAs-OvAizH_6uuclWJ-izjdAxNuADcmPGo0UdQE" />
-    <title>RENTSPACE</title>
+    <title>RENTHUB</title>
     <link rel="shortcut icon" href="assets/images/logo-icon.png" type="image/x-icon"> 
     <link rel="stylesheet" href="assets/styles/daisy_ui.css">
     <link rel="stylesheet" href="assets/styles/index.css">
@@ -42,14 +42,30 @@
             <li><a href="#map_rentals">Map</a></li>
             <li><a href="#works">How It Works</a></li>
             <div class="divider my-1"></div>
-            <li><a href="signin.php" class="btn btn-ghost btn-sm">Sign In</a></li>
-            <li><a href="signup.php" class="btn bg-[#14b8a6] btn-sm text-white">Get Started</a></li>
+            <li>
+              <a href="signin.php" class="btn        btn-sm bg-[#0d9488] text-white p-5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-key-round preview-icon"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></svg>
+                Sign In
+              </a>
+            </li>
+            <li>
+              <a href="signin.php" class="btn btn-ghost btn-sm bg-[#0d9488] text-white p-5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-user preview-icon"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M7 21v-2a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2"/></svg>
+                Sign up as Owner
+              </a>
+            </li>
+            <li>
+              <a href="signup_owner.php" class="btn btn-ghost btn-sm bg-[#0d9488] text-white p-5">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-round-check preview-icon"><path d="M2 21a8 8 0 0 1 13.292-6"/><circle cx="10" cy="8" r="5"/><path d="m16 19 2 2 4-4"/></svg>
+                Sign up as Tenant
+              </a>
+            </li>
           </ul>
         </div>
-        <a href="#" class="  flex flex-row">
+        <a href="#" class="  flex flex-row ">
           <img src="assets/images/logo-icon.png" class="w-[50px] me-2" loading="lazy">
           <div class="flex flex-col mt-2">  
-            <p class="nav_li cursive-text m-0 p-0 text-sm font-bold text-white">RENTSPACE</p>
+            <p class="nav_li cursive-text m-0 p-0 text-sm font-bold text-white">RENTHUB</p>
             <p class="nav_li m-0 p-0 text-sm text-white">Find Your Places</p>
           </div>
         </a>
@@ -66,9 +82,23 @@
         <a href="signin.php" class="nav_li btn btn-ghost p-[7px] rounded-sm text-sm bg-transparent text-white hover:bg-[#14b8a6] btn-sm hidden lg:inline-flex font-semibold border-0">
           Sign In
         </a>
-        <a href="signup.php" class="btn bg-[#14b8a6] border-0  shadow-md shadow-primary/20 text-white font-bold px-5 btn-sm hidden lg:inline-flex ">
-          Get Started
-        </a>
+        <div class="dropdown dropdown-bottom dropdown-end hidden lg:inline-flex">
+          <div tabindex="0" role="button" class="btn bg-[#14b8a6] hover:bg-[#0d9488] text-white border-0 shadow-md shadow-primary/20 font-bold px-5 btn-sm m-1">
+            Get Started
+          </div>
+          <ul tabindex="-1"  class="signup-dropdown dropdown-content menu   glass rounded-box z-1 w-52 p-2 shadow-sm">
+            <li>
+              <a href="signup.php" class="text-white" >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-user preview-icon"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M7 21v-2a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2"/></svg>
+              Sign up as Tenant</a>
+            </li>
+            <li>
+              <a href="signup_owner.php" class="text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-round-check preview-icon"><path d="M2 21a8 8 0 0 1 13.292-6"/><circle cx="10" cy="8" r="5"/><path d="m16 19 2 2 4-4"/></svg>Sign up as Owner
+              </a>
+            </li>
+          </ul>
+        </div>
       </div>
     </nav>
     <div class="banner w-full m-0 p-0 relative">
@@ -735,7 +765,7 @@
             </div>
             <div class="w-[100%] flex flex-col items-center justify-center px-[0px] pt-[100px]  lg:p-[30px]">
               <p class="leading-relaxed mb-3">
-                  RentSpace was born from a simple yet powerful idea — finding a rental property should not feel like a gamble. In a market often clouded by unverified listings, hidden fees, and unreliable arrangements, we recognized a critical need for change. We envisioned and built a modern platform where security meets convenience; a space where every listing is strictly verified, every price point is fully transparent, and every single renter feels absolute confidence and peace of mind before they even step foot inside their future home.
+                  RentHub was born from a simple yet powerful idea — finding a rental property should not feel like a gamble. In a market often clouded by unverified listings, hidden fees, and unreliable arrangements, we recognized a critical need for change. We envisioned and built a modern platform where security meets convenience; a space where every listing is strictly verified, every price point is fully transparent, and every single renter feels absolute confidence and peace of mind before they even step foot inside their future home.
               </p>
               
               <p class="leading-relaxed mb-3">
@@ -743,7 +773,7 @@
               </p>
 
               <p class="leading-relaxed">
-                  What truly sets RentSpace apart is our unwavering commitment to quality assurance and community trust. Our dedicated team goes beyond just hosting online advertisements; we actively review properties, verify landlord credentials, and perform rigorous quality checks to eliminate scams and misleading posts. By streamlining communication and securing data transactions, we ensure a seamless, hassle-free booking experience from the very first search click up to the exciting moment of your move-in day.
+                  What truly sets RentHub apart is our unwavering commitment to quality assurance and community trust. Our dedicated team goes beyond just hosting online advertisements; we actively review properties, verify landlord credentials, and perform rigorous quality checks to eliminate scams and misleading posts. By streamlining communication and securing data transactions, we ensure a seamless, hassle-free booking experience from the very first search click up to the exciting moment of your move-in day.
               </p>
             </div>
           </div>
@@ -804,7 +834,7 @@
         <div class="mb-20 lg:mb-0 flex flex-col text-center lg:text-start justify-center lg:justify-start items-center lg:items-start">
           <div class="flex items-center mb-3">
             <img src="assets/images/logo-icon.png" class="w-[30px] me-2 ">
-            <p class="text-white font-bold">RENTSPACE</p>
+            <p class="text-white font-bold">RENTHUB</p>
           </div>
           <p class="text-white mb-5">
             Your trusted platform for discovering  verified rental <br class="hidden lg:flex"> properties around Irosin Sorsogon
@@ -875,6 +905,5 @@
   <script src="assets/scripts/index.js"></script>
 </body>
 </html>
-
 
 

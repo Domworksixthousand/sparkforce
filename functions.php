@@ -1,11 +1,11 @@
 <?php
 include 'config.php';
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-use PHPMailer\PHPMailer\SMTP;
-
-// Isa lang na require line ang kailangan para sa buong project!
 require __DIR__ . '/vendor/autoload.php';
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\Exception;
+
 
 // Pwede mo nang gamitin ang PHPMailer dito:
 $mail = new PHPMailer(true);
@@ -330,22 +330,21 @@ if ($selfie_error === UPLOAD_ERR_OK && !empty($selfie_img_name)) {
 
     $mail = new PHPMailer(true);
 
+
     try {
         $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
+        $mail->Host       = 'mail.rentspace.asia';
         $mail->SMTPAuth   = true;
-        $mail->Username   = 'rentspace4707@gmail.com';
-        $mail->Password   = 'hmmv thkm hoqs gzhi'; 
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-        $mail->Port       = 465;
+        $mail->Username   = 'renthub@rentspace.asia';
+        $mail->Password   = 'paulobubloCflmanZ@123';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
 
-        $mail->setFrom('rentspace4707@gmail.com', 'RENTSPACE');
+        $mail->setFrom('renthub@rentspace.asia', 'RENTHUB');
         $mail->addAddress($email, $firstname);
-
         $mail->isHTML(true);
         $mail->Subject = $subject;
         $mail->Body    = $message;
-
         $mail->send();
 
         //  HASH THE PASSWORD
@@ -377,23 +376,24 @@ if ($selfie_error === UPLOAD_ERR_OK && !empty($selfie_img_name)) {
             $_SESSION['user_id'] = $user_id;
             $_SESSION['verification_code'] = $verification_code;
             $_SESSION['success'] = "Verification Code Successfully Sent to your Email, Please Check your Email";
-            
-            header("location:signup_confirmation.php");
-            exit;
-        } else {
-            $_SESSION['error'] = "Registration failed. Database error occurred.";
-            header("location:signup.php");
-            exit;
-        }
-      
-    } catch (Exception $e) {
-        //check kun my internet
-        $_SESSION['error'] = "Failed to send email. Please check your internet connection or try again.";
-        header("Location: signup.php");
-        exit;
-    }
-}
+            ini_set('display_errors', 1);
+            error_reporting(E_ALL);
+                        header("location:signup_confirmation.php");
+                        exit;
+                    } else {
+                        $_SESSION['error'] = "Registration failed. Database error occurred.";
+                        header("location:signup.php");
+                        exit;
+                    }
+                
+                } catch (Exception $e) {
+                error_log("Mailer Error: " . $mail->ErrorInfo);
+                $_SESSION['error'] = "Failed to send email: " . $mail->ErrorInfo; // pansamantala lang
+                header("Location: signup.php");
+                exit;
+            }
 
+} 
 
 if(isset($_POST['confirm_code'])){
     $code =  mysqli_real_escape_string($conn, $_POST['code'] ?? '');
@@ -555,15 +555,15 @@ if(isset($_POST['approved_request_account'])){
     $mail = new PHPMailer(true);
 
     try {
-        $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
+         $mail->isSMTP();
+        $mail->Host       = 'mail.rentspace.asia';
         $mail->SMTPAuth   = true;
-        $mail->Username   = 'rentspace4707@gmail.com';
-        $mail->Password   = 'hmmv thkm hoqs gzhi'; 
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-        $mail->Port       = 465;
+        $mail->Username   = 'renthub@rentspace.asia';
+        $mail->Password   = 'paulobubloCflmanZ@123';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
 
-        $mail->setFrom('rentspace4707@gmail.com', 'RENTSPACE');
+        $mail->setFrom('renthub@rentspace.asia', 'RENTHUB');
         $mail->addAddress($email, $firstname);
 
         $mail->isHTML(true);
@@ -643,15 +643,15 @@ if(isset($_POST['disapproved_request_account'])){
     $mail = new PHPMailer(true);
 
     try {
-        $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
+         $mail->isSMTP();
+        $mail->Host       = 'mail.rentspace.asia';
         $mail->SMTPAuth   = true;
-        $mail->Username   = 'rentspace4707@gmail.com';
-        $mail->Password   = 'hmmv thkm hoqs gzhi'; 
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-        $mail->Port       = 465;
+        $mail->Username   = 'renthub@rentspace.asia';
+        $mail->Password   = 'paulobubloCflmanZ@123';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
 
-        $mail->setFrom('rentspace4707@gmail.com', 'RENTSPACE');
+        $mail->setFrom('renthub@rentspace.asia', 'RENTHUB');
         $mail->addAddress($email, $firstname);
 
         $mail->isHTML(true);
@@ -733,15 +733,15 @@ if(isset($_POST['forgot_password'])){
         $mail = new PHPMailer(true);
 
         try {
-            $mail->isSMTP();
-            $mail->Host       = 'smtp.gmail.com';
-            $mail->SMTPAuth   = true;
-            $mail->Username   = 'rentspace4707@gmail.com';
-            $mail->Password   = 'hmmv thkm hoqs gzhi'; 
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-            $mail->Port       = 465;
+             $mail->isSMTP();
+        $mail->Host       = 'mail.rentspace.asia';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'renthub@rentspace.asia';
+        $mail->Password   = 'paulobubloCflmanZ@123';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
 
-            $mail->setFrom('rentspace4707@gmail.com', 'RENTSPACE');
+        $mail->setFrom('renthub@rentspace.asia', 'RENTHUB');
             $mail->addAddress($email, $firstname);
 
             $mail->isHTML(true);
@@ -955,15 +955,15 @@ if (isset($_POST['change_credentials'])) {
             $mail = new PHPMailer(true);
 
             try {
-                $mail->isSMTP();
-                $mail->Host = 'smtp.gmail.com';
-                $mail->SMTPAuth = true;
-                $mail->Username = 'rentspace4707@gmail.com';
-                $mail->Password = 'hmmv thkm hoqs gzhi';
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-                $mail->Port = 465;
+                 $mail->isSMTP();
+        $mail->Host       = 'mail.rentspace.asia';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'renthub@rentspace.asia';
+        $mail->Password   = 'paulobubloCflmanZ@123';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
 
-                $mail->setFrom('rentspace4707@gmail.com', 'RENTSPACE');
+        $mail->setFrom('renthub@rentspace.asia', 'RENTHUB');
                 $mail->addAddress($emailko, $firstnameko);
 
                 $mail->isHTML(true);
@@ -1039,15 +1039,15 @@ if (isset($_POST['change_credentials'])) {
             $mail = new PHPMailer(true);
 
             try {
-                $mail->isSMTP();
-                $mail->Host = 'smtp.gmail.com';
-                $mail->SMTPAuth = true;
-                $mail->Username = 'rentspace4707@gmail.com';
-                $mail->Password = 'hmmv thkm hoqs gzhi';
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-                $mail->Port = 465;
+                 $mail->isSMTP();
+        $mail->Host       = 'mail.rentspace.asia';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'renthub@rentspace.asia';
+        $mail->Password   = 'paulobubloCflmanZ@123';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
 
-                $mail->setFrom('rentspace4707@gmail.com', 'RENTSPACE');
+        $mail->setFrom('renthub@rentspace.asia', 'RENTHUB');
                 $mail->addAddress($emailko, $firstnameko);
 
                 $mail->isHTML(true);
@@ -1127,15 +1127,15 @@ if (isset($_POST['change_credentials'])) {
             $mail = new PHPMailer(true);
 
             try {
-                $mail->isSMTP();
-                $mail->Host = 'smtp.gmail.com';
-                $mail->SMTPAuth = true;
-                $mail->Username = 'rentspace4707@gmail.com';
-                $mail->Password = 'hmmv thkm hoqs gzhi';
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-                $mail->Port = 465;
+                 $mail->isSMTP();
+        $mail->Host       = 'mail.rentspace.asia';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'renthub@rentspace.asia';
+        $mail->Password   = 'paulobubloCflmanZ@123';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
 
-                $mail->setFrom('rentspace4707@gmail.com', 'RENTSPACE');
+        $mail->setFrom('renthub@rentspace.asia', 'RENTHUB');
                 $mail->addAddress($emailko, $firstnameko);
 
                 $mail->isHTML(true);
@@ -4831,72 +4831,5 @@ if (isset($_POST['update_vacantlot'])) {
 
     $_SESSION['success'] = "Vacant Lot Successfully Updated";
     header("Location: users/my_property.php?property_id=" . urlencode($landlord_id) . "&updated=1");
-    exit;
-}
-
-if (isset($_POST['send_request'])) {
-    $landlord_id = trim($_POST['landlord_id'] ?? '');
-    $visit_date = trim($_POST['visit_date'] ?? '');
-    $visit_time = trim($_POST['visit_time'] ?? '');
-    $message = trim($_POST['message'] ?? '');
-    $status = "Pending";
-
-    $_SESSION['rv_landlord_id'] = $landlord_id;
-    $_SESSION['rv_visit_date'] = $visit_date;
-    $_SESSION['rv_visit_time'] = $visit_time;
-    $_SESSION['rv_message'] = $message;
-
-    $error = '';
-    $visit_at = DateTime::createFromFormat('Y-m-d H:i', "{$visit_date} {$visit_time}");
-
-    if ($landlord_id === '') {
-        $error = "Please select a property.";
-    } elseif ($visit_at === false) {
-        $error = "Please enter a valid date and time.";
-    } elseif ($visit_at < new DateTime()) {
-        $error = "Please choose a future date and time.";
-    } elseif (mb_strlen($message) > 250) {
-        $error = "Message must not exceed 250 characters.";
-    } else {
-        $owner = $conn->prepare("SELECT 1 FROM `landlord` WHERE `landlord_id` = ? AND `user_id` != ?");
-        $owner->bind_param("ss", $landlord_id, $user_id_login);
-        $owner->execute();
-        if ($owner->get_result()->num_rows === 0) {
-            $error = "The selected property is not available.";
-        }
-        $owner->close();
-    }
-
-    if ($error === '') {
-        $check = $conn->prepare("SELECT 1 FROM `request_visit` WHERE `user_id` = ? AND `landlord_id` = ? AND `date_sched` = ? AND `status` = ?");
-        $check->bind_param("ssss", $user_id_login, $landlord_id, $visit_date, $status);
-        $check->execute();
-        if ($check->get_result()->num_rows > 0) {
-            $error = "You already have a scheduled visit for this property on that date.";
-        }
-        $check->close();
-    }
-
-    if ($error !== '') {
-        $_SESSION['error'] = $error;
-        $_SESSION['rv_open'] = true;
-        header("location:users/request_visit.php");
-        exit;
-    }
-
-    $insert = $conn->prepare("INSERT INTO `request_visit` (`status`, `landlord_id`, `user_id`, `date_sched`, `time_sched`, `message`,`date_request`,`time_request`) VALUES (?,?,?,?,?,?,?,?)");
-    $insert->bind_param("ssssssss", $status, $landlord_id, $user_id_login, $visit_date, $visit_time, $message, $datetoday, $timetoday1);
-    $insert->execute();
-    $insert->close();
-
-    unset(
-        $_SESSION['rv_landlord_id'],
-        $_SESSION['rv_visit_date'],
-        $_SESSION['rv_visit_time'],
-        $_SESSION['rv_message']
-    );
-
-    $_SESSION['success'] = "Successfully requested a schedule.";
-    header("location:users/request_visit.php");
     exit;
 }

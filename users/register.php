@@ -93,7 +93,7 @@
                         </label>
                         <p class="text-sm text-red-500">(Upload 3 to 10 high-quality photos showing the exterior and interior spaces.)</p>
                     </span>
-                </div>
+                  </div>
                   <p class="mb-3  ">Property Location</p>  
                   <div class="flex flex-col lg:flex-row gap-3 mb-5">
                     <span class="w-[100%]">
