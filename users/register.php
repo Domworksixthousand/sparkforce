@@ -224,43 +224,7 @@
   <form method="dialog" class="mb-10">
     <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
   </form>
-    <!-- Header -->
-    <div class="flex justify-between items-center border-b border-base-300 pb-3 mb-4">
-      <h3 class="text-xl font-black text-success tracking-wide">RENTSPACE</h3>
-      <span class="badge badge-outline font-semibold">Landlord Terms</span>
-    </div>
-
-    <h2 class="text-lg font-extrabold text-base-content mb-2">Terms and Conditions for Landlords</h2>
-    <p class="text-xs text-base-content/60 mb-4">Please read carefully before activating your Landlord Centre account.</p>
-
-    <!-- Scrollable Terms Container -->
-    <div class="max-h-72 overflow-y-auto pr-2 space-y-4 text-sm text-base-content/80 bg-base-200 p-4 rounded-lg border border-base-300">
-      
-      <div>
-        <h4 class="font-bold text-base-content">1. Account Eligibility & Verification</h4>
-        <p class="text-xs mt-1">To list properties on RentSpace, you must be at least 18 years old and provide a valid government ID upon request. You are fully responsible for all listings and actions managed under your account.</p>
-      </div>
-
-      <div>
-        <h4 class="font-bold text-base-content">2. Property Listings & Accuracy</h4>
-        <p class="text-xs mt-1">All uploaded descriptions, room rates, and real-time imagery must be accurate. Uploading misleading content or wrong availability data will result in immediate room layout suspension.</p>
-      </div>
-
-      <div>
-        <h4 class="font-bold text-base-content">3. Booking & Conflict Prevention</h4>
-        <p class="text-xs mt-1">You must process schedules diligently to avoid booking overlaps. Rejecting confirmed reservations repeatedly without valid reasons may penalize your listing visibility in our system finder.</p>
-      </div>
-
-      <div>
-        <h4 class="font-bold text-base-content">4. Conduct & Tenant Safety</h4>
-        <p class="text-xs mt-1">You must strictly maintain clean, safe, and livable lodging standards following local building laws. RentSpace maintains strict rules against illegal profiling and any form of tenant discrimination.</p>
-      </div>
-
-      <div>
-        <h4 class="font-bold text-base-content">5. Platform Policies & Direct Deals</h4>
-        <p class="text-xs mt-1">RentSpace reserves the right to enforce transaction processing rules. Closing agreements offline deliberately to circumvent platform logic after discovering tenants via RentSpace is strictly prohibited.</p>
-      </div>
-
+   
     </div>
 
 

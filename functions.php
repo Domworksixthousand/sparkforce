@@ -34,7 +34,7 @@ if(isset($_GET['noti_id'])){
     exit;
 }
 
-
+/*
 if (isset($_POST['register'])) {
     
     // kuwaon an input san user
@@ -55,7 +55,29 @@ if (isset($_POST['register'])) {
     $password        = $_POST['password'] ?? '';
     $repeat_password = $_POST['repeat_password'] ?? '';
 
-    
+
+    //landlord
+    $latitud = $_POST['latitude'] ?? '';
+    $longitude = $_POST['longitude'] ?? '';
+    $province1 = $_POST['province1'] ?? '';
+    $municipality1 = $_POST['municipality1'] ?? ''; 
+    $barangay1 = $_POST['barangay1'] ?? '';
+    $property_type = $_POST['property_type'] ?? '';
+    $property_name = $_POST['property_name'] ?? '';
+
+    if (isset($_FILES['owner_docs']['name']) && !empty(array_filter($_FILES['owner_docs']['name']))) {
+     
+        $owner_docs_validation = $_FILES['owner_docs']['name'];
+    } else {
+        $owner_docs_validation = $_SESSION['owner_docs'] ?? [];
+    }
+
+    if (isset($_FILES['photo_gallery']['name']) && !empty(array_filter($_FILES['photo_gallery']['name']))) {
+        $photo_gallery_validation = $_FILES['photo_gallery']['name'];
+    } else {
+        $photo_gallery_validation = $_SESSION['photo_gallery'] ?? [];
+    }
+
 
     
     // old image
@@ -394,6 +416,533 @@ if ($selfie_error === UPLOAD_ERR_OK && !empty($selfie_img_name)) {
             }
 
 } 
+*/
+if (isset($_POST['register'])) {
+
+    // ---------------------------------------------------------------
+    // 1. INPUTS
+    // ---------------------------------------------------------------
+    $lastname       = mysqli_real_escape_string($conn, $_POST['lastname'] ?? '');
+    $firstname      = mysqli_real_escape_string($conn, $_POST['firstname'] ?? '');
+    $middlename     = mysqli_real_escape_string($conn, $_POST['middlename'] ?? '');
+    $suffix         = mysqli_real_escape_string($conn, $_POST['suffix'] ?? '');
+    $email          = mysqli_real_escape_string($conn, $_POST['email'] ?? '');
+    $contact_number = mysqli_real_escape_string($conn, $_POST['contact_number'] ?? '');
+    $province       = mysqli_real_escape_string($conn, $_POST['province'] ?? '');
+    $municipality   = mysqli_real_escape_string($conn, $_POST['municipality'] ?? '');
+    $barangay       = mysqli_real_escape_string($conn, $_POST['barangay'] ?? '');
+    $zipcode        = mysqli_real_escape_string($conn, $_POST['zipcode'] ?? '');
+    $username       = mysqli_real_escape_string($conn, $_POST['username'] ?? '');
+    $id_type        = mysqli_real_escape_string($conn, $_POST['id_type'] ?? '');
+    $id_number      = mysqli_real_escape_string($conn, $_POST['id_number'] ?? '');
+    $occupation     = mysqli_real_escape_string($conn, $_POST['occupation'] ?? '');
+    $password        = $_POST['password'] ?? '';
+    $repeat_password = $_POST['repeat_password'] ?? '';
+
+    // landlord sign-up?  (decides where we redirect back to, and whether property data is saved)
+    $is_landlord = isset($_POST['is_landlord']);
+    $back        = $is_landlord ? "signup_owner.php" : "signup.php";
+
+    // landlord / property inputs
+    $latitud       = trim($_POST['latitude'] ?? '');
+    $longitude     = trim($_POST['longitude'] ?? '');
+    $province1     = $_POST['province1'] ?? '';
+    $municipality1 = $_POST['municipality1'] ?? '';
+    $barangay1     = $_POST['barangay1'] ?? '';
+    $property_type = $_POST['property_type'] ?? '';
+    $property_name = trim($_POST['property_name'] ?? '');
+
+    // old image
+    $old_id_photo     = mysqli_real_escape_string($conn, $_POST['old_id_photo'] ?? '');
+    $old_selfie_photo = mysqli_real_escape_string($conn, $_POST['old_selfie_photo'] ?? '');
+
+    if (!empty($old_id_photo)) {
+        $_SESSION['id_photo_name'] = $old_id_photo;
+    }
+
+    // default values
+    $usertype             = "4";
+    $status               = "Pending";
+    $datetoday            = date("Y-m-d");
+    $user_id              = $id_number . rand();
+    $user_type_acceptable = "3";
+
+    // ---------------------------------------------------------------
+    // 2. KEEP INPUTS IN SESSION (so the form refills after an error)
+    // ---------------------------------------------------------------
+    $fields = [
+        'lastname', 'firstname', 'middlename', 'suffix', 'email', 'contact_number',
+        'province', 'municipality', 'barangay', 'zipcode', 'username', 'id_type',
+        'id_number', 'occupation', 'password', 'repeat_password'
+    ];
+
+    foreach ($fields as $field) {
+        if (isset($_POST[$field])) {
+            $_SESSION[$field] = $_POST[$field];
+        }
+    }
+
+    if (isset($_POST['terms_agree'])) {
+        $_SESSION['terms_agree'] = 1;
+    }
+
+    if ($is_landlord) {
+        $_SESSION['latitud']       = $latitud;
+        $_SESSION['longitude']     = $longitude;
+        $_SESSION['province1']     = $province1;
+        $_SESSION['municipality1'] = $municipality1;
+        $_SESSION['barangay1']     = $barangay1;
+        $_SESSION['property_type'] = $property_type;
+        $_SESSION['property_name'] = $property_name;
+    }
+
+    if (!empty($old_selfie_photo)) {
+        $_SESSION['selfie_photo_name'] = $old_selfie_photo;
+    }
+
+    // ---------------------------------------------------------------
+    // 3. ID PHOTO + SELFIE
+    // ---------------------------------------------------------------
+    $selfie_img_name = $_FILES['selfie_photo']['name'] ?? '';
+    $selfie_tmp_name = $_FILES['selfie_photo']['tmp_name'] ?? '';
+    $selfie_error    = $_FILES['selfie_photo']['error'] ?? UPLOAD_ERR_NO_FILE;
+    $final_selfie_name = "";
+
+    $img_name = $_FILES['id_photo']['name'] ?? '';
+    $tmp_name = $_FILES['id_photo']['tmp_name'] ?? '';
+    $error    = $_FILES['id_photo']['error'] ?? UPLOAD_ERR_NO_FILE;
+
+    $final_photo_name = "";
+    $tomorrow         = date("Y-m-d", strtotime("+1 day"));
+
+    if (!file_exists('assets/trash_uploads')) mkdir('assets/trash_uploads', 0777, true);
+    if (!file_exists('assets/uploads')) mkdir('assets/uploads', 0777, true);
+
+    if ($error === UPLOAD_ERR_NO_FILE && empty($old_id_photo)) {
+        $_SESSION['error'] = "Please upload ID photo!";
+        header("location:$back");
+        exit;
+    }
+
+    if ($error !== UPLOAD_ERR_OK && $error !== UPLOAD_ERR_NO_FILE) {
+        $_SESSION['error'] = "An error occurred during file upload. Error Code: " . $error;
+        header("location:$back");
+        exit;
+    }
+
+    if ($selfie_error === UPLOAD_ERR_NO_FILE && empty($old_selfie_photo)) {
+        $_SESSION['error'] = "Please take a selfie!";
+        header("location:$back");
+        exit;
+    }
+
+    if ($selfie_error !== UPLOAD_ERR_OK && $selfie_error !== UPLOAD_ERR_NO_FILE) {
+        $_SESSION['error'] = "An error occurred during selfie upload. Error Code: " . $selfie_error;
+        header("location:$back");
+        exit;
+    }
+
+    if ($selfie_error === UPLOAD_ERR_OK && !empty($selfie_img_name)) {
+
+        $selfie_trash_name = $tomorrow . "_" . $selfie_img_name;
+        $selfie_trash_path = 'assets/trash_uploads/' . $selfie_trash_name;
+        $selfie_location   = 'assets/uploads/' . $selfie_img_name;
+
+        if (move_uploaded_file($selfie_tmp_name, $selfie_trash_path)) {
+            if (rename($selfie_trash_path, $selfie_location)) {
+                $final_selfie_name = $selfie_img_name;
+                $_SESSION['selfie_photo_name'] = $selfie_img_name;
+            } else {
+                $_SESSION['error'] = "Failed moving selfie to permanent directory.";
+                header("location:$back");
+                exit;
+            }
+        } else {
+            $_SESSION['error'] = "Error uploading selfie to temporary folder.";
+            header("location:$back");
+            exit;
+        }
+
+    } else if (!empty($old_selfie_photo)) {
+
+        $selfie_source_trash = 'assets/trash_uploads/' . $tomorrow . "_" . $old_selfie_photo;
+        $selfie_destination  = 'assets/uploads/' . $old_selfie_photo;
+
+        if (file_exists($selfie_source_trash)) {
+            if (rename($selfie_source_trash, $selfie_destination)) {
+                $final_selfie_name = $old_selfie_photo;
+            } else {
+                $_SESSION['error'] = "Failed to transfer the cached selfie to permanent directory.";
+                header("location:$back");
+                exit;
+            }
+        } else if (file_exists($selfie_destination)) {
+            $final_selfie_name = $old_selfie_photo;
+        } else {
+            $_SESSION['error'] = "Your previously captured selfie session has expired. Please retake your selfie.";
+            unset($_SESSION['selfie_photo_name']);
+            header("location:$back");
+            exit;
+        }
+    }
+
+    if ($error === UPLOAD_ERR_OK && !empty($img_name)) {
+
+        $image_trash  = $tomorrow . "_" . $img_name;
+        $trash_folder = 'assets/trash_uploads/' . $image_trash;
+        $location     = 'assets/uploads/' . $img_name;
+
+        if (move_uploaded_file($tmp_name, $trash_folder)) {
+            if (rename($trash_folder, $location)) {
+                $final_photo_name = $img_name;
+                $_SESSION['id_photo_name'] = $img_name;
+            } else {
+                $_SESSION['error'] = "Failed moving file to permanent directory.";
+                header("location:$back");
+                exit;
+            }
+        } else {
+            $_SESSION['error'] = "Error uploading to temporary folder.";
+            header("location:$back");
+            exit;
+        }
+    }
+    else if (!empty($old_id_photo)) {
+
+        $source_trash        = 'assets/trash_uploads/' . $tomorrow . "_" . $old_id_photo;
+        $destination_uploads = 'assets/uploads/' . $old_id_photo;
+
+        if (file_exists($source_trash)) {
+            if (rename($source_trash, $destination_uploads)) {
+                $final_photo_name = $old_id_photo;
+            } else {
+                $_SESSION['error'] = "Failed to transfer the cached photo to permanent directory.";
+                header("location:$back");
+                exit;
+            }
+        } else if (file_exists($destination_uploads)) {
+            $final_photo_name = $old_id_photo;
+        } else {
+            $_SESSION['error'] = "Your previously uploaded photo session has expired. Please re-upload your ID.";
+            unset($_SESSION['id_photo_name']);
+            header("location:$back");
+            exit;
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // 4. ACCOUNT VALIDATION
+    // ---------------------------------------------------------------
+    if ($repeat_password !== $password) {
+        $_SESSION['error'] = "Password and Repeat Password do not Match!";
+        header("location:$back");
+        exit;
+    }
+
+    if (strlen($contact_number) !== 11 || !str_starts_with($contact_number, '09')) {
+        $_SESSION['error'] = "Contact Number Must start in 09 and 11 digits";
+        header("location:$back");
+        exit;
+    }
+
+    $hasNumber = preg_match('/[0-9]/', $password);
+    $hasSymbol = preg_match('/[!@#$%^&*(),.?":{}|<>]/', $password);
+    if (strlen($password) < 7 || !$hasNumber || !$hasSymbol) {
+        $_SESSION['error'] = "Password must be at least 7 characters long, contain 1 number, and 1 symbol!";
+        header("location:$back");
+        exit;
+    }
+
+    if (strlen($username) < 7) {
+        $_SESSION['error'] = "Username must be at least 7 characters long";
+        header("location:$back");
+        exit;
+    }
+
+    if ($username === $password) {
+        $_SESSION['error'] = "Username and password cannot be the same!";
+        header("location:$back");
+        exit;
+    }
+
+    $get_email = $conn->prepare("SELECT email,user_type FROM accounts WHERE `email` = ? AND `user_type` <= ? ");
+    $get_email->bind_param("ss", $email, $user_type_acceptable);
+    $get_email->execute();
+    if ($get_email->get_result()->num_rows > 0) {
+        $_SESSION['error'] = "Email already Taken!";
+        header("location:$back");
+        exit;
+    }
+
+    $get_contact = $conn->prepare("SELECT contact_number,user_type FROM accounts WHERE `contact_number` = ? AND `user_type` <= ? ");
+    $get_contact->bind_param("ss", $contact_number, $user_type_acceptable);
+    $get_contact->execute();
+    if ($get_contact->get_result()->num_rows > 0) {
+        $_SESSION['error'] = "Contact Number already Taken!";
+        header("location:$back");
+        exit;
+    }
+
+    $get_user = $conn->prepare("SELECT username,user_type FROM accounts WHERE `username` = ?  AND `user_type` <= ? ");
+    $get_user->bind_param("ss", $username, $user_type_acceptable);
+    $get_user->execute();
+    if ($get_user->get_result()->num_rows > 0) {
+        $_SESSION['error'] = "Username already Taken!";
+        header("location:$back");
+        exit;
+    }
+
+    // ---------------------------------------------------------------
+    // 5. LANDLORD / PROPERTY VALIDATION + FILE UPLOADS
+    //    (runs only for signup_owner.php, after the account checks pass)
+    // ---------------------------------------------------------------
+    $landlord_id = '';
+
+    if ($is_landlord) {
+
+        $location_folder = "assets/uploads/";
+
+        if (!isset($_SESSION['owner_docs']) || !is_array($_SESSION['owner_docs'])) $_SESSION['owner_docs'] = [];
+        if (!isset($_SESSION['photo_gallery']) || !is_array($_SESSION['photo_gallery'])) $_SESSION['photo_gallery'] = [];
+
+        // new files picked this time?
+        $new_docs    = array_filter((array)($_FILES['owner_docs']['name'] ?? []));
+        $new_gallery = array_filter((array)($_FILES['photo_gallery']['name'] ?? []));
+
+        // if nothing new, fall back to what was uploaded in an earlier (failed) attempt
+        $count_owner_docs    = !empty($new_docs)    ? count($new_docs)    : count($_SESSION['owner_docs']);
+        $count_photo_gallery = !empty($new_gallery) ? count($new_gallery) : count($_SESSION['photo_gallery']);
+
+        if ($count_owner_docs < 1) {
+            $_SESSION['error'] = "Please upload at least 1 Proof of Ownership document.";
+            header("location:$back");
+            exit;
+        }
+
+        if ($count_photo_gallery < 3 || $count_photo_gallery > 10) {
+            $_SESSION['error'] = "Gallery photos uploaded must be 3 to 10 images.";
+            header("location:$back");
+            exit;
+        }
+
+        if (!is_numeric($latitud) || !is_numeric($longitude) || empty($province1) || empty($municipality1) || empty($barangay1)) {
+            $_SESSION['error'] = "Please select property location using the map control.";
+            header("location:$back");
+            exit;
+        }
+
+        if (empty($property_type) || $property_type == "Select Property type") {
+            $_SESSION['error'] = "Please Select Property Type";
+            header("location:$back");
+            exit;
+        }
+
+        if (empty($property_name)) {
+            $_SESSION['error'] = "Please enter your property name";
+            header("location:$back");
+            exit;
+        }
+
+        if (!isset($_POST['terms_agree'])) {
+            $_SESSION['error'] = "Please agree to the Terms and Conditions.";
+            header("location:$back");
+            exit;
+        }
+
+        // property name must be unique among approved properties
+        $data_status = "Approved";
+        $check = $conn->prepare("SELECT `landlord_id` FROM `landlord` WHERE `property_name` = ? AND `status` = ?");
+        $check->bind_param("ss", $property_name, $data_status);
+        $check->execute();
+        if ($check->get_result()->num_rows > 0) {
+            $_SESSION['error'] = "Property name already exists. Please choose another one.";
+            header("location:$back");
+            exit;
+        }
+
+        // helper: validates + saves every file of one multi-file input, returns [ok, names|error]
+        $save_uploads = function (string $input, string $label) use ($location_folder) {
+            $saved = [];
+            foreach ((array)$_FILES[$input]['name'] as $key => $filename) {
+                if ($filename === '') continue;
+
+                if ($_FILES[$input]['error'][$key] !== UPLOAD_ERR_OK) {
+                    return [false, "Failed to upload $label: $filename"];
+                }
+
+                $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+                if (!in_array($ext, ['jpg', 'jpeg'], true) || !@getimagesize($_FILES[$input]['tmp_name'][$key])) {
+                    return [false, "$label must be a valid JPG image: $filename"];
+                }
+
+                $unique_name = time() . '_' . uniqid() . '.' . $ext;
+                if (!move_uploaded_file($_FILES[$input]['tmp_name'][$key], $location_folder . $unique_name)) {
+                    return [false, "Failed to upload $label: $filename"];
+                }
+                $saved[] = $unique_name;
+            }
+            return [true, $saved];
+        };
+
+        if (!empty($new_docs)) {
+            [$ok, $result] = $save_uploads('owner_docs', 'ownership document');
+            if (!$ok) {
+                $_SESSION['error'] = $result;
+                header("location:$back");
+                exit;
+            }
+            $_SESSION['owner_docs'] = $result;
+        }
+
+        if (!empty($new_gallery)) {
+            [$ok, $result] = $save_uploads('photo_gallery', 'gallery image');
+            if (!$ok) {
+                $_SESSION['error'] = $result;
+                header("location:$back");
+                exit;
+            }
+            $_SESSION['photo_gallery'] = $result;
+        }
+
+        $landlord_id = $property_name . '_' . rand(1000, 9999);
+    }
+
+    $verification_code = rand(100000, 999999);
+    $expiry_time       = time() + (5 * 60);
+
+    $_SESSION['email_verification'] = [
+        'code'       => $verification_code,
+        'email'      => $email,
+        'expires_at' => $expiry_time
+    ];
+
+    $subject = "RENTSPACE VERIFICATION";
+    $message = "
+        <p>Dear <strong>$firstname</strong>,</p>
+        <p>Thank you for using <strong>Rentspace</strong>.<br>
+        To complete your verification, please use the code below:</p>
+        <h2 style='color:#2c7be5; letter-spacing:3px; text-align:center;'>$verification_code</h2>
+        <p>This code will expire in <strong>5 minutes</strong>.<br>
+        If you did not request this verification, please ignore this email.</p>
+        <p>Best regards,</p>
+        <p><strong>RENTSPACE</strong></p>
+    ";
+
+    $mail = new PHPMailer(true);
+
+    try {
+      /*
+        $mail->isSMTP();
+        $mail->Host       = 'mail.rentspace.asia';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'renthub@rentspace.asia';
+        $mail->Password   = 'paulobubloCflmanZ@123';  
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
+        $mail->setFrom('renthub@rentspace.asia', 'RENTHUB');
+        */
+
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'rentspace4707@gmail.com';
+        $mail->Password   = 'hmmv thkm hoqs gzhi'; 
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        $mail->Port       = 465;
+
+        $mail->setFrom('rentspace4707@gmail.com', 'RENTSPACE');
+        $mail->addAddress($email, $firstname);
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $message;
+        $mail->send();
+     
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+        // ---------------------------------------------------------------
+        // 7. SAVE EVERYTHING (account + landlord data in one transaction)
+        // ---------------------------------------------------------------
+        $conn->begin_transaction();
+
+        $insert = $conn->prepare("INSERT INTO `accounts` (`user_id`,`middlename`,`lastname`,`firstname`,`suffix`,`email`,`contact_number`,`province`,`municipality`,`barangay`,`zipcode`,`username`,`password`,`id_type`,`id_number`,`id_photo`,`selfie_photo`,`occupation`,`status`,`user_type`,`date_request`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+
+        $insert->bind_param(
+            "sssssssssssssssssssss",
+            $user_id, $middlename, $lastname, $firstname, $suffix,
+            $email, $contact_number, $province, $municipality, $barangay,
+            $zipcode, $username, $hashed_password, $id_type, $id_number,
+            $final_photo_name, $final_selfie_name, $occupation, $status, $usertype, $datetoday
+        );
+
+        $saved_ok = $insert->execute();
+
+        // landlord: documents, gallery, property details (status Pending, waits for admin approval)
+        if ($saved_ok && $is_landlord) {
+
+            $insert_docs = $conn->prepare("INSERT INTO `documents` (`doc_name`,`user_id`,`landlord_id`) VALUES (?,?,?)");
+            foreach ($_SESSION['owner_docs'] as $docs) {
+                $insert_docs->bind_param("sss", $docs, $user_id, $landlord_id);
+                $saved_ok = $saved_ok && $insert_docs->execute();
+            }
+
+            $insert_gallery = $conn->prepare("INSERT INTO `gallery` (`image_name`,`user_id`,`landlord_id`) VALUES (?,?,?)");
+            foreach ($_SESSION['photo_gallery'] as $images) {
+                $insert_gallery->bind_param("sss", $images, $user_id, $landlord_id);
+                $saved_ok = $saved_ok && $insert_gallery->execute();
+            }
+
+            $landlord_status = "Pending";
+            $insert_details = $conn->prepare("INSERT INTO `landlord` (`landlord_id`,`user_id`,`province`,`municipality`,`barangay`,`type`,`property_name`,`date_request`,`status`,`longitude`,`latitude`) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+            $insert_details->bind_param(
+                "sssssssssss",
+                $landlord_id, $user_id, $province1, $municipality1, $barangay1,
+                $property_type, $property_name, $datetoday, $landlord_status, $longitude, $latitud
+            );
+            $saved_ok = $saved_ok && $insert_details->execute();
+        }
+
+        if ($saved_ok) {
+            $conn->commit();
+
+            // clear form sessions
+            foreach ($fields as $field) {
+                unset($_SESSION[$field]);
+            }
+            unset($_SESSION['id_photo_name'], $_SESSION['selfie_photo_name'], $_SESSION['terms_agree'], $_SESSION['error']);
+
+            if ($is_landlord) {
+                unset(
+                    $_SESSION['latitud'], $_SESSION['longitude'],
+                    $_SESSION['province1'], $_SESSION['municipality1'], $_SESSION['barangay1'],
+                    $_SESSION['property_type'], $_SESSION['property_name'],
+                    $_SESSION['owner_docs'], $_SESSION['photo_gallery']
+                );
+            }
+
+            $_SESSION['user_id'] = $user_id;
+            $_SESSION['verification_code'] = $verification_code;
+            $_SESSION['success'] = "Verification Code Successfully Sent to your Email, Please Check your Email";
+            header("location:signup_confirmation.php");
+            exit;
+        } else {
+            $conn->rollback();
+            $_SESSION['error'] = "Registration failed. Database error occurred.";
+            header("location:$back");
+            exit;
+        }
+
+    } catch (Exception $e) {
+        // if the DB throws, undo the partial inserts (harmless if no transaction is open)
+        try { $conn->rollback(); } catch (Throwable $t) {}
+        error_log("Register Error: " . $e->getMessage() . " | Mailer: " . $mail->ErrorInfo);
+        $_SESSION['error'] = "Registration failed. Please try again.";
+        header("Location: $back");
+        exit;
+    }
+}
+
+
+
 
 if(isset($_POST['confirm_code'])){
     $code =  mysqli_real_escape_string($conn, $_POST['code'] ?? '');
@@ -1040,12 +1589,12 @@ if (isset($_POST['change_credentials'])) {
 
             try {
                  $mail->isSMTP();
-        $mail->Host       = 'mail.rentspace.asia';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = 'renthub@rentspace.asia';
-        $mail->Password   = 'paulobubloCflmanZ@123';
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
+                $mail->Host       = 'mail.rentspace.asia';
+                $mail->SMTPAuth   = true;
+                $mail->Username   = 'renthub@rentspace.asia';
+                $mail->Password   = 'paulobubloCflmanZ@123';
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                $mail->Port       = 587;
 
         $mail->setFrom('renthub@rentspace.asia', 'RENTHUB');
                 $mail->addAddress($emailko, $firstnameko);

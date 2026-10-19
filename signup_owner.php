@@ -1,7 +1,3 @@
-<?php
-    include 'config.php';
-?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -17,14 +13,18 @@
     <script src="assets/scripts/daisy_ui.js"></script>
     <script src="assets/scripts/cool_alert.js"></script>
     <script src="assets/scripts/face_api.js"></script>
-
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" /> 
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-geosearch@3.11.0/dist/geosearch.css" />  
 </head>
 <body class=" min-h-screen ">
 
     <!---alert-->
     <?php 
-        include 'alerts.php'; 
-   
+        include 'config.php';
+        include 'alerts.php';
+        include 'modal_terms_and_reg_signup_landlord.php';
+        include 'modal_map.php';
+        include 'requirements_landlord.php';
     ?>
 
 
@@ -271,7 +271,7 @@
                     <?php endif; ?>
                     <input type="file" id="selfieInput" name="selfie_photo" class=" file-input grow w-[100%] mb-2 select-none " >
                     <div class="text-end">
-                        <button class="btn btn-success text-white btn-sm " onclick="selfie_modal.showModal()">
+                        <button type="button" class="btn btn-success text-white btn-sm " onclick="selfie_modal.showModal()">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-camera-icon lucide-camera"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></svg>
                             Take Selfie
                         </button>
@@ -293,26 +293,7 @@
                 </div>
                  <p class="mb-3  ">Property Ownership & Media</p>
                   <div class="flex flex-col lg:flex-row gap-3 mb-5">
-                    <!-- Proof of Ownership -->
-                    <span class="w-[100%]">
-                        <div class="flex justify-between items-center mb-2">
-                            <p class="text-sm font-semibold">Proof of Ownership Document *</p>
-                            <?php if (isset($_SESSION['owner_docs']) && is_array($_SESSION['owner_docs']) && !empty($_SESSION['owner_docs'])): ?>
-                                <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-medium border border-green-200">
-                                    ✓ Already Uploaded (<?php echo count($_SESSION['owner_docs']); ?> file/s)
-                                </span>
-                            <?php endif; ?>
-                        </div>
-                        <label class="input w-[100%]">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-gray-500">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 9h3.75m-4.5 2.625h4.5M12 18.75 9.75 16.5h.375a2.625 2.625 0 0 0 0-5.25H9.75m.75-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                            </svg>
-                            <input type="file" class="file-input grow w-[100%]" id="owner_docs" name="owner_docs[]" multiple accept="image/jpeg, image/jpg" <?php echo isset($_SESSION['owner_docs']) ? '' : 'required'; ?> />
-                        </label>
-                        <p class="text-sm text-red-500">(Upload your Land Title, Deed of Absolute Sale, or notarized Management Authorization.)</p>
-                    </span>
-
-                    <!-- Photo Gallery -->
+                      <!-- Photo Gallery -->
                     <span class="w-[100%]">
                         <div class="flex justify-between items-center mb-2">
                             <p class="text-sm font-semibold">Property Photo Gallery *</p>
@@ -328,11 +309,36 @@
                             </svg>
                             <input type="file" class="file-input grow w-[100%]" id="photo_gallery" name="photo_gallery[]" multiple accept="image/jpeg, image/jpg" <?php echo isset($_SESSION['photo_gallery']) ? '' : 'required'; ?> />
                         </label>
-                        <p class="text-sm text-red-500">(Upload 3 to 10 high-quality photos showing the exterior and interior spaces.)</p>
+                        
                     </span>
+                    <!-- Proof of Ownership -->
+                    <span class="w-[100%]">
+                        <div class="flex justify-between items-center mb-2">
+                            <p class="text-sm font-semibold">Proof of Ownership Document *</p>
+                            <?php if (isset($_SESSION['owner_docs']) && is_array($_SESSION['owner_docs']) && !empty($_SESSION['owner_docs'])): ?>
+                                <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-medium border border-green-200">
+                                    ✓ Already Uploaded (<?php echo count($_SESSION['owner_docs']); ?> file/s)
+                                </span>
+                            <?php endif; ?>
+                        </div>
+                        <label class="input w-[100%] mb-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-gray-500">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 9h3.75m-4.5 2.625h4.5M12 18.75 9.75 16.5h.375a2.625 2.625 0 0 0 0-5.25H9.75m.75-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                            </svg>
+                            <input type="file" class="file-input grow w-[100%]" id="owner_docs" name="owner_docs[]" multiple accept="image/jpeg, image/jpg" <?php echo isset($_SESSION['owner_docs']) ? '' : 'required'; ?> />
+                        </label>
+                        <div class="flex justify-end mb-5">
+                            <button type="button" class="btn btn-success text-white flex" onclick="requirements_modal.showModal()">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text preview-icon"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+                                Documents requirements
+                            </button>
+                        </div>
+                    </span>
+
+                  
                   </div>
                   <p class="mb-3  ">Property Location</p>  
-                  <div class="flex flex-col lg:flex-row gap-3 mb-5">
+                  <div class="flex flex-col lg:flex-row gap-3 mb-1">
                     <span class="w-[100%]">
                         <p class="mb-2 text-sm">Province *</p>
                         <label class="input w-[100%]">
@@ -341,10 +347,10 @@
                             <input 
                                 type="text" 
                                 class="file-input grow w-[100%]" 
-                                id="province" 
-                                name="province"  
+                                id="province1" 
+                                name="province1"  
                                 readonly   
-                                value="<?php echo $_SESSION['province'] ?? '' ?>"                
+                                value="<?php echo $_SESSION['province1'] ?? '' ?>"                
                             />
                         </label>
                     </span>
@@ -356,10 +362,10 @@
                             <input 
                                 type="text" 
                                 class="file-input grow w-[100%]" 
-                                id="municipality" 
-                                name="municipality"  
+                                id="municipality1" 
+                                name="municipality1"  
                                 readonly   
-                              value="<?php echo $_SESSION['municipality'] ?? '' ?>"
+                              value="<?php echo $_SESSION['municipality1'] ?? '' ?>"
                             />
                         </label>
                     </span>
@@ -371,10 +377,10 @@
                             <input 
                                 type="text" 
                                 class="file-input grow w-[100%]" 
-                                id="barangay" 
-                                name="barangay"  
+                                id="barangay1" 
+                                name="barangay1"  
                                 readonly   
-                                  value="<?php echo $_SESSION['barangay'] ?? '  ' ?>"                 
+                                  value="<?php echo $_SESSION['barangay1'] ?? '  ' ?>"                 
                             />
                         </label>
                     </span>
@@ -497,60 +503,10 @@
         </div>
     </dialog>
 
-    <!--modal terms and regulations-->
-    <dialog id="policy_modal" class="modal modal-bottom sm:modal-middle">
-    <div class="modal-box max-w-2xl bg-base-100">
-        <h3 class="text-lg font-bold text-error flex items-center gap-2 mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-6">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-            </svg>
-            RENTHUB Terms, Privacy & Account Ban Policy
-        </h3>
-        <div class="space-y-4 text-sm text-gray-600 max-h-[60vh] overflow-y-auto pr-2">
-            <div>
-                <h4 class="font-bold text-base-content mb-1">1. Truthful Information & Account Accuracy</h4>
-                <p>The user promises that their complete name, address, and login credentials are real. Fake accounts, duplicate profiles, or falsified profile information are strictly prohibited.</p>
-            </div>
-            
-            <div>
-                <h4 class="font-bold text-base-content mb-1">2. Data & Identity Verification</h4>
-                <p>By uploading an ID Type, ID Number, and ID Photo, the user gives RENTHUB the explicit right to process and verify their identity. This data is handled securely and used solely to protect the platform against rental fraud, scams, and identity theft.</p>
-            </div>
-            
-            <div class="p-3 bg-error/10 border border-error/20 rounded-lg">
-                <h4 class="font-bold text-error mb-1">3. Immediate Account Ban for Violations</h4>
-                <p class="mb-2">RENTHUB enforces a strict zero-tolerance policy for illegal, malicious, or deceptive behaviors. Your account will be **permanently banned, suspended, or terminated immediately without prior notice** if caught engaging in:</p>
-                <ul class="list-disc list-inside space-y-1 ml-2 font-medium">
-                    <li>Posting fake rental listings or misleading property details.</li>
-                    <li>Financial scams, payment fraud, extortion, or phishing.</li>
-                    <li>Uploading fake, heavily modified, or stolen government identification cards.</li>
-                    <li>Violating local housing laws, tenancy regulations, or community safety rules.</li>
-                </ul>
-            </div>
-            <div>
-                <h4 class="font-bold text-base-content mb-1">4. Liability & Platform Rights</h4>
-                <p>The user assumes full responsibility for all activities, bookings, and messages sent through their account. If an account is banned for a policy violation, the user forfeits access to their profile and any active listings. RENTHUB reserves the right to report fraudulent activities directly to local law enforcement.</p>
-            </div>
-        </div>
-        <div class="modal-action border-t border-base-300 pt-3">
-        <form method="dialog">
-            <button class="btn btn-sm btn-ghost mr-2">Close</button>
-            <button class="btn btn-sm btn-error text-white" onclick="document.getElementById('terms_agree').checked = true">I Understand & Agree</button>
-        </form>
-        </div>
-    </div>
-    </dialog>
+  
 
 
-      <!--modal map-->
-    <dialog id="my_modal_maps" class="modal">
-        <div class="modal-box w-11/12 max-w-4xl">
-        <form method="dialog">
-            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
-        </form>
-            <div id="map" class="h-[500px] mt-5"></div>
-        </div>
-    </dialog>
+  
 
       <!--leaflet script-->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
