@@ -436,12 +436,14 @@ if (isset($_POST['register'])) {
     $id_type        = mysqli_real_escape_string($conn, $_POST['id_type'] ?? '');
     $id_number      = mysqli_real_escape_string($conn, $_POST['id_number'] ?? '');
     $occupation     = mysqli_real_escape_string($conn, $_POST['occupation'] ?? '');
+    $type_register     = mysqli_real_escape_string($conn, $_POST['type_register'] ?? '');
     $password        = $_POST['password'] ?? '';
     $repeat_password = $_POST['repeat_password'] ?? '';
 
     // landlord sign-up?  (decides where we redirect back to, and whether property data is saved)
-    $is_landlord = isset($_POST['is_landlord']);
-    $back        = $is_landlord ? "signup_owner.php" : "signup.php";
+
+
+    $back = ($type_register === 'landlord') ? "signup_owner.php" : "signup.php";
 
     // landlord / property inputs
     $latitud       = trim($_POST['latitude'] ?? '');
@@ -486,7 +488,7 @@ if (isset($_POST['register'])) {
         $_SESSION['terms_agree'] = 1;
     }
 
-    if ($is_landlord) {
+    if ($type_register === 'landlord') {
         $_SESSION['latitud']       = $latitud;
         $_SESSION['longitude']     = $longitude;
         $_SESSION['province1']     = $province1;
@@ -498,6 +500,117 @@ if (isset($_POST['register'])) {
 
     if (!empty($old_selfie_photo)) {
         $_SESSION['selfie_photo_name'] = $old_selfie_photo;
+    }
+
+       $landlord_id = '';
+
+    if ($type_register === 'landlord') {
+
+        $location_folder = "assets/uploads/";
+
+        if (!isset($_SESSION['owner_docs']) || !is_array($_SESSION['owner_docs'])) $_SESSION['owner_docs'] = [];
+        if (!isset($_SESSION['photo_gallery']) || !is_array($_SESSION['photo_gallery'])) $_SESSION['photo_gallery'] = [];
+
+        // new files picked this time?
+        $new_docs    = array_filter((array)($_FILES['owner_docs']['name'] ?? []));
+        $new_gallery = array_filter((array)($_FILES['photo_gallery']['name'] ?? []));
+
+        // if nothing new, fall back to what was uploaded in an earlier (failed) attempt
+        $count_owner_docs    = !empty($new_docs)    ? count($new_docs)    : count($_SESSION['owner_docs']);
+        $count_photo_gallery = !empty($new_gallery) ? count($new_gallery) : count($_SESSION['photo_gallery']);
+
+        if ($count_owner_docs < 1) {
+            $_SESSION['error'] = "Please upload at least 1 Proof of Ownership document.";
+            header("location:$back");
+            exit;
+        }
+
+        if ($count_photo_gallery < 3 || $count_photo_gallery > 10) {
+            $_SESSION['error'] = "Gallery photos uploaded must be 3 to 10 images.";
+            header("location:$back");
+            exit;
+        }
+
+        if (!is_numeric($latitud) || !is_numeric($longitude) || empty($province1) || empty($municipality1) || empty($barangay1)) {
+            $_SESSION['error'] = "Please select property location using the map control.";
+            header("location:$back");
+            exit;
+        }
+
+        if (empty($property_type) || $property_type == "Select Property type") {
+            $_SESSION['error'] = "Please Select Property Type";
+            header("location:$back");
+            exit;
+        }
+
+        if (empty($property_name)) {
+            $_SESSION['error'] = "Please enter your property name";
+            header("location:$back");
+            exit;
+        }
+
+        if (!isset($_POST['terms_agree'])) {
+            $_SESSION['error'] = "Please agree to the Terms and Conditions.";
+            header("location:$back");
+            exit;
+        }
+
+        // property name must be unique among approved properties
+        $data_status = "Approved";
+        $check = $conn->prepare("SELECT `landlord_id` FROM `landlord` WHERE `property_name` = ? AND `status` = ?");
+        $check->bind_param("ss", $property_name, $data_status);
+        $check->execute();
+        if ($check->get_result()->num_rows > 0) {
+            $_SESSION['error'] = "Property name already exists. Please choose another one.";
+            header("location:$back");
+            exit;
+        }
+
+        // helper: validates + saves every file of one multi-file input, returns [ok, names|error]
+        $save_uploads = function (string $input, string $label) use ($location_folder) {
+            $saved = [];
+            foreach ((array)$_FILES[$input]['name'] as $key => $filename) {
+                if ($filename === '') continue;
+
+                if ($_FILES[$input]['error'][$key] !== UPLOAD_ERR_OK) {
+                    return [false, "Failed to upload $label: $filename"];
+                }
+
+                $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+                if (!in_array($ext, ['jpg', 'jpeg'], true) || !@getimagesize($_FILES[$input]['tmp_name'][$key])) {
+                    return [false, "$label must be a valid JPG image: $filename"];
+                }
+
+                $unique_name = time() . '_' . uniqid() . '.' . $ext;
+                if (!move_uploaded_file($_FILES[$input]['tmp_name'][$key], $location_folder . $unique_name)) {
+                    return [false, "Failed to upload $label: $filename"];
+                }
+                $saved[] = $unique_name;
+            }
+            return [true, $saved];
+        };
+
+        if (!empty($new_docs)) {
+            [$ok, $result] = $save_uploads('owner_docs', 'ownership document');
+            if (!$ok) {
+                $_SESSION['error'] = $result;
+                header("location:$back");
+                exit;
+            }
+            $_SESSION['owner_docs'] = $result;
+        }
+
+        if (!empty($new_gallery)) {
+            [$ok, $result] = $save_uploads('photo_gallery', 'gallery image');
+            if (!$ok) {
+                $_SESSION['error'] = $result;
+                header("location:$back");
+                exit;
+            }
+            $_SESSION['photo_gallery'] = $result;
+        }
+
+        $landlord_id = $property_name . '_' . rand(1000, 9999);
     }
 
     // ---------------------------------------------------------------
@@ -692,120 +805,7 @@ if (isset($_POST['register'])) {
         exit;
     }
 
-    // ---------------------------------------------------------------
-    // 5. LANDLORD / PROPERTY VALIDATION + FILE UPLOADS
-    //    (runs only for signup_owner.php, after the account checks pass)
-    // ---------------------------------------------------------------
-    $landlord_id = '';
-
-    if ($is_landlord) {
-
-        $location_folder = "assets/uploads/";
-
-        if (!isset($_SESSION['owner_docs']) || !is_array($_SESSION['owner_docs'])) $_SESSION['owner_docs'] = [];
-        if (!isset($_SESSION['photo_gallery']) || !is_array($_SESSION['photo_gallery'])) $_SESSION['photo_gallery'] = [];
-
-        // new files picked this time?
-        $new_docs    = array_filter((array)($_FILES['owner_docs']['name'] ?? []));
-        $new_gallery = array_filter((array)($_FILES['photo_gallery']['name'] ?? []));
-
-        // if nothing new, fall back to what was uploaded in an earlier (failed) attempt
-        $count_owner_docs    = !empty($new_docs)    ? count($new_docs)    : count($_SESSION['owner_docs']);
-        $count_photo_gallery = !empty($new_gallery) ? count($new_gallery) : count($_SESSION['photo_gallery']);
-
-        if ($count_owner_docs < 1) {
-            $_SESSION['error'] = "Please upload at least 1 Proof of Ownership document.";
-            header("location:$back");
-            exit;
-        }
-
-        if ($count_photo_gallery < 3 || $count_photo_gallery > 10) {
-            $_SESSION['error'] = "Gallery photos uploaded must be 3 to 10 images.";
-            header("location:$back");
-            exit;
-        }
-
-        if (!is_numeric($latitud) || !is_numeric($longitude) || empty($province1) || empty($municipality1) || empty($barangay1)) {
-            $_SESSION['error'] = "Please select property location using the map control.";
-            header("location:$back");
-            exit;
-        }
-
-        if (empty($property_type) || $property_type == "Select Property type") {
-            $_SESSION['error'] = "Please Select Property Type";
-            header("location:$back");
-            exit;
-        }
-
-        if (empty($property_name)) {
-            $_SESSION['error'] = "Please enter your property name";
-            header("location:$back");
-            exit;
-        }
-
-        if (!isset($_POST['terms_agree'])) {
-            $_SESSION['error'] = "Please agree to the Terms and Conditions.";
-            header("location:$back");
-            exit;
-        }
-
-        // property name must be unique among approved properties
-        $data_status = "Approved";
-        $check = $conn->prepare("SELECT `landlord_id` FROM `landlord` WHERE `property_name` = ? AND `status` = ?");
-        $check->bind_param("ss", $property_name, $data_status);
-        $check->execute();
-        if ($check->get_result()->num_rows > 0) {
-            $_SESSION['error'] = "Property name already exists. Please choose another one.";
-            header("location:$back");
-            exit;
-        }
-
-        // helper: validates + saves every file of one multi-file input, returns [ok, names|error]
-        $save_uploads = function (string $input, string $label) use ($location_folder) {
-            $saved = [];
-            foreach ((array)$_FILES[$input]['name'] as $key => $filename) {
-                if ($filename === '') continue;
-
-                if ($_FILES[$input]['error'][$key] !== UPLOAD_ERR_OK) {
-                    return [false, "Failed to upload $label: $filename"];
-                }
-
-                $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-                if (!in_array($ext, ['jpg', 'jpeg'], true) || !@getimagesize($_FILES[$input]['tmp_name'][$key])) {
-                    return [false, "$label must be a valid JPG image: $filename"];
-                }
-
-                $unique_name = time() . '_' . uniqid() . '.' . $ext;
-                if (!move_uploaded_file($_FILES[$input]['tmp_name'][$key], $location_folder . $unique_name)) {
-                    return [false, "Failed to upload $label: $filename"];
-                }
-                $saved[] = $unique_name;
-            }
-            return [true, $saved];
-        };
-
-        if (!empty($new_docs)) {
-            [$ok, $result] = $save_uploads('owner_docs', 'ownership document');
-            if (!$ok) {
-                $_SESSION['error'] = $result;
-                header("location:$back");
-                exit;
-            }
-            $_SESSION['owner_docs'] = $result;
-        }
-
-        if (!empty($new_gallery)) {
-            [$ok, $result] = $save_uploads('photo_gallery', 'gallery image');
-            if (!$ok) {
-                $_SESSION['error'] = $result;
-                header("location:$back");
-                exit;
-            }
-            $_SESSION['photo_gallery'] = $result;
-        }
-
-        $landlord_id = $property_name . '_' . rand(1000, 9999);
-    }
+  
 
     $verification_code = rand(100000, 999999);
     $expiry_time       = time() + (5 * 60);
@@ -877,7 +877,7 @@ if (isset($_POST['register'])) {
         $saved_ok = $insert->execute();
 
         // landlord: documents, gallery, property details (status Pending, waits for admin approval)
-        if ($saved_ok && $is_landlord) {
+        if ($saved_ok && $type_register === 'landlord') {
 
             $insert_docs = $conn->prepare("INSERT INTO `documents` (`doc_name`,`user_id`,`landlord_id`) VALUES (?,?,?)");
             foreach ($_SESSION['owner_docs'] as $docs) {
@@ -910,7 +910,7 @@ if (isset($_POST['register'])) {
             }
             unset($_SESSION['id_photo_name'], $_SESSION['selfie_photo_name'], $_SESSION['terms_agree'], $_SESSION['error']);
 
-            if ($is_landlord) {
+            if ($type_register === 'landlord') {
                 unset(
                     $_SESSION['latitud'], $_SESSION['longitude'],
                     $_SESSION['province1'], $_SESSION['municipality1'], $_SESSION['barangay1'],
