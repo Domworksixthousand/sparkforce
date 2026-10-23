@@ -948,6 +948,15 @@ if(isset($_POST['confirm_code'])){
     $code =  mysqli_real_escape_string($conn, $_POST['code'] ?? '');
     $user_type = "3";
 
+
+    $get_data = $conn->prepare("SELECT * FROM `landlord` WHERE `user_id`  = ? ");
+    $get_data->bind_param("s",$_SESSION['user_id']);
+    $get_data->execute();
+    $result_data = $get_data->get_result();
+    if($result_data->num_rows>0){
+        $user_type = "2";
+    }
+
     if($code == $_SESSION['verification_code']){
         $update = $conn->prepare("UPDATE accounts SET `user_type` = ? WHERE `user_id` = ?");
         $update->bind_param("ss",$user_type,$_SESSION['user_id']);

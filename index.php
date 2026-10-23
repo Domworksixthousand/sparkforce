@@ -28,7 +28,7 @@
 <!--header ini-->
   <header class=" relative ">
     <nav
-     class="navbar  lg:container  lg:px-[30px]   glass fixed top-0 left-1/2 -translate-x-1/2 z-50  transition-all mt-0  lg:mt-[20px] rounded-0 lg:rounded-lg">
+     class="navbar navbar-landingpage  lg:container  lg:px-[30px]   glass fixed top-0 left-1/2 -translate-x-1/2 z-50  transition-all mt-0  lg:mt-[20px] rounded-0 lg:rounded-lg">
       <div class="navbar-start">
         <div class="dropdown">
           <div tabindex="0" role="button" class="btn btn-ghost lg:hidden " aria-label="Toggle Navigation">

@@ -73,57 +73,63 @@ const zipToMunicipality = {
 };
 
 function fetchAddressDetails(lat, lng) {
-    document.getElementById('barangay1').value = "Fetching...";
-    document.getElementById('municipality1').value = "Fetching...";
-    document.getElementById('province1').value = "Fetching...";
-
+    const barangayEl = document.getElementById('barangay1') || document.getElementById('barangay');
+    const municipalityEl = document.getElementById('municipality1') || document.getElementById('municipality');
+    const provinceEl = document.getElementById('province1') || document.getElementById('province');
+    
+    if (barangayEl) barangayEl.value = "Fetching...";
+    if (municipalityEl) municipalityEl.value = "Fetching...";
+    if (provinceEl) provinceEl.value = "Fetching...";
+    
     const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
-
+    
     fetch(url)
         .then(response => response.json())
         .then(data => {
             if (data && data.address) {
                 const addr = data.address;
-
+                
                 const barangay = addr.neighbourhood
                     || addr.suburb
                     || addr.village
                     || addr.quarter
                     || addr.hamlet
                     || "";
-
+                
                 let municipality = addr.city
                     || addr.town
                     || addr.municipality
                     || addr.county
                     || addr.district
                     || "";
-
+                
                 const province = addr.province
                     || addr.state
                     || addr.region
                     || "";
-
+                
                 const postcode = addr.postcode || "";
                 if (!municipality && postcode && zipToMunicipality[postcode]) {
                     municipality = zipToMunicipality[postcode];
                 }
-
+                
                 if (!municipality && data.display_name) {
                     const parts = data.display_name.split(',').map(p => p.trim());
                     if (parts.length >= 3) {
                         municipality = parts[1];
                     }
                 }
-
-                document.getElementById('barangay1').value = barangay;
-                document.getElementById('municipality1').value = municipality;
-                document.getElementById('province1').value = province;
-
-                activeMarker.setPopupContent(
-                    `<b>${barangay || 'Selected Location'}</b><br>${municipality}${municipality && province ? ', ' : ''}${province}`
-                );
-
+                
+                if (barangayEl) barangayEl.value = barangay;
+                if (municipalityEl) municipalityEl.value = municipality;
+                if (provinceEl) provinceEl.value = province;
+                
+                if (activeMarker) {
+                    activeMarker.setPopupContent(
+                        `<b>${barangay || 'Selected Location'}</b><br>${municipality}${municipality && province ? ', ' : ''}${province}`
+                    );
+                }
+                
                 console.log('Address:', addr);
                 console.log('Postcode:', postcode);
                 console.log('Display:', data.display_name);
@@ -131,9 +137,9 @@ function fetchAddressDetails(lat, lng) {
         })
         .catch(error => {
             console.error('Error:', error);
-            document.getElementById('barangay1').value = "Error loading";
-            document.getElementById('municipality1').value = "Error loading";
-            document.getElementById('province1').value = "Error loading";
+            if (barangayEl) barangayEl.value = "Error loading";
+            if (municipalityEl) municipalityEl.value = "Error loading";
+            if (provinceEl) provinceEl.value = "Error loading";
         });
 }
 

@@ -4,7 +4,7 @@
         <ul class="space-y-2">
             <li class="flex justify-center items-center text-center mb-10">
                 <img src="../assets/images/logo-icon.png" class="w-[80px] ">
-                <p class="nav_li  m-0 p-0 text-sm font-bold text-white">RS ADMIN</p>
+                <p class="nav_li  m-0 p-0 text-sm font-bold text-white">RENTHUB ADMIN</p>
             </li>
             <li>
                 <a href="index.php" class="flex items-center gap-3 active">
@@ -61,6 +61,7 @@
                     </li>
                 </ul>
             </li>
+            <!--
             <li class="relative">
                 <button id="dropdownBtn2" class="w-full flex items-center justify-between gap-3 text-white active focus:outline-none">
                     <div class="flex items-center gap-3">
@@ -68,7 +69,7 @@
                         <span>
                             Properties
                             <div class="request_properties indicator  ms-5 ">
-                                <!--count-->
+                              
                             </div>
                         </span>
                     </div>
@@ -77,7 +78,7 @@
                     </svg>
                 </button>
 
-                <!-- Dropdown Menu -->
+              
                 <ul id="dropdownMenu2" class="hidden mt-2 ml-6 space-y-1 rounded-md p-2">
                     <li>
                         <a href="verified_properties.php" class="block text-sm text-white hover:text-white py-1 px-2">
@@ -88,12 +89,12 @@
                         <a href="pending_properties.php" class="block text-sm text-white hover:text-white py-1 px-2">
                             Pending Requests
                             <div class="request_properties indicator  ms-5">
-                                <!--count-->
+                          
                             </div>
                         </a>
                     </li>
                 </ul>
-            </li>
+            </li>  -->
             <li>
                 <a href="reports.php" class="flex items-center gap-3 active">                           
                     <svg xmlns="http://www.w3.org/2000/svg" width="25" class="text-white" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-flag-icon lucide-flag"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528"/></svg>

@@ -132,7 +132,7 @@
 
 
 // 9. Navbar Scroll Visual Effect Trigger
-  const navbar = document.querySelector('.navbar');
+  const navbar = document.querySelector('.navbar-landingpage');
   const dropdown_signup = document.querySelector('.signup-dropdown'); // Changed to querySelector
 
   if (navbar) {
