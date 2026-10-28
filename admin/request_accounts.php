@@ -268,8 +268,7 @@ $not_user = "4";
         <div class="alert bg-[#0d9488] text-white text-sm py-2"><span id="toastMsg">Copied</span></div>
     </div>
 
-    <script src="./../assets/scripts/index.js"></script>
-    <script src="./../assets/scripts/query_filter.js"></script>
+
     <script>
     (function(){
         const rows = Array.from(document.querySelectorAll('#requestsTable .data-row'));
@@ -361,6 +360,7 @@ $not_user = "4";
     </script>
 
     <script src="../assets/scripts/index.js"></script>
-    <script src="../assets/scripts/query_filter.js"></script>
+
+
 </body>
 </html>

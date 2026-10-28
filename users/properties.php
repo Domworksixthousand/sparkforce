@@ -226,6 +226,7 @@
                                     'name'         => $name,
                                     'price'        => number_format((float)$price, 2),
                                     'type'         => $type,
+                                    'rate'         => $rate,
                                     'url'          => $locate . '?id=' . $rent_id,
                                     'image'        => $image_url,
                                     'lat'          => $latitude,
@@ -416,7 +417,7 @@
               <div class="p-1 font-sans">
                   <img src="${p.image}" class="w-full h-20 object-cover rounded mb-2" loading="lazy" alt="${p.title}">
                   <h4 class="font-bold text-xs truncate">${p.title}</h4>
-                  <p class="text-[11px] text-emerald-600 font-extrabold">&#8369;${p.price} / ${p.ext}</p>
+                  <p class="text-[11px] text-emerald-600 font-extrabold">&#8369;${p.price} / ${p.rate}</p>
                   <a href="${p.url}" class="block text-center bg-emerald-600 !text-white text-[10px] font-bold py-1 rounded mt-2">View Details</a>
               </div>
           `;
@@ -492,7 +493,7 @@
                           <div class="p-1 font-sans">
                               <img src="${p.image}" class="w-full h-20 object-cover rounded mb-2" loading="lazy" alt="${p.title}">
                               <h4 class="font-bold text-xs truncate">${p.title}</h4>
-                              <p class="text-[11px] text-emerald-600 font-extrabold">&#8369;${p.price} / ${p.ext}</p>
+                              <p class="text-[11px] text-emerald-600 font-extrabold">&#8369;${p.price} / ${p.rate}</p>
                               <a href="${p.url}" class="block text-center bg-emerald-600 !text-white text-[10px] font-bold py-1 rounded mt-2">View Details</a>
                           </div>
                       `;

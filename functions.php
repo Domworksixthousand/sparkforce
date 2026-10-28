@@ -1,5 +1,10 @@
 <?php
+
+
+
 include 'config.php';
+
+
 require __DIR__ . '/vendor/autoload.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -831,30 +836,7 @@ if (isset($_POST['register'])) {
     $mail = new PHPMailer(true);
 
     try {
-      /*
-        $mail->isSMTP();
-        $mail->Host       = 'mail.rentspace.asia';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = 'renthub@rentspace.asia';
-        $mail->Password   = 'paulobubloCflmanZ@123';  
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
-        $mail->setFrom('renthub@rentspace.asia', 'RENTHUB');
-        */
-
-        $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = 'rentspace4707@gmail.com';
-        $mail->Password   = 'hmmv thkm hoqs gzhi'; 
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-        $mail->Port       = 465;
-
-        $mail->setFrom('rentspace4707@gmail.com', 'RENTSPACE');
-        $mail->addAddress($email, $firstname);
-        $mail->isHTML(true);
-        $mail->Subject = $subject;
-        $mail->Body    = $message;
+        include 'vendor/connect_mail.php';
         $mail->send();
      
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
@@ -1113,21 +1095,7 @@ if(isset($_POST['approved_request_account'])){
     $mail = new PHPMailer(true);
 
     try {
-         $mail->isSMTP();
-        $mail->Host       = 'mail.rentspace.asia';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = 'renthub@rentspace.asia';
-        $mail->Password   = 'paulobubloCflmanZ@123';
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
-
-        $mail->setFrom('renthub@rentspace.asia', 'RENTHUB');
-        $mail->addAddress($email, $firstname);
-
-        $mail->isHTML(true);
-        $mail->Subject = $subject;
-        $mail->Body    = $message;
-
+        include 'vendor/connect_mail.php';
         $mail->send();
 
             
@@ -1201,21 +1169,7 @@ if(isset($_POST['disapproved_request_account'])){
     $mail = new PHPMailer(true);
 
     try {
-         $mail->isSMTP();
-        $mail->Host       = 'mail.rentspace.asia';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = 'renthub@rentspace.asia';
-        $mail->Password   = 'paulobubloCflmanZ@123';
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
-
-        $mail->setFrom('renthub@rentspace.asia', 'RENTHUB');
-        $mail->addAddress($email, $firstname);
-
-        $mail->isHTML(true);
-        $mail->Subject = $subject;
-        $mail->Body    = $message;
-
+        include 'vendor/connect_mail.php';
         $mail->send();
 
             
@@ -1291,21 +1245,7 @@ if(isset($_POST['forgot_password'])){
         $mail = new PHPMailer(true);
 
         try {
-             $mail->isSMTP();
-        $mail->Host       = 'mail.rentspace.asia';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = 'renthub@rentspace.asia';
-        $mail->Password   = 'paulobubloCflmanZ@123';
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
-
-        $mail->setFrom('renthub@rentspace.asia', 'RENTHUB');
-            $mail->addAddress($email, $firstname);
-
-            $mail->isHTML(true);
-            $mail->Subject = $subject;
-            $mail->Body    = $message;
-
+            include 'vendor/connect_mail.php';
             $mail->send();
 
 
@@ -1513,21 +1453,7 @@ if (isset($_POST['change_credentials'])) {
             $mail = new PHPMailer(true);
 
             try {
-                 $mail->isSMTP();
-        $mail->Host       = 'mail.rentspace.asia';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = 'renthub@rentspace.asia';
-        $mail->Password   = 'paulobubloCflmanZ@123';
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
-
-        $mail->setFrom('renthub@rentspace.asia', 'RENTHUB');
-                $mail->addAddress($emailko, $firstnameko);
-
-                $mail->isHTML(true);
-                $mail->Subject = $subject;
-                $mail->Body = $message;
-
+               include 'vendor/connect_mail.php';
                 $mail->send();
 
                 $_SESSION['type'] = "username";
@@ -1597,20 +1523,7 @@ if (isset($_POST['change_credentials'])) {
             $mail = new PHPMailer(true);
 
             try {
-                 $mail->isSMTP();
-                $mail->Host       = 'mail.rentspace.asia';
-                $mail->SMTPAuth   = true;
-                $mail->Username   = 'renthub@rentspace.asia';
-                $mail->Password   = 'paulobubloCflmanZ@123';
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-                $mail->Port       = 587;
-
-        $mail->setFrom('renthub@rentspace.asia', 'RENTHUB');
-                $mail->addAddress($emailko, $firstnameko);
-
-                $mail->isHTML(true);
-                $mail->Subject = $subject;
-                $mail->Body = $message;
+                include 'vendor/connect_mail.php';
 
                 $mail->send();
 
@@ -1685,21 +1598,7 @@ if (isset($_POST['change_credentials'])) {
             $mail = new PHPMailer(true);
 
             try {
-                 $mail->isSMTP();
-        $mail->Host       = 'mail.rentspace.asia';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = 'renthub@rentspace.asia';
-        $mail->Password   = 'paulobubloCflmanZ@123';
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
-
-        $mail->setFrom('renthub@rentspace.asia', 'RENTHUB');
-                $mail->addAddress($emailko, $firstnameko);
-
-                $mail->isHTML(true);
-                $mail->Subject = $subject;
-                $mail->Body = $message;
-
+                include 'vendor/connect_mail.php';
                 $mail->send();
 
                 $_SESSION['type'] = "password&username";
@@ -4301,7 +4200,7 @@ if(isset($_POST['send_warning'])){
         exit;
     }else{
         $unseen = "unseen";
-        $sender = "RENTSPACE TEAM";
+        $sender = "RENTHUB TEAM";
         $link = "report_message.php";
         //send noti sa reported
         $insert = $conn->prepare("INSERT INTO `notifications` (`text_noti`, `status`, `date_sent`, `time_sent`, `sender`, `receiver`, `link`) VALUES (?, ?, ?, ?, ?, ?, ?)");
@@ -5390,4 +5289,49 @@ if (isset($_POST['update_vacantlot'])) {
     $_SESSION['success'] = "Vacant Lot Successfully Updated";
     header("Location: users/my_property.php?property_id=" . urlencode($landlord_id) . "&updated=1");
     exit;
+}
+
+if (isset($_POST['action']) && $_POST['action'] === 'reserve_bed') {
+    ob_start();                        // itatapon ang stray output
+    ini_set('display_errors', 0);      // huwag ilabas ang warnings sa response
+    header('Content-Type: application/json');
+
+    $respond = function (bool $ok, string $msg) {
+        ob_end_clean();
+        echo json_encode(['ok' => $ok, 'message' => $msg]);
+        exit;
+    };
+
+    try {
+        $boarding_id = $_POST['boarding_id'] ?? '';
+        $landlord_id = $_POST['landlord_id'] ?? '';
+        $status  = "Pending";
+        $status1 = "Reserved";
+
+        if (empty($user_id_login))  $respond(false, 'You must be logged in');
+        if ($boarding_id === '' || $landlord_id === '') $respond(false, 'Missing bed or landlord data');
+
+        $check = $conn->prepare("SELECT 1 FROM `interested` WHERE `user_id` = ? AND `data_id` = ? AND `status` = ?");
+        $check->bind_param("sss", $user_id_login, $boarding_id, $status);
+        $check->execute();
+        if ($check->get_result()->num_rows > 0) $respond(false, 'You already sent a request for this bed');
+
+        $check2 = $conn->prepare("SELECT 1 FROM `interested` WHERE `data_id` = ? AND `status` = ?");
+        $check2->bind_param("ss", $boarding_id, $status1);
+        $check2->execute();
+        if ($check2->get_result()->num_rows > 0) $respond(false, 'This bed is already reserved');
+
+        $d = $datetoday ?? date('Y-m-d');
+        $t = $timetoday1 ?? date('H:i:s');
+
+        $stmt = $conn->prepare("INSERT INTO interested (user_id, landlord_id, data_id, status, date_sent, time_sent) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("ssssss", $user_id_login, $landlord_id, $boarding_id, $status, $d, $t);
+        $stmt->execute();
+
+        $respond(true, 'Successfully Requested');
+
+    } catch (Throwable $e) {
+        error_log('reserve_bed: ' . $e->getMessage());
+        $respond(false, 'Server error: ' . $e->getMessage());   // alisin ito pag live na
+    }
 }

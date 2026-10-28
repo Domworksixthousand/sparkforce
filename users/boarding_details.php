@@ -163,6 +163,9 @@ if ($already_viewed == 0) {
     <link rel="stylesheet" href="../assets/styles/index.css">
     <script src="../assets/scripts/tailwind.js"></script>
     <script src="../assets/scripts/daisy_ui.js"></script>
+    <script src="../assets/scripts/jquery.js"></script>
+    <link rel="stylesheet" href="../assets/styles/coolalert.css">   
+    <script src="../assets/scripts/cool_alert.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -171,7 +174,7 @@ if ($already_viewed == 0) {
 
 <div class="drawer lg:drawer-open">
   <input id="my-drawer-3" type="checkbox" class="drawer-toggle" />
-  
+
   <!-- MAIN CONTENT AREA -->
   <div class="drawer-content flex flex-col">
     
@@ -298,8 +301,9 @@ if ($already_viewed == 0) {
             <h2 class="text-lg font-bold mb-3 flex items-center gap-2">
               <i class="fa-solid fa-circle-info text-success"></i> About This Space
             </h2>
+            <!-- FIXED: htmlspecialchars para iwas XSS (whitespace-pre-line ang bahala sa line breaks) -->
             <p class="text-base-content/80 text-sm leading-relaxed whitespace-pre-line">
-              <?= $other_info ?: 'No additional details provided.'; ?>
+              <?= $other_info ? htmlspecialchars($other_info) : 'No additional details provided.'; ?>
             </p>
           </div>
 
@@ -332,13 +336,21 @@ if ($already_viewed == 0) {
             </div>
 
             <?php if (!empty($boarding_houses)): ?>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 ">
                 <?php foreach ($boarding_houses as $bh): ?>
-                  <div class="border border-base-300 rounded-xl p-4 flex gap-4 items-center bg-base-100 hover:border-primary transition-all">
+                  <button type="button" 
+                          class="bed-card border border-base-300 cursor-pointer rounded-xl p-4 flex gap-4 items-center bg-base-100 hover:border-primary hover:shadow-md transition-all text-left w-full"
+                          data-img="../assets/uploads/<?= htmlspecialchars($bh['image']); ?>"
+                          data-bed="<?= htmlspecialchars($bh['bed_number']); ?>"
+                          data-status="<?= htmlspecialchars($bh['status']); ?>"
+                          data-decks="<?= htmlspecialchars($bh['num_decks']); ?>"
+                          data-id="<?= htmlspecialchars($bh['boarding_id']); ?>"
+                          data-landlord-id="<?= htmlspecialchars($landlord_id); ?>"
+                          onclick="openBedModal(this)">
                     <!-- Bed Image -->
                     <div class="w-20 h-20 rounded-lg overflow-hidden bg-base-200 flex-shrink-0">
                       <img src="../assets/uploads/<?= htmlspecialchars($bh['image']); ?>" 
-                           alt="Bed <?= $bh['bed_number']; ?>" 
+                           alt="Bed <?= htmlspecialchars($bh['bed_number']); ?>" 
                            loading="lazy"
                            class="w-full h-full object-cover"
                            onerror="this.src='assets/images/placeholder-bed.jpg';" />
@@ -355,8 +367,9 @@ if ($already_viewed == 0) {
                       <p class="text-xs text-base-content/70 mt-1">
                         Decks: <span class="font-semibold text-base-content"><?= htmlspecialchars($bh['num_decks']); ?></span>
                       </p>
+
                     </div>
-                  </div>
+                  </button>
                 <?php endforeach; ?>
               </div>
             <?php else: ?>
@@ -618,28 +631,114 @@ if ($already_viewed == 0) {
 </div>
 </div>
 
-<!-- SCRIPTS -->
-<script src="../assets/scripts/jquery.js"></script>
-<script src="../assets/scripts/index.js"></script>
+<!-- Bed Details Modal -->
+<dialog id="bed_modal" class="modal">
+  <div class="modal-box max-w-2xl p-0 overflow-hidden">
+    <form method="dialog">
+      <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2 z-10">✕</button>
+    </form>
+      <div class="w-full h-64 sm:h-96 bg-base-200">
+        <img id="bed_modal_img" src="" alt="Bed" class="w-full h-full object-cover" onerror="this.src='../assets/images/placeholder-bed.jpg';" />
+        <form action="" method="" class="absolute top-0 p-3">
+          <button  type="button" id="reserve_bed_btn"
+        class="btn btn-success w-full cursor-pointer tooltip tooltip-right"
+        data-boarding-id="" data-landlord-id="" data-tip="Interested">
+            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" class="text-white bg-error p-1 rounded-[10px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-house-heart preview-icon"><path d="M8.62 13.8A2.25 2.25 0 1 1 12 10.836a2.25 2.25 0 1 1 3.38 2.966l-2.626 2.856a.998.998 0 0 1-1.507 0z"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          </button>
+        </form>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xl font-bold" id="bed_modal_title">Bed #</h3>
+          <span id="bed_modal_status" class="badge badge-lg"></span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="p-4 bg-base-200/60 rounded-xl">
+            <p class="text-xs text-base-content/60 uppercase tracking-wider">Decks</p>
+            <p class="text-lg font-semibold mt-1" id="bed_modal_decks">-</p>
+          </div>
+          <div class="p-4 bg-base-200/60 rounded-xl">
+            <p class="text-xs text-base-content/60 uppercase tracking-wider">Property</p>
+            <p class="text-lg font-semibold mt-1 truncate"><?= htmlspecialchars($property_name); ?></p>
+          </div>
 
-<!-- Leaflet Map Initialization -->
+        </div>
+      </div>
+  </div>
+  <form method="dialog" class="modal-backdrop">
+    <button>close</button>
+  </form>
+</dialog>
+
+<!-- ============================================================
+     FIXED: ISANG <script> BLOCK NA LANG (tinanggal ang duplicate $.post block)
+     ============================================================ -->
 <script>
-  $(document).ready(function() {
-    var lat = <?= !empty($latitude) ? $latitude : '13.7565'; ?>;
-    var lng = <?= !empty($longitude) ? $longitude : '121.0583'; ?>;
-    var propertyName = <?= json_encode($property_name); ?>;
+function openBedModal(btn) {
+  const reserveBtn = document.getElementById('reserve_bed_btn');
+  reserveBtn.setAttribute('data-boarding-id', btn.getAttribute('data-id'));
+  reserveBtn.setAttribute('data-landlord-id', btn.getAttribute('data-landlord-id'));
 
-    var map = L.map('map').setView([lat, lng], 15);
+  document.getElementById('bed_modal_img').src = btn.getAttribute('data-img');
+  document.getElementById('bed_modal_title').textContent = 'Bed #' + btn.getAttribute('data-bed');
+  document.getElementById('bed_modal_decks').textContent = btn.getAttribute('data-decks');
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
+  const status = btn.getAttribute('data-status');
+  const statusEl = document.getElementById('bed_modal_status');
+  statusEl.textContent = status;
+  statusEl.className = 'badge badge-lg';
+  if (status === 'Available') statusEl.classList.add('badge-success', 'text-white');
+  else if (status === 'Occupied') statusEl.classList.add('badge-error', 'text-white');
+  else statusEl.classList.add('badge-ghost');
 
-    L.marker([lat, lng]).addTo(map)
-      .bindPopup('<b>' + propertyName + '</b><br><?= htmlspecialchars($barangay); ?>')
-      .openPopup();
+  document.getElementById('bed_modal').showModal();
+}
+
+// FIXED: may fallback kung hindi ma-load ang CoolAlert
+function showAlert(ok, message) {
+  // Subukan ang iba't ibang posibleng pangalan ng library
+  const lib = window.CoolAlert || window.coolAlert || window.Coolalert || null;
+
+  if (!lib || typeof lib.show !== 'function') {
+    console.warn('CoolAlert not loaded. Check path: ../assets/scripts/coolalert.js');
+    alert((ok ? 'SUCCESS: ' : 'ERROR: ') + message);
+    return;
+  }
+
+  lib.show({
+    toast: true,
+    icon: ok ? "success" : "error",
+    title: ok ? "SUCCESS" : "SOMETHING WRONG",
+    text: String(message),
+    position: "top-right",
+    timer: 8000,
+    timerProgressBar: true,
+    customClass: { container: "z-[9999]" }
   });
+}
+
+$('#reserve_bed_btn').off('click').on('click', function () {
+  $.ajax({
+    url: '../functions.php',
+    method: 'POST',
+    dataType: 'json',
+    data: {
+      action: 'reserve_bed',
+      boarding_id: this.getAttribute('data-boarding-id'),
+      landlord_id: this.getAttribute('data-landlord-id')
+    },
+    success: function (res) {
+      console.log('reserve_bed response:', res);
+      document.getElementById('bed_modal').close();
+      showAlert(res.ok, res.message);
+    },
+    error: function (xhr) {
+      console.log('reserve_bed error:', xhr.responseText);
+      document.getElementById('bed_modal').close();
+      showAlert(false, 'Server error: ' + (xhr.responseText || 'Request failed').substring(0, 200));
+    }
+  });
+});
 </script>
 
 </body>

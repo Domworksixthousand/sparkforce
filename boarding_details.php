@@ -268,7 +268,13 @@ $availableBeds = count(array_filter($boarding_houses, fn($b) => $b['status'] ===
             <?php if (!empty($boarding_houses)): ?>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <?php foreach ($boarding_houses as $bh): ?>
-                  <div class="border border-base-300 rounded-xl p-4 flex gap-4 items-center bg-base-100 hover:border-primary transition-all">
+                  <button type="button" 
+                          class="bed-card border border-base-300 cursor-pointer rounded-xl p-4 flex gap-4 items-center bg-base-100 hover:border-primary hover:shadow-md transition-all text-left w-full"
+                          data-img="assets/uploads/<?= htmlspecialchars($bh['image']); ?>"
+                          data-bed="<?= htmlspecialchars($bh['bed_number']); ?>"
+                          data-status="<?= htmlspecialchars($bh['status']); ?>"
+                          data-decks="<?= htmlspecialchars($bh['num_decks']); ?>"
+                          onclick="openBedModal(this)">
                     <!-- Bed Image -->
                     <div class="w-20 h-20 rounded-lg overflow-hidden bg-base-200 flex-shrink-0">
                       <img src="assets/uploads/<?= htmlspecialchars($bh['image']); ?>" 
@@ -288,21 +294,8 @@ $availableBeds = count(array_filter($boarding_houses, fn($b) => $b['status'] ===
                       <p class="text-xs text-base-content/70 mt-1">
                         Decks: <span class="font-semibold text-base-content"><?= htmlspecialchars($bh['num_decks']); ?></span>
                       </p>
-
-                      <!-- Action Button 
-                      <div class="mt-3">
-                        <?php //if ($bh['status'] === 'Available'): ?>
-                          <button class="btn btn-primary btn-xs w-full" onclick="openRoomModal('<?= $bh['boarding_id']; ?>')">
-                            Book / Reserve
-                          </button>
-                        <?php //else: ?>
-                          <button class="btn btn-disabled btn-xs w-full" disabled>
-                            Unavailable
-                          </button>
-                        <?php //endif; ?>
-                      </div>-->
                     </div>
-                  </div>
+                  </button>
                 <?php endforeach; ?>
               </div>
             <?php else: ?>
@@ -444,9 +437,61 @@ $availableBeds = count(array_filter($boarding_houses, fn($b) => $b['status'] ===
 </div>
 </div>
 
-<!-- SCRIPTS -->
-<script src="assets/scripts/jquery.js"></script>
-<script src="assets/scripts/index.js"></script>
+<!-- Bed Details Modal -->
+<dialog id="bed_modal" class="modal">
+  <div class="modal-box max-w-2xl p-0 overflow-hidden">
+    <form method="dialog">
+      <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2 z-10">✕</button>
+    </form>
+    <div class="w-full h-64 sm:h-96 bg-base-200">
+      <img id="bed_modal_img" src="" alt="Bed" class="w-full h-full object-cover" onerror="this.src='assets/images/placeholder-bed.jpg';" />
+    </div>
+    <div class="p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xl font-bold" id="bed_modal_title">Bed #</h3>
+        <span id="bed_modal_status" class="badge badge-lg"></span>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="p-4 bg-base-200/60 rounded-xl">
+          <p class="text-xs text-base-content/60 uppercase tracking-wider">Decks</p>
+          <p class="text-lg font-semibold mt-1" id="bed_modal_decks">-</p>
+        </div>
+        <div class="p-4 bg-base-200/60 rounded-xl">
+          <p class="text-xs text-base-content/60 uppercase tracking-wider">Property</p>
+          <p class="text-lg font-semibold mt-1 truncate"><?= htmlspecialchars($property_name); ?></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop">
+    <button>close</button>
+  </form>
+</dialog>
+
+<script>
+  function openBedModal(btn) {
+    const img = btn.getAttribute('data-img');
+    const bed = btn.getAttribute('data-bed');
+    const status = btn.getAttribute('data-status');
+    const decks = btn.getAttribute('data-decks');
+    
+    document.getElementById('bed_modal_img').src = img;
+    document.getElementById('bed_modal_title').textContent = 'Bed #' + bed;
+    document.getElementById('bed_modal_decks').textContent = decks;
+    
+    const statusEl = document.getElementById('bed_modal_status');
+    statusEl.textContent = status;
+    statusEl.className = 'badge badge-lg';
+    if (status === 'Available') statusEl.classList.add('badge-success', 'text-white');
+    else if (status === 'Occupied') statusEl.classList.add('badge-error', 'text-white');
+    else statusEl.classList.add('badge-ghost');
+    
+    document.getElementById('bed_modal').showModal();
+  }
+</script>
+
+</body>
+</html>
 
 <!-- Leaflet Map Initialization -->
 <script>

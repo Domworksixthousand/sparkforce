@@ -89,29 +89,32 @@
       return date('M j, Y', $ts);
   }
 
-  $stats = [
-      [
-          'label' => 'Unread Messages',
-          'value' => $total_messages,
-          'href'  => 'messages.php',
-          'icon'  => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>',
-          'badge' => $total_messages > 0,
-      ],
-      [
+  $stats = [];
+  $stats[] = [
+      'label' => 'Unread Messages',
+      'value' => $total_messages,
+      'href'  => 'messages.php',
+      'icon'  => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>',
+      'badge' => $total_messages > 0,
+  ];
+  if ($user_type === "3") {
+      $stats[] = [
           'label' => 'Saved Favorites',
           'value' => $total_favorites,
           'href'  => 'my_favorite.php',
           'icon'  => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>',
           'badge' => false,
-      ],
-      [
+      ];
+  }
+  if ($user_type === "2") {
+      $stats[] = [
           'label' => 'Listed Properties',
           'value' => $total_properties,
           'href'  => 'property_requests.php',
           'icon'  => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9 9 9M5 10v10h5v-6h4v6h5V10"/>',
           'badge' => false,
-      ],
-  ];
+      ];
+  }
 
 //peroty voews
   $landlord_ids = [];
@@ -233,17 +236,31 @@
             </h1>
 
             <p class="text-sm md:text-base text-base-content/60 max-w-md">
-              Find your RentSpace that fits your needs and preferences.
+               <?php
+               if($user_type === "2"){
+                 echo "Manage your listed spaces and track performance.";
+               }else{
+                 echo "Find your spaces that fits your needs and preferences.";
+               }
+               ?>
+           
             </p>
+            <?php
+              if ($user_type === "3") {
+                  ?>
+              <div class="flex items-center gap-3 mt-3">
+                <a href="properties.php" class="btn btn-success btn-sm rounded-full px-5 text-white">
+                  Browse Listings
+                </a>
+                <a href="my_favorite.php" class="btn btn-ghost btn-sm rounded-full px-5">
+                  View my Favorites
+                </a>
+              </div>
 
-            <div class="flex items-center gap-3 mt-3">
-              <a href="properties.php" class="btn btn-success btn-sm rounded-full px-5 text-white">
-                Browse Listings
-              </a>
-              <a href="my_favorite.php" class="btn btn-ghost btn-sm rounded-full px-5">
-                View Saved
-              </a>
-            </div>
+
+              <?php
+              }
+              ?>
           </div>
         </section>
 
@@ -277,9 +294,11 @@
                 <p class="text-2xl font-bold tracking-tight text-base-content leading-none tabular-nums">
                   <?php echo number_format((int) $stat['value']); ?>
                 </p>
+              
                 <p class="text-xs font-medium text-base-content/50 mt-1.5 uppercase tracking-wide truncate">
                   <?php echo htmlspecialchars($stat['label']); ?>
                 </p>
+             
               </div>
 
               <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-base-content/25 group-hover:text-[#0fab9e] group-hover:translate-x-1 transition-all duration-200 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -297,7 +316,10 @@
           <?php endforeach; ?>
           </div>
         </section>
-        <section class="mb-6">
+       <?php
+       if ($user_type === "2") {
+            ?>
+        <section class="mb-8"> <section class="mb-6">
           <h2 class="mb-1 font-bold text-lg">Property Views</h2>
           <p class="text-sm text-base-content/60">Total views tracked for your properties.</p>
 
@@ -321,7 +343,10 @@
             <p class="text-gray-500 italic mt-3">No views recorded yet for your properties.</p>
           <?php endif; ?>
         </section>
-        <section class="mb-6">
+            <?php
+       }else{
+        ?>
+              <section class="mb-6">
           <div class="flex items-end justify-between mb-4">
             <div>
               <h2 class="font-bold text-lg text-base-content tracking-tight">Visited Properties</h2>
@@ -386,6 +411,12 @@
             <?php endif; ?>
           <?php endif; ?>
         </section>
+
+      <?php
+       }
+
+       ?>
+
         </main>
       </div>
     </div>
