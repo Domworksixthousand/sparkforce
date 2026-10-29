@@ -5328,7 +5328,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'reserve_bed') {
         $stmt->bind_param("ssssss", $user_id_login, $landlord_id, $boarding_id, $status, $d, $t);
         $stmt->execute();
 
-        $respond(true, 'Successfully Requested');
+        $respond(true, 'Successfully Requested, if 3 days doesnt Approved it will automatically Decline');
 
     } catch (Throwable $e) {
         error_log('reserve_bed: ' . $e->getMessage());
