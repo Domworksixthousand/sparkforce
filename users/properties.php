@@ -126,11 +126,19 @@
                         $min_p       = isset($_GET['min_price']) && is_numeric($_GET['min_price']) ? floatval($_GET['min_price']) : 0;
                         $max_p       = isset($_GET['max_price']) && is_numeric($_GET['max_price']) ? floatval($_GET['max_price']) : 0;
 
-                       $query = "
-                            SELECT r.*, l.province, l.municipality, l.barangay, l.property_name, l.latitude, l.longitude, r.rate, acc.user_id, l.user_id, acc.status
+                        // Kasama na ang average rating at bilang ng reviews kada property (landlord)
+                        $query = "
+                            SELECT r.*, l.province, l.municipality, l.barangay, l.property_name, l.latitude, l.longitude, r.rate, acc.user_id, l.user_id, acc.status,
+                                   rv.avg_rating, rv.review_count
                             FROM rentspace r
                             LEFT JOIN landlord l ON l.landlord_id = r.landlord_id
                             LEFT JOIN accounts acc ON l.user_id = acc.user_id
+                            LEFT JOIN (
+                                SELECT landlord_id, AVG(rating) AS avg_rating, COUNT(*) AS review_count
+                                FROM reviews
+                                GROUP BY landlord_id
+                            ) rv ON rv.landlord_id = r.landlord_id
+
                             WHERE 1=1 AND acc.status = 'Approved'
                         ";
 
@@ -184,6 +192,25 @@
                                 $latitude      = !empty($row_rentals['latitude']) ? floatval($row_rentals['latitude']) : 12.703015;
                                 $longitude     = !empty($row_rentals['longitude']) ? floatval($row_rentals['longitude']) : 124.037141;
 
+                                // Rating (average ng 1-5 stars)
+                                $avg_rating   = (float)($row_rentals['avg_rating'] ?? 0);
+                                $review_count = (int)($row_rentals['review_count'] ?? 0);
+                                $filled       = (int)round($avg_rating);
+                                $stars        = str_repeat('★', $filled) . str_repeat('☆', 5 - $filled);
+
+                                if ($review_count > 0) {
+                                    $rating_html = '
+                                        <div class="flex items-center gap-1 text-[11px] mb-2">
+                                            <span class="text-amber-400 tracking-tight">' . $stars . '</span>
+                                            <span class="font-bold text-slate-700">' . number_format($avg_rating, 1) . '</span>
+                                            <span class="text-slate-400">(' . $review_count . ')</span>
+                                        </div>';
+                                    $rating_text = number_format($avg_rating, 1) . ' ★ (' . $review_count . ')';
+                                } else {
+                                    $rating_html = '<div class="text-[11px] text-slate-400 mb-2">No reviews yet</div>';
+                                    $rating_text = 'No reviews yet';
+                                }
+
                                 $location = trim(
                                     ($row_rentals['barangay'] ?? '') . ', ' .
                                     ($row_rentals['municipality'] ?? '') . ', ' .
@@ -227,6 +254,7 @@
                                     'price'        => number_format((float)$price, 2),
                                     'type'         => $type,
                                     'rate'         => $rate,
+                                    'rating'       => $rating_text,
                                     'url'          => $locate . '?id=' . $rent_id,
                                     'image'        => $image_url,
                                     'lat'          => $latitude,
@@ -256,6 +284,7 @@
                                     <div class="p-3.5 flex flex-col flex-1">
                                         <h3 class="text-sm font-bold text-slate-900 truncate mb-0.5">' . $property_name . '</h3>
                                         <p class="text-xs text-slate-500 truncate mb-2">' . $name . '</p>
+                                        ' . $rating_html . '
                                         <div class="flex items-center gap-1 text-[11px] text-slate-500 mb-3 truncate">
                                             <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
@@ -417,6 +446,7 @@
               <div class="p-1 font-sans">
                   <img src="${p.image}" class="w-full h-20 object-cover rounded mb-2" loading="lazy" alt="${p.title}">
                   <h4 class="font-bold text-xs truncate">${p.title}</h4>
+                  <p class="text-[11px] text-amber-500 font-bold">${p.rating}</p>
                   <p class="text-[11px] text-emerald-600 font-extrabold">&#8369;${p.price} / ${p.rate}</p>
                   <a href="${p.url}" class="block text-center bg-emerald-600 !text-white text-[10px] font-bold py-1 rounded mt-2">View Details</a>
               </div>
@@ -493,6 +523,7 @@
                           <div class="p-1 font-sans">
                               <img src="${p.image}" class="w-full h-20 object-cover rounded mb-2" loading="lazy" alt="${p.title}">
                               <h4 class="font-bold text-xs truncate">${p.title}</h4>
+                              <p class="text-[11px] text-amber-500 font-bold">${p.rating}</p>
                               <p class="text-[11px] text-emerald-600 font-extrabold">&#8369;${p.price} / ${p.rate}</p>
                               <a href="${p.url}" class="block text-center bg-emerald-600 !text-white text-[10px] font-bold py-1 rounded mt-2">View Details</a>
                           </div>

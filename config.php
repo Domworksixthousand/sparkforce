@@ -19,7 +19,8 @@
 
     #connection sa mysql
     session_start();
-    $conn = mysqli_connect("localhost","root","","sparkforce_db","3307");
+    //$conn = mysqli_connect("localhost","root","","sparkforce_db","3307");
+    $conn = mysqli_connect("localhost","root","","sparkforce_db","3306");
     if(!$conn){
         echo "not connected";
     }

@@ -15,9 +15,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['int_action'])) {
     $token_ok = isset($_POST['csrf_token']) && hash_equals($_SESSION['csrf_token'], $_POST['csrf_token']);
     $action   = $_POST['int_action'];
     $int_id   = $_POST['int_id'] ?? '';
+
     if ($token_ok && in_array($action, ['Approved', 'Decline', 'Completed'], true) && $int_id !== '') {
         // Pending -> Approved/Decline, Approved -> Completed
         $required_status = ($action === 'Completed') ? 'Approved' : 'Pending';
+
         // Ang may-ari lang ng property ang puwedeng mag-update
         $u = $conn->prepare("
             UPDATE interested AS i
@@ -27,24 +29,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['int_action'])) {
         ");
         $u->bind_param("ssss", $action, $int_id, $user_id_login, $required_status);
         $u->execute();
+
         if ($u->affected_rows > 0) {
 
-            // Kunin ang applicant (receiver) mula sa database, hindi galing sa browser
-            $g = $conn->prepare("SELECT user_id FROM interested WHERE int_id = ?");
+            // Kunin ang applicant, data_id at type mula sa database (hindi galing sa browser)
+            $g = $conn->prepare("
+                SELECT i.user_id, i.data_id, l.type
+                FROM interested AS i
+                INNER JOIN landlord AS l ON l.landlord_id = i.landlord_id
+                WHERE i.int_id = ?
+            ");
             $g->bind_param("s", $int_id);
             $g->execute();
-            $receiver = $g->get_result()->fetch_assoc()['user_id'] ?? '';
+            $info = $g->get_result()->fetch_assoc();
+
+            $receiver  = $info['user_id'] ?? '';
+            $data_id   = $info['data_id'] ?? '';
+            $data_type = $info['type'] ?? '';
 
             if ($receiver !== '') {
                 if ($action === 'Approved') {
                     $text_noti = $fullnameko . " approved your request. You can now message them to arrange a visit or view details.";
-                    $noti_link = "interested.php"; // TODO: palitan ng page na dapat buksan ng applicant
+                    $noti_link = "interested.php";
+
+                    // I-reserve ang bed kapag Boarding House / Bedspace
+                    if ($data_type === "Boarding House / Bedspace" && $data_id !== '') {
+                        $new_stat = "Reserved";
+                        $update = $conn->prepare("UPDATE boarding_house SET `status` = ? WHERE boarding_id = ?");
+                        $update->bind_param("ss", $new_stat, $data_id);
+                        $update->execute();
+                    }
+
                 } elseif ($action === 'Completed') {
                     $text_noti = $fullnameko . " marked your request as completed. You can now rate and comment.";
                     $noti_link = "comment_rate.php";
+
+                    // Optional: gawing Occupied ang bed pagka-complete
+                    if ($data_type === "Boarding House / Bedspace" && $data_id !== '') {
+                        $new_stat = "Occupied";
+                        $update = $conn->prepare("UPDATE boarding_house SET `status` = ? WHERE boarding_id = ?");
+                        $update->bind_param("ss", $new_stat, $data_id);
+                        $update->execute();
+                    }
+
                 } else {
                     $text_noti = $fullnameko . " declined your request.";
-                    $noti_link = "interested.php"; // TODO: palitan ng page na dapat buksan ng applicant
+                    $noti_link = "interested.php";
                 }
                 $noti_status = "unseen";
 
@@ -74,7 +104,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['int_action'])) {
     echo "<script>location.href='interest_owner.php';</script>";
     exit;
 }
-
 /**
  * Pages per type. Palitan ang file names ayon sa actual pages mo.
  * 'default' ang gagamitin kapag walang match na type (Apartment, etc.)
@@ -254,7 +283,7 @@ function getInterestDetail($conn, $type_pages, $type, $data_id, $property_name, 
               <tbody class="myTable2 divide-y divide-base-300">
                 <?php
                 $get_data = $conn->prepare("
-                    SELECT l.province, l.municipality, l.barangay, l.type, l.property_name,
+                    SELECT l.province, l.municipality, l.barangay, l.type as type, l.property_name,
                            i.status, i.data_id, i.landlord_id, i.date_sent, i.time_sent, i.int_id,l.user_id
                     FROM `interested` AS i
                     LEFT JOIN landlord AS l ON l.landlord_id = i.landlord_id
@@ -303,10 +332,12 @@ function getInterestDetail($conn, $type_pages, $type, $data_id, $property_name, 
                                   data-int-id="<?= htmlspecialchars($row['int_id'], ENT_QUOTES); ?>"
                                   data-action="Approved"
                                   data-name="<?= htmlspecialchars($row['property_name'] ?? '', ENT_QUOTES); ?>"
+                                  type-data="<?= htmlspecialchars($row['type'] ?? '', ENT_QUOTES); ?>"
                                   onclick="confirmAction(this)">APPROVE</button>
                           <button type="button" class="btn btn-error btn-xs text-white"
                                   data-int-id="<?= htmlspecialchars($row['int_id'], ENT_QUOTES); ?>"
                                   data-action="Decline"
+                                   type-data="<?= htmlspecialchars($row['type'] ?? '', ENT_QUOTES); ?>"
                                   data-name="<?= htmlspecialchars($row['property_name'] ?? '', ENT_QUOTES); ?>"
                                   onclick="confirmAction(this)">DECLINE</button>
                         <?php endif; ?>
@@ -365,6 +396,7 @@ function getInterestDetail($conn, $type_pages, $type, $data_id, $property_name, 
     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']); ?>">
     <input type="hidden" name="int_id" id="action_int_id">
     <input type="hidden" name="int_action" id="action_type">
+    <input type="hidden" name="data_type" id="action_data_type">
   </form>
 
   <script src="./../assets/scripts/index.js"></script>

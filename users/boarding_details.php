@@ -76,6 +76,21 @@ function bedStatusBadge($status) {
     }
 }
 
+// Helper: Font Awesome stars (full / half / empty) para sa average rating
+function renderFaStars($avg) {
+    $html = '';
+    for ($i = 1; $i <= 5; $i++) {
+        if ($avg >= $i) {
+            $html .= '<i class="fa-solid fa-star"></i>';
+        } elseif ($avg >= $i - 0.5) {
+            $html .= '<i class="fa-solid fa-star-half-stroke"></i>';
+        } else {
+            $html .= '<i class="fa-regular fa-star"></i>';
+        }
+    }
+    return $html;
+}
+
 // LANDLORD DETAILS
 $get_landlord_info = $conn->prepare("SELECT * FROM `landlord` WHERE `landlord_id` = ?");
 $get_landlord_info->bind_param("s", $landlord_id);
@@ -106,6 +121,53 @@ if($result_account->num_rows > 0){
         $contact_number = $row_account['contact_number'];
         $email          = $row_account['email'];
     }
+}
+
+// RATINGS & REVIEWS (average + bilang, per property/landlord)
+$get_avg = $conn->prepare("SELECT AVG(rating) AS avg_rating, COUNT(*) AS review_count FROM `reviews` WHERE `landlord_id` = ?");
+$get_avg->bind_param("s", $landlord_id);
+$get_avg->execute();
+$avg_row      = $get_avg->get_result()->fetch_assoc();
+$avg_rating   = (float)($avg_row['avg_rating'] ?? 0);
+$review_count = (int)($avg_row['review_count'] ?? 0);
+
+// Listahan ng mga review (pinakabago muna)
+$get_reviews = $conn->prepare("
+    SELECT acc.*, rv.rating, rv.comment, rv.date_sent, rv.time_sent, rv.review_id
+    FROM `reviews` AS rv
+    LEFT JOIN `accounts` AS acc ON acc.user_id = rv.user_id
+    WHERE rv.landlord_id = ?
+    ORDER BY rv.review_id DESC
+    LIMIT 20
+");
+$get_reviews->bind_param("s", $landlord_id);
+$get_reviews->execute();
+$reviews_res = $get_reviews->get_result();
+
+$reviews = [];
+while ($rv = $reviews_res->fetch_assoc()) {
+    // Pangalan ng reviewer. Palitan ayon sa actual na column ng accounts table mo.
+    $reviewer = $rv['fullname'] ?? $rv['full_name'] ?? $rv['name'] ?? '';
+    if ($reviewer === '') {
+        $reviewer = trim(($rv['first_name'] ?? '') . ' ' . ($rv['last_name'] ?? ''));
+    }
+    if ($reviewer === '') {
+        $reviewer = $rv['username'] ?? 'Anonymous';
+    }
+
+    $parts    = preg_split('/\s+/', trim($reviewer));
+    $initials = strtoupper(mb_substr($parts[0] ?? 'A', 0, 1) . (isset($parts[1]) ? mb_substr($parts[1], 0, 1) : ''));
+
+    $ts   = strtotime(($rv['date_sent'] ?? ''));
+    $date = $ts ? date('M j, Y', $ts) : ($rv['date_sent'] ?? '');
+
+    $reviews[] = [
+        'name'     => $reviewer,
+        'initials' => $initials,
+        'date'     => $date,
+        'rating'   => (int)$rv['rating'],
+        'comment'  => $rv['comment'] ?? '',
+    ];
 }
 
 //favorites
@@ -380,7 +442,7 @@ if ($already_viewed == 0) {
             <?php endif; ?>
           </div>
 
-          <!-- RATINGS & COMMENTS SECTION (UI ONLY) -->
+          <!-- RATINGS & COMMENTS SECTION (view only) -->
           <div class="bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300 space-y-6">
               
               <!-- HEADER & RATING OVERVIEW -->
@@ -394,107 +456,61 @@ if ($already_viewed == 0) {
                   
                   <!-- Average Score Badge -->
                   <div class="flex items-center gap-3 bg-base-200/60 px-4 py-2.5 rounded-xl border border-base-300">
-                      <div class="text-3xl font-black text-warning">4.8</div>
-                      <div>
-                          <div class="flex text-warning text-xs gap-0.5">
-                              <i class="fa-solid fa-star"></i>
-                              <i class="fa-solid fa-star"></i>
-                              <i class="fa-solid fa-star"></i>
-                              <i class="fa-solid fa-star"></i>
-                              <i class="fa-solid fa-star-half-stroke"></i>
+                      <?php if ($review_count > 0): ?>
+                          <div class="text-3xl font-black text-warning"><?= number_format($avg_rating, 1); ?></div>
+                          <div>
+                              <div class="flex text-warning text-xs gap-0.5">
+                                  <?= renderFaStars($avg_rating); ?>
+                              </div>
+                              <span class="text-[11px] font-semibold text-base-content/60">
+                                  <?= $review_count; ?> review<?= $review_count > 1 ? 's' : ''; ?>
+                              </span>
                           </div>
-                          <span class="text-[11px] font-semibold text-base-content/60">12 reviews</span>
-                      </div>
+                      <?php else: ?>
+                          <div class="text-3xl font-black text-base-content/30">—</div>
+                          <div>
+                              <div class="flex text-warning text-xs gap-0.5">
+                                  <?= renderFaStars(0); ?>
+                              </div>
+                              <span class="text-[11px] font-semibold text-base-content/60">No reviews yet</span>
+                          </div>
+                      <?php endif; ?>
                   </div>
               </div>
 
-              <!-- WRITE A REVIEW FORM -->
-              <form onsubmit="event.preventDefault();" class="bg-base-200/40 p-4 rounded-xl border border-base-300 space-y-3">
-                  <h3 class="font-bold text-sm text-base-content flex items-center gap-2">
-                      <i class="fa-solid fa-pen-to-square text-emerald-600"></i> Leave a Review
-                  </h3>
-                  
-                  <!-- Interactive Star Rating Input -->
-                  <div class="flex items-center gap-3">
-                      <span class="text-xs font-semibold text-base-content/70">Your Rating:</span>
-                      <div class="rating rating-sm">
-                          <input type="radio" name="rating-ui" class="mask mask-star-2 bg-warning" />
-                          <input type="radio" name="rating-ui" class="mask mask-star-2 bg-warning" />
-                          <input type="radio" name="rating-ui" class="mask mask-star-2 bg-warning" />
-                          <input type="radio" name="rating-ui" class="mask mask-star-2 bg-warning" />
-                          <input type="radio" name="rating-ui" class="mask mask-star-2 bg-warning" checked />
-                      </div>
-                  </div>
-
-                  <!-- Comment Textarea -->
-                  <div>
-                      <textarea rows="3" class="textarea textarea-bordered w-full text-xs focus:outline-none focus:border-emerald-500 bg-base-100" placeholder="Write your experience, pros, cons, or questions about this space..."></textarea>
-                  </div>
-
-                  <!-- Submit Button -->
-                  <div class="flex justify-end">
-                      <button type="submit" class="btn bg-emerald-600 hover:bg-emerald-700 text-white btn-sm px-5 rounded-lg border-none">
-                          <i class="fa-solid fa-paper-plane text-xs"></i> Post Review
-                      </button>
-                  </div>
-              </form>
-
-              <!-- LIST OF REVIEWS (SAMPLE DATA) -->
-              <div class="space-y-4 pt-2">
+              <!-- LIST OF REVIEWS -->
+              <div class="space-y-4">
                   <h4 class="text-xs font-bold uppercase tracking-wider text-base-content/50">Recent Comments</h4>
 
-                  <!-- Review Card 1 -->
-                  <div class="p-4 rounded-xl border border-base-200 bg-base-100 space-y-2 hover:border-emerald-500/30 transition-all">
-                      <div class="flex items-center justify-between">
-                          <div class="flex items-center gap-2.5">
-                              <div class="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-700 font-bold flex items-center justify-center text-xs">
-                                  JD
+                  <?php if (!empty($reviews)): ?>
+                      <?php foreach ($reviews as $rv): ?>
+                          <div class="p-4 rounded-xl border border-base-200 bg-base-100 space-y-2 hover:border-emerald-500/30 transition-all">
+                              <div class="flex items-center justify-between">
+                                  <div class="flex items-center gap-2.5">
+                                      <div class="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-700 font-bold flex items-center justify-center text-xs">
+                                          <?= htmlspecialchars($rv['initials']); ?>
+                                      </div>
+                                      <div>
+                                          <h4 class="font-bold text-xs text-base-content"><?= htmlspecialchars($rv['name']); ?></h4>
+                                          <span class="text-[10px] text-base-content/50"><?= htmlspecialchars($rv['date']); ?></span>
+                                      </div>
+                                  </div>
+                                  <!-- Stars -->
+                                  <div class="flex text-warning text-xs gap-0.5">
+                                      <?= renderFaStars($rv['rating']); ?>
+                                  </div>
                               </div>
-                              <div>
-                                  <h4 class="font-bold text-xs text-base-content">John Doe</h4>
-                                  <span class="text-[10px] text-base-content/50">2 days ago</span>
-                              </div>
+                              <p class="text-xs text-base-content/80 pl-10 leading-relaxed">
+                                  <?= nl2br(htmlspecialchars($rv['comment'])); ?>
+                              </p>
                           </div>
-                          <!-- Stars -->
-                          <div class="flex text-warning text-xs gap-0.5">
-                              <i class="fa-solid fa-star"></i>
-                              <i class="fa-solid fa-star"></i>
-                              <i class="fa-solid fa-star"></i>
-                              <i class="fa-solid fa-star"></i>
-                              <i class="fa-solid fa-star"></i>
-                          </div>
+                      <?php endforeach; ?>
+                  <?php else: ?>
+                      <div class="text-center py-8 text-base-content/50">
+                          <i class="fa-regular fa-comments text-3xl mb-2 block"></i>
+                          <p class="text-sm">No comments yet.</p>
                       </div>
-                      <p class="text-xs text-base-content/80 pl-10 leading-relaxed">
-                          Napakaganda at tahimik ng lugar. Malinis ang mga bed spaces at responsive din ang landlord kapag may kailangan. Highly recommended para sa mga estudyante!
-                      </p>
-                  </div>
-
-                  <!-- Review Card 2 -->
-                  <div class="p-4 rounded-xl border border-base-200 bg-base-100 space-y-2 hover:border-emerald-500/30 transition-all">
-                      <div class="flex items-center justify-between">
-                          <div class="flex items-center gap-2.5">
-                              <div class="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-700 font-bold flex items-center justify-center text-xs">
-                                  MS
-                              </div>
-                              <div>
-                                  <h4 class="font-bold text-xs text-base-content">Maria Santos</h4>
-                                  <span class="text-[10px] text-base-content/50">1 week ago</span>
-                              </div>
-                          </div>
-                          <!-- Stars -->
-                          <div class="flex text-warning text-xs gap-0.5">
-                              <i class="fa-solid fa-star"></i>
-                              <i class="fa-solid fa-star"></i>
-                              <i class="fa-solid fa-star"></i>
-                              <i class="fa-solid fa-star"></i>
-                              <i class="fa-regular fa-star"></i>
-                          </div>
-                      </div>
-                      <p class="text-xs text-base-content/80 pl-10 leading-relaxed">
-                          Accessible sa sakayan at malapit sa pamilihan. Malakas din ang Wi-Fi connection na napakahalaga para sa online classes/work.
-                      </p>
-                  </div>
-
+                  <?php endif; ?>
               </div>
 
           </div>
