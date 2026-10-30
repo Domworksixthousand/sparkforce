@@ -84,6 +84,36 @@
                 <?php
                 }
             ?>
+             <?php
+                if($user_type === "2"){
+                ?>
+            <li>
+                <a href="interest_owner.php" class="flex items-center gap-3 active">                           
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class="text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-house-heart preview-icon"><path d="M8.62 13.8A2.25 2.25 0 1 1 12 10.836a2.25 2.25 0 1 1 3.38 2.966l-2.626 2.856a.998.998 0 0 1-1.507 0z"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                    <span class="text-white">
+                    Interested
+                </span>
+                </a>
+            </li>
+
+                <?php
+                }
+            ?>
+              <?php
+                if($user_type === "3"){
+                ?>
+            <li>
+                <a href="comment_rate.php" class="flex items-center gap-3 active">                           
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class="text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-circle-check preview-icon"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/><path d="m16 9-5.5 5.5L8 12"/></svg>
+                    <span class="text-white">
+                    Comment & Rate
+                </span>
+                </a>
+            </li>
+
+                <?php
+                }
+            ?>
             <?php
                 if($user_type === "2"){
 
