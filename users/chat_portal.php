@@ -4,7 +4,8 @@
     if (isset($_GET['id'])) {
         $user_id_chat = $_GET['id'];
     } else {
-        header("Location: messages.php");
+        // header() hindi na gagana dito dahil may output na galing sa messages.php
+        echo "<script>location.href='messages.php';</script>";
         exit;
     }
    
@@ -161,4 +162,19 @@
 
 <script>
   window.chatUserId = "<?php echo htmlspecialchars($user_id_chat); ?>";
+
+  // Buksan agad ang chat modal pagka-load ng page
+  // (hindi nagpapakita ang <dialog> hanggang hindi tinatawag ang showModal())
+  (function () {
+    function openChatModal() {
+      const modal = document.getElementById('my_modal_3');
+      if (modal && !modal.open) modal.showModal();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', openChatModal);
+    } else {
+      openChatModal();
+    }
+  })();
 </script>

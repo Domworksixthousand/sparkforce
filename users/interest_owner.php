@@ -10,6 +10,19 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
+/**
+ * I-normalize ang type: trim, collapse spaces, lowercase.
+ * Para hindi masira ng trailing space / ibang casing / "Boarding House/Bedspace".
+ * Return: 'bh' | 'commercial' | 'apartment' | 'default'
+ */
+function getTypeKind($type) {
+    $t = strtolower(trim(preg_replace('/\s+/', ' ', (string)$type)));
+    if (strpos($t, 'boarding') !== false || strpos($t, 'bedspace') !== false) return 'bh';
+    if (strpos($t, 'commercial') !== false) return 'commercial';
+    if (strpos($t, 'apartment') !== false) return 'apartment';
+    return 'default';
+}
+
 // Approve / Decline handler
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['int_action'])) {
     $token_ok = isset($_POST['csrf_token']) && hash_equals($_SESSION['csrf_token'], $_POST['csrf_token']);
@@ -46,6 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['int_action'])) {
             $receiver  = $info['user_id'] ?? '';
             $data_id   = $info['data_id'] ?? '';
             $data_type = $info['type'] ?? '';
+            $is_bh     = (getTypeKind($data_type) === 'bh');
 
             if ($receiver !== '') {
                 if ($action === 'Approved') {
@@ -53,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['int_action'])) {
                     $noti_link = "interested.php";
 
                     // I-reserve ang bed kapag Boarding House / Bedspace
-                    if ($data_type === "Boarding House / Bedspace" && $data_id !== '') {
+                    if ($is_bh && $data_id !== '') {
                         $new_stat = "Reserved";
                         $update = $conn->prepare("UPDATE boarding_house SET `status` = ? WHERE boarding_id = ?");
                         $update->bind_param("ss", $new_stat, $data_id);
@@ -64,8 +78,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['int_action'])) {
                     $text_noti = $fullnameko . " marked your request as completed. You can now rate and comment.";
                     $noti_link = "comment_rate.php";
 
-                    // Optional: gawing Occupied ang bed pagka-complete
-                    if ($data_type === "Boarding House / Bedspace" && $data_id !== '') {
+                    // Gawing Occupied ang bed pagka-complete
+                    if ($is_bh && $data_id !== '') {
                         $new_stat = "Occupied";
                         $update = $conn->prepare("UPDATE boarding_house SET `status` = ? WHERE boarding_id = ?");
                         $update->bind_param("ss", $new_stat, $data_id);
@@ -104,42 +118,119 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['int_action'])) {
     echo "<script>location.href='interest_owner.php';</script>";
     exit;
 }
+
 /**
- * Pages per type. Palitan ang file names ayon sa actual pages mo.
- * 'default' ang gagamitin kapag walang match na type (Apartment, etc.)
+ * Pages per type kind. Palitan ang file names ayon sa actual pages mo.
+ * Keys: 'bh', 'commercial', 'apartment', 'default'
  */
 $type_pages = [
-    'Boarding House / Bedspace' => ['page' => 'my_bh_info.php',         'text' => 'View Boarding House'],
-    'Commercial Space'          => ['page' => 'my_commercial_info.php', 'text' => 'View Commercial Space'],
-    'default'                   => ['page' => 'my_apartment_info.php',  'text' => 'View Apartment'],
+    'bh'         => ['page' => 'my_bh_info.php',         'text' => 'View Boarding House'],
+    'commercial' => ['page' => 'my_commercial_info.php', 'text' => 'View Commercial Space'],
+    'apartment'  => ['page' => 'apartment_details.php',  'text' => 'View Apartment'],
+    'default'    => ['page' => 'my_apartment_info.php',  'text' => 'View Property'],
 ];
 
 /**
  * Gumawa ng link at button text base sa type.
  * Return: [link, link_text]
- * Ang link ay may `id` (rent_id) at `property_id` (landlord_id) dahil pareho itong required ng target page.
  */
 function getTypeLink($type_pages, $type, $id, $landlord_id) {
-    $cfg = $type_pages[$type] ?? $type_pages['default'];
+    $kind = getTypeKind($type);
+    $cfg  = $type_pages[$kind] ?? $type_pages['default'];
     return [$cfg['page'] . '?id=' . urlencode($id) . '&property_id=' . urlencode($landlord_id), $cfg['text']];
 }
 
 /**
+ * Fallback: hindi na babalik ng null para laging may VIEW button.
+ * Ipinapakita nito kung ano ang hindi nahanap para madaling i-debug.
+ */
+function getFallbackDetail($type, $data_id, $property_name, $reason) {
+    return [
+        'title'     => $property_name ?: 'Details not found',
+        'image'     => '../assets/images/under_constractions.jpg',
+        'status'    => '',
+        'fields'    => [
+            'Property' => $property_name,
+            'Type'     => $type,
+            'Note'     => $reason . ' (data_id: ' . $data_id . ')',
+        ],
+        'link'      => '',
+        'link_text' => '',
+    ];
+}
+
+/**
  * Kumuha ng detail ng isang interested item depende sa type.
- * Magdagdag ng bagong `case` para sa bawat type/table.
- * Return: array na may title, image, status, fields, link, link_text (o null kung walang nahanap)
  */
 function getInterestDetail($conn, $type_pages, $type, $data_id, $property_name, $landlord_id) {
-    switch ($type) {
+    $data_id = trim((string)$data_id);
+    $kind    = getTypeKind($type);
 
-        case 'Boarding House / Bedspace':
+    switch ($kind) {
+
+        case 'bh':
             $q = $conn->prepare("SELECT boarding_id, bed_number, status, num_decks, image, rent_id
                                  FROM boarding_house WHERE boarding_id = ?");
+            if (!$q) {
+                error_log('[interest_owner] BH prepare failed: ' . $conn->error);
+                return getFallbackDetail($type, $data_id, $property_name, 'Query error');
+            }
             $q->bind_param("s", $data_id);
             $q->execute();
             $b = $q->get_result()->fetch_assoc();
-            if (!$b) return null;
-            // Kung boarding_id ang hinahanap ng my_bh_info.php, palitan ng $b['boarding_id']
+
+            // Fallback 1: baka rent_id ang naka-save sa interested.data_id
+            if (!$b) {
+                $q2 = $conn->prepare("SELECT boarding_id, bed_number, status, num_decks, image, rent_id
+                                      FROM boarding_house WHERE rent_id = ? LIMIT 1");
+                if ($q2) {
+                    $q2->bind_param("s", $data_id);
+                    $q2->execute();
+                    $b = $q2->get_result()->fetch_assoc();
+                }
+            }
+
+            // Fallback 2: baka rentspace ang record (property mismo, hindi bed)
+            if (!$b) {
+                $q3 = $conn->prepare("SELECT rent_id, name, price, image_cover
+                                      FROM rentspace WHERE rent_id = ? LIMIT 1");
+                if ($q3) {
+                    $q3->bind_param("s", $data_id);
+                    $q3->execute();
+                    $r = $q3->get_result()->fetch_assoc();
+                    if ($r) {
+                        [$link, $link_text] = getTypeLink($type_pages, $type, $r['rent_id'], $landlord_id);
+                        return [
+                            'title'     => $r['name'],
+                            'image'     => '../assets/uploads/' . $r['image_cover'],
+                            'status'    => '',
+                            'fields'    => [
+                                'Price'    => '₱' . number_format((float)$r['price'], 2) . ' / month',
+                                'Property' => $property_name,
+                            ],
+                            'link'      => $link,
+                            'link_text' => $link_text,
+                        ];
+                    }
+                }
+            }
+
+            if (!$b) {
+                error_log("[interest_owner] No boarding_house/rentspace row for data_id=[$data_id] type=[$type]");
+
+                // TEMPORARY DEBUG: ipakita kung anong database at anong beds ang nakikita ng PHP
+                $dbg = 'Bed record not found';
+                $r1 = $conn->query("SELECT DATABASE() AS db, (SELECT COUNT(*) FROM boarding_house) AS total");
+                if ($r1 && ($x1 = $r1->fetch_assoc())) {
+                    $dbg .= ' | DB=' . $x1['db'] . ' | beds in table=' . $x1['total'];
+                }
+                $r2 = $conn->query("SELECT boarding_id FROM boarding_house LIMIT 5");
+                $ids = [];
+                while ($r2 && ($x2 = $r2->fetch_assoc())) { $ids[] = $x2['boarding_id']; }
+                $dbg .= ' | sample boarding_id=' . ($ids ? implode(', ', $ids) : '(none)');
+
+                return getFallbackDetail($type, $data_id, $property_name, $dbg);
+            }
             [$link, $link_text] = getTypeLink($type_pages, $type, $b['rent_id'], $landlord_id);
             return [
                 'title'     => 'Bed #' . $b['bed_number'],
@@ -153,34 +244,73 @@ function getInterestDetail($conn, $type_pages, $type, $data_id, $property_name, 
                 'link_text' => $link_text,
             ];
 
-        case 'Commercial Space':
-            // TODO: palitan ng actual table/columns ng commercial mo
-            $q = $conn->prepare("SELECT rent_id, name, price, image_cover, other_info
-                                 FROM rentspace WHERE rent_id = ?");
+        case 'apartment':
+            // data_id = apartment_id (galing sa add_interested_apartment sa functions.php)
+            $q = $conn->prepare("
+                SELECT a.apartment_id, a.apartment_type, a.status, a.rent_id,
+                       r.name, r.price, r.image_cover
+                FROM apartment AS a
+                INNER JOIN rentspace AS r ON r.rent_id = a.rent_id
+                WHERE a.apartment_id = ? LIMIT 1
+            ");
+            if (!$q) {
+                error_log('[interest_owner] apartment prepare failed: ' . $conn->error);
+                return getFallbackDetail($type, $data_id, $property_name, 'Query error');
+            }
             $q->bind_param("s", $data_id);
             $q->execute();
-            $r = $q->get_result()->fetch_assoc();
-            if (!$r) return null;
-            [$link, $link_text] = getTypeLink($type_pages, $type, $r['rent_id'], $landlord_id);
+            $a = $q->get_result()->fetch_assoc();
+
+            // Fallback: baka rent_id ang naka-save
+            if (!$a) {
+                $q2 = $conn->prepare("
+                    SELECT a.apartment_id, a.apartment_type, a.status, a.rent_id,
+                           r.name, r.price, r.image_cover
+                    FROM apartment AS a
+                    INNER JOIN rentspace AS r ON r.rent_id = a.rent_id
+                    WHERE a.rent_id = ? LIMIT 1
+                ");
+                if ($q2) {
+                    $q2->bind_param("s", $data_id);
+                    $q2->execute();
+                    $a = $q2->get_result()->fetch_assoc();
+                }
+            }
+
+            if (!$a) {
+                error_log("[interest_owner] No apartment row for data_id=[$data_id] type=[$type]");
+                return getFallbackDetail($type, $data_id, $property_name, 'Apartment record not found');
+            }
+
+            // apartment_details.php?id=<rent_id>
+            [$link, $link_text] = getTypeLink($type_pages, $type, $a['rent_id'], $landlord_id);
             return [
-                'title'     => $r['name'],
-                'image'     => '../assets/uploads/' . $r['image_cover'],
-                'status'    => '',
+                'title'     => $a['name'],
+                'image'     => '../assets/uploads/' . $a['image_cover'],
+                'status'    => $a['status'],
                 'fields'    => [
-                    'Price'    => '₱' . number_format((float)$r['price'], 2) . ' / month',
+                    'Type'     => $a['apartment_type'],
+                    'Price'    => '₱' . number_format((float)$a['price'], 2) . ' / month',
                     'Property' => $property_name,
                 ],
                 'link'      => $link,
                 'link_text' => $link_text,
             ];
 
-        default: // Apartment, etc. (rentspace muna)
+        default: // Commercial Space, etc. (rentspace)
             $q = $conn->prepare("SELECT rent_id, name, price, image_cover
                                  FROM rentspace WHERE rent_id = ?");
+            if (!$q) {
+                error_log('[interest_owner] rentspace prepare failed: ' . $conn->error);
+                return getFallbackDetail($type, $data_id, $property_name, 'Query error');
+            }
             $q->bind_param("s", $data_id);
             $q->execute();
             $r = $q->get_result()->fetch_assoc();
-            if (!$r) return null;
+            if (!$r) {
+                error_log("[interest_owner] No rentspace row for rent_id=[$data_id] type=[$type]");
+                return getFallbackDetail($type, $data_id, $property_name, 'Property record not found');
+            }
             [$link, $link_text] = getTypeLink($type_pages, $type, $r['rent_id'], $landlord_id);
             return [
                 'title'     => $r['name'],
@@ -284,7 +414,7 @@ function getInterestDetail($conn, $type_pages, $type, $data_id, $property_name, 
                 <?php
                 $get_data = $conn->prepare("
                     SELECT l.province, l.municipality, l.barangay, l.type as type, l.property_name,
-                           i.status, i.data_id, i.landlord_id, i.date_sent, i.time_sent, i.int_id,l.user_id
+                           i.status, i.data_id, i.landlord_id, i.date_sent, i.time_sent, i.int_id, l.user_id
                     FROM `interested` AS i
                     LEFT JOIN landlord AS l ON l.landlord_id = i.landlord_id
                     WHERE l.user_id = ?
@@ -315,7 +445,7 @@ function getInterestDetail($conn, $type_pages, $type, $data_id, $property_name, 
                     <td><?= date('M j, Y', strtotime($row['date_sent'])); ?></td>
                     <td><?= date('g:i A', strtotime($row['time_sent'])); ?></td>
                     <td>
-                      <p class="<?= $bg_color; ?> rounded-full p-0 text-center"><?= htmlspecialchars($status); ?></p>
+                      <p class="<?= $bg_color; ?> rounded-full py-1 px-3 text-center"><?= htmlspecialchars($status); ?></p>
                     </td>
                     <td>
                       <div class="flex items-center gap-1 flex-wrap">
@@ -332,12 +462,12 @@ function getInterestDetail($conn, $type_pages, $type, $data_id, $property_name, 
                                   data-int-id="<?= htmlspecialchars($row['int_id'], ENT_QUOTES); ?>"
                                   data-action="Approved"
                                   data-name="<?= htmlspecialchars($row['property_name'] ?? '', ENT_QUOTES); ?>"
-                                  type-data="<?= htmlspecialchars($row['type'] ?? '', ENT_QUOTES); ?>"
+                                  data-type="<?= htmlspecialchars($row['type'] ?? '', ENT_QUOTES); ?>"
                                   onclick="confirmAction(this)">APPROVE</button>
                           <button type="button" class="btn btn-error btn-xs text-white"
                                   data-int-id="<?= htmlspecialchars($row['int_id'], ENT_QUOTES); ?>"
                                   data-action="Decline"
-                                   type-data="<?= htmlspecialchars($row['type'] ?? '', ENT_QUOTES); ?>"
+                                  data-type="<?= htmlspecialchars($row['type'] ?? '', ENT_QUOTES); ?>"
                                   data-name="<?= htmlspecialchars($row['property_name'] ?? '', ENT_QUOTES); ?>"
                                   onclick="confirmAction(this)">DECLINE</button>
                         <?php endif; ?>
@@ -375,7 +505,7 @@ function getInterestDetail($conn, $type_pages, $type, $data_id, $property_name, 
       </form>
       <div class="w-full h-64 sm:h-96 bg-base-200">
         <img id="info_img" src="" alt="" class="w-full h-full object-cover"
-             onerror="this.src='../assets/images/placeholder-bed.jpg';" />
+             onerror="this.onerror=null;this.src='../assets/images/placeholder-bed.jpg';" />
       </div>
       <div class="p-6 space-y-4">
         <div class="flex items-center justify-between">
@@ -391,18 +521,17 @@ function getInterestDetail($conn, $type_pages, $type, $data_id, $property_name, 
     <form method="dialog" class="modal-backdrop"><button>close</button></form>
   </dialog>
 
-  <!-- Hidden form para sa Approve / Decline -->
+  <!-- Hidden form para sa Approve / Decline / Complete -->
   <form id="action_form" method="POST" action="interest_owner.php" class="hidden">
     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']); ?>">
     <input type="hidden" name="int_id" id="action_int_id">
     <input type="hidden" name="int_action" id="action_type">
-    <input type="hidden" name="data_type" id="action_data_type">
   </form>
 
   <script src="./../assets/scripts/index.js"></script>
   <script src="./../assets/scripts/query_filter.js"></script>
   <script>
-    // Confirm Approve / Decline gamit ang CoolAlert
+    // Confirm Approve / Decline / Complete gamit ang CoolAlert
     function confirmAction(btn) {
       const action  = btn.dataset.action;   // "Approved", "Decline" or "Completed"
       const intId   = btn.dataset.intId;
@@ -450,6 +579,8 @@ function getInterestDetail($conn, $type_pages, $type, $data_id, $property_name, 
       if (!d.status) st.classList.add('hidden');
       else if (d.status === 'Available') st.classList.add('badge-success', 'text-white');
       else if (d.status === 'Occupied') st.classList.add('badge-error', 'text-white');
+      else if (d.status === 'Reserved') st.classList.add('badge-primary', 'text-white');
+      else if (d.status === 'Completed') st.classList.add('badge-secondary', 'text-white');
       else st.classList.add('badge-ghost');
 
       // Dynamic fields (kahit ilan, depende sa type)
@@ -462,7 +593,7 @@ function getInterestDetail($conn, $type_pages, $type, $data_id, $property_name, 
         l.className = 'text-xs text-base-content/60 uppercase tracking-wider';
         l.textContent = label;
         const v = document.createElement('p');
-        v.className = 'text-lg font-semibold mt-1 truncate';
+        v.className = 'text-lg font-semibold mt-1 break-words';
         v.textContent = value;
         wrap.append(l, v);
         box.appendChild(wrap);

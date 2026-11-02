@@ -22,13 +22,14 @@ $name = "";
 $price = "";
 $image_cover = "";
 $other_info = "";
+$rate = "";
 
 if ($rent_row = $rent_res->fetch_assoc()) {
     $name        = $rent_row['name'];
     $price       = $rent_row['price'];
     $image_cover = $rent_row['image_cover'];
     $other_info  = $rent_row['other_info'];
-    $rate  = $rent_row['rate'];
+    $rate        = $rent_row['rate'];
 }
 
 // BOARDING HOUSES
@@ -67,13 +68,33 @@ while ($row = $amen_res->fetch_assoc()) {
     ];
 }
 
+// REVIEWS / RATINGS
+// Based on the reviews table only (landlord_id). LEFT JOIN accounts so a review
+// is never hidden just because the account / interested row can't be matched.
+$get_reviews = $conn->prepare("
+    SELECT r.rating, r.comment, r.date_sent, r.time_sent, a.firstname, a.lastname
+    FROM `reviews` AS r
+    LEFT JOIN `accounts` AS a ON a.user_id = r.user_id
+    WHERE r.landlord_id = ?
+    ORDER BY r.date_sent DESC, r.time_sent DESC
+");
+$get_reviews->bind_param("s", $landlord_id);
+$get_reviews->execute();
+$reviews_res = $get_reviews->get_result();
+
+$reviews = [];
+while ($row = $reviews_res->fetch_assoc()) {
+    $reviews[] = $row;
+}
+
 // Helper: badge color per bed status
 function bedStatusBadge($status) {
     switch ($status) {
         case 'Available':      return 'badge-success';
-        case 'Occupied':  return 'badge-error';
+        case 'Reserved':       return 'badge-primary';
+        case 'Occupied':       return 'badge-error';
         case 'Out of Order':   return 'badge-error';
-        default:                return 'badge-ghost';
+        default:               return 'badge-ghost';
     }
 }
 
@@ -102,7 +123,7 @@ $availableBeds = count(array_filter($boarding_houses, fn($b) => $b['status'] ===
       <div class="absolute bottom-0 left-0 p-5 text-white">
         <h2 class="text-2xl font-bold drop-shadow-sm"><?php echo htmlspecialchars($name); ?></h2>
         <p class="text-lg font-semibold text-success-content">
-          <span class="text-white">&#x20B1;<?php echo htmlspecialchars(number_format((float) $price, 2)); ?> <span class="text-sm font-normal opacity-80">/ <?php echo $rate; ?></span></span>
+          <span class="text-white">&#x20B1;<?php echo htmlspecialchars(number_format((float) $price, 2)); ?> <span class="text-sm font-normal opacity-80">/ <?php echo htmlspecialchars($rate); ?></span></span>
         </p>
       </div>
       <div class="absolute top-3 left-3 flex gap-2">
@@ -120,6 +141,7 @@ $availableBeds = count(array_filter($boarding_houses, fn($b) => $b['status'] ===
       <a role="tab" class="tab tab-active room-tab" data-tab="overview">Overview</a>
       <a role="tab" class="tab room-tab" data-tab="beds">Beds (<?php echo $totalBeds; ?>)</a>
       <a role="tab" class="tab room-tab" data-tab="amenities">Amenities (<?php echo count($saved_amenities); ?>)</a>
+      <a role="tab" class="tab room-tab" data-tab="reviews">Reviews (<?php echo count($reviews); ?>)</a>
     </div>
 
     <!-- TAB CONTENT -->
@@ -178,6 +200,43 @@ $availableBeds = count(array_filter($boarding_houses, fn($b) => $b['status'] ===
           </div>
         <?php else: ?>
           <p class="text-sm text-gray-500 italic">No amenities listed for this room.</p>
+        <?php endif; ?>
+      </div>
+
+      <!-- REVIEWS -->
+      <div class="tab-panel hidden" data-panel="reviews">
+        <?php if (!empty($reviews)): ?>
+          <?php foreach ($reviews as $rv): ?>
+            <?php
+              // Reviewer name (falls back to "Anonymous" if the account can't be found)
+              $reviewer = trim(($rv['firstname'] ?? '') . ' ' . ($rv['lastname'] ?? ''));
+              if ($reviewer === '') $reviewer = 'Anonymous';
+
+              $initials = strtoupper(mb_substr($rv['firstname'] ?? '', 0, 1) . mb_substr($rv['lastname'] ?? '', 0, 1));
+              if ($initials === '') $initials = 'A';
+            ?>
+            <div class="p-3 bg-base-200/50 rounded-xl border border-base-200 mb-3">
+              <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                  <?php echo htmlspecialchars($initials); ?>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="text-xs font-semibold text-gray-700"><?php echo htmlspecialchars($reviewer); ?></span>
+                    <span class="text-xs text-gray-500"><?php echo htmlspecialchars(($rv['date_sent'] ?? '') . ' ' . ($rv['time_sent'] ?? '')); ?></span>
+                  </div>
+                  <div class="flex text-warning text-xs mb-1">
+                    <?php for ($s = 1; $s <= 5; $s++): ?>
+                      <span class="<?php echo $s <= (int)$rv['rating'] ? 'text-warning' : 'text-gray-300'; ?>">★</span>
+                    <?php endfor; ?>
+                  </div>
+                  <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-line"><?php echo htmlspecialchars($rv['comment'] ?? ''); ?></p>
+                </div>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        <?php else: ?>
+          <p class="text-sm text-gray-500 italic">No reviews yet.</p>
         <?php endif; ?>
       </div>
 

@@ -446,8 +446,6 @@ if (isset($_POST['register'])) {
     $repeat_password = $_POST['repeat_password'] ?? '';
 
     // landlord sign-up?  (decides where we redirect back to, and whether property data is saved)
-
-
     $back = ($type_register === 'landlord') ? "signup_owner.php" : "signup.php";
 
     // landlord / property inputs
@@ -473,6 +471,7 @@ if (isset($_POST['register'])) {
     $datetoday            = date("Y-m-d");
     $user_id              = $id_number . rand();
     $user_type_acceptable = "3";
+    $tomorrow             = date("Y-m-d", strtotime("+1 day"));
 
     // ---------------------------------------------------------------
     // 2. KEEP INPUTS IN SESSION (so the form refills after an error)
@@ -507,8 +506,17 @@ if (isset($_POST['register'])) {
         $_SESSION['selfie_photo_name'] = $old_selfie_photo;
     }
 
-       $landlord_id = '';
+    if (!file_exists('assets/trash_uploads')) mkdir('assets/trash_uploads', 0777, true);
+    if (!file_exists('assets/uploads')) mkdir('assets/uploads', 0777, true);
 
+    // ---------------------------------------------------------------
+    // 3. SAVE ALL UPLOADS FIRST (so nothing is lost if validation fails later)
+    //    Order: owner docs + gallery -> selfie -> ID photo -> then validate
+    // ---------------------------------------------------------------
+    $landlord_id  = '';
+    $upload_error = '';   // upload problems are reported AFTER everything else is saved
+
+    // 3a. LANDLORD: ownership documents + gallery
     if ($type_register === 'landlord') {
 
         $location_folder = "assets/uploads/";
@@ -516,65 +524,10 @@ if (isset($_POST['register'])) {
         if (!isset($_SESSION['owner_docs']) || !is_array($_SESSION['owner_docs'])) $_SESSION['owner_docs'] = [];
         if (!isset($_SESSION['photo_gallery']) || !is_array($_SESSION['photo_gallery'])) $_SESSION['photo_gallery'] = [];
 
-        // new files picked this time?
-        $new_docs    = array_filter((array)($_FILES['owner_docs']['name'] ?? []));
-        $new_gallery = array_filter((array)($_FILES['photo_gallery']['name'] ?? []));
-
-        // if nothing new, fall back to what was uploaded in an earlier (failed) attempt
-        $count_owner_docs    = !empty($new_docs)    ? count($new_docs)    : count($_SESSION['owner_docs']);
-        $count_photo_gallery = !empty($new_gallery) ? count($new_gallery) : count($_SESSION['photo_gallery']);
-
-        if ($count_owner_docs < 1) {
-            $_SESSION['error'] = "Please upload at least 1 Proof of Ownership document.";
-            header("location:$back");
-            exit;
-        }
-
-        if ($count_photo_gallery < 3 || $count_photo_gallery > 10) {
-            $_SESSION['error'] = "Gallery photos uploaded must be 3 to 10 images.";
-            header("location:$back");
-            exit;
-        }
-
-        if (!is_numeric($latitud) || !is_numeric($longitude) || empty($province1) || empty($municipality1) || empty($barangay1)) {
-            $_SESSION['error'] = "Please select property location using the map control.";
-            header("location:$back");
-            exit;
-        }
-
-        if (empty($property_type) || $property_type == "Select Property type") {
-            $_SESSION['error'] = "Please Select Property Type";
-            header("location:$back");
-            exit;
-        }
-
-        if (empty($property_name)) {
-            $_SESSION['error'] = "Please enter your property name";
-            header("location:$back");
-            exit;
-        }
-
-        if (!isset($_POST['terms_agree'])) {
-            $_SESSION['error'] = "Please agree to the Terms and Conditions.";
-            header("location:$back");
-            exit;
-        }
-
-        // property name must be unique among approved properties
-        $data_status = "Approved";
-        $check = $conn->prepare("SELECT `landlord_id` FROM `landlord` WHERE `property_name` = ? AND `status` = ?");
-        $check->bind_param("ss", $property_name, $data_status);
-        $check->execute();
-        if ($check->get_result()->num_rows > 0) {
-            $_SESSION['error'] = "Property name already exists. Please choose another one.";
-            header("location:$back");
-            exit;
-        }
-
         // helper: validates + saves every file of one multi-file input, returns [ok, names|error]
         $save_uploads = function (string $input, string $label) use ($location_folder) {
             $saved = [];
-            foreach ((array)$_FILES[$input]['name'] as $key => $filename) {
+            foreach ((array)($_FILES[$input]['name'] ?? []) as $key => $filename) {
                 if ($filename === '') continue;
 
                 if ($_FILES[$input]['error'][$key] !== UPLOAD_ERR_OK) {
@@ -595,64 +548,34 @@ if (isset($_POST['register'])) {
             return [true, $saved];
         };
 
+        // new files picked this time?
+        $new_docs    = array_filter((array)($_FILES['owner_docs']['name'] ?? []));
+        $new_gallery = array_filter((array)($_FILES['photo_gallery']['name'] ?? []));
+
         if (!empty($new_docs)) {
             [$ok, $result] = $save_uploads('owner_docs', 'ownership document');
-            if (!$ok) {
-                $_SESSION['error'] = $result;
-                header("location:$back");
-                exit;
+            if ($ok) {
+                $_SESSION['owner_docs'] = $result;
+            } else {
+                $upload_error = $result;
             }
-            $_SESSION['owner_docs'] = $result;
         }
 
         if (!empty($new_gallery)) {
             [$ok, $result] = $save_uploads('photo_gallery', 'gallery image');
-            if (!$ok) {
-                $_SESSION['error'] = $result;
-                header("location:$back");
-                exit;
+            if ($ok) {
+                $_SESSION['photo_gallery'] = $result;
+            } elseif ($upload_error === '') {
+                $upload_error = $result;
             }
-            $_SESSION['photo_gallery'] = $result;
         }
-
-        $landlord_id = $property_name . '_' . rand(1000, 9999);
     }
 
-    // ---------------------------------------------------------------
-    // 3. ID PHOTO + SELFIE
-    // ---------------------------------------------------------------
+    // 3b. SELFIE
     $selfie_img_name = $_FILES['selfie_photo']['name'] ?? '';
     $selfie_tmp_name = $_FILES['selfie_photo']['tmp_name'] ?? '';
     $selfie_error    = $_FILES['selfie_photo']['error'] ?? UPLOAD_ERR_NO_FILE;
     $final_selfie_name = "";
-
-    $img_name = $_FILES['id_photo']['name'] ?? '';
-    $tmp_name = $_FILES['id_photo']['tmp_name'] ?? '';
-    $error    = $_FILES['id_photo']['error'] ?? UPLOAD_ERR_NO_FILE;
-
-    $final_photo_name = "";
-    $tomorrow         = date("Y-m-d", strtotime("+1 day"));
-
-    if (!file_exists('assets/trash_uploads')) mkdir('assets/trash_uploads', 0777, true);
-    if (!file_exists('assets/uploads')) mkdir('assets/uploads', 0777, true);
-
-    if ($error === UPLOAD_ERR_NO_FILE && empty($old_id_photo)) {
-        $_SESSION['error'] = "Please upload ID photo!";
-        header("location:$back");
-        exit;
-    }
-
-    if ($error !== UPLOAD_ERR_OK && $error !== UPLOAD_ERR_NO_FILE) {
-        $_SESSION['error'] = "An error occurred during file upload. Error Code: " . $error;
-        header("location:$back");
-        exit;
-    }
-
-    if ($selfie_error === UPLOAD_ERR_NO_FILE && empty($old_selfie_photo)) {
-        $_SESSION['error'] = "Please take a selfie!";
-        header("location:$back");
-        exit;
-    }
 
     if ($selfie_error !== UPLOAD_ERR_OK && $selfie_error !== UPLOAD_ERR_NO_FILE) {
         $_SESSION['error'] = "An error occurred during selfie upload. Error Code: " . $selfie_error;
@@ -704,6 +627,18 @@ if (isset($_POST['register'])) {
         }
     }
 
+    // 3c. ID PHOTO
+    $img_name = $_FILES['id_photo']['name'] ?? '';
+    $tmp_name = $_FILES['id_photo']['tmp_name'] ?? '';
+    $error    = $_FILES['id_photo']['error'] ?? UPLOAD_ERR_NO_FILE;
+    $final_photo_name = "";
+
+    if ($error !== UPLOAD_ERR_OK && $error !== UPLOAD_ERR_NO_FILE) {
+        $_SESSION['error'] = "An error occurred during file upload. Error Code: " . $error;
+        header("location:$back");
+        exit;
+    }
+
     if ($error === UPLOAD_ERR_OK && !empty($img_name)) {
 
         $image_trash  = $tomorrow . "_" . $img_name;
@@ -749,7 +684,89 @@ if (isset($_POST['register'])) {
     }
 
     // ---------------------------------------------------------------
-    // 4. ACCOUNT VALIDATION
+    // 3d. NOW everything uploadable is saved -> report problems
+    // ---------------------------------------------------------------
+    if ($upload_error !== '') {
+        $_SESSION['error'] = $upload_error;
+        header("location:$back");
+        exit;
+    }
+
+    if ($final_photo_name === '') {
+        $_SESSION['error'] = "Please upload ID photo!";
+        header("location:$back");
+        exit;
+    }
+
+    if ($final_selfie_name === '') {
+        $_SESSION['error'] = "Please take a selfie!";
+        header("location:$back");
+        exit;
+    }
+
+    // ---------------------------------------------------------------
+    // 4. LANDLORD VALIDATION (uploads are already safe in the session)
+    // ---------------------------------------------------------------
+    if ($type_register === 'landlord') {
+
+        $count_owner_docs    = count($_SESSION['owner_docs']);
+        $count_photo_gallery = count($_SESSION['photo_gallery']);
+
+        if ($count_owner_docs < 1) {
+            $_SESSION['error'] = "Please upload at least 1 Proof of Ownership document.";
+            header("location:$back");
+            exit;
+        }
+
+        if ($count_photo_gallery < 3 || $count_photo_gallery > 10) {
+            $_SESSION['error'] = "Gallery photos uploaded must be 3 to 10 images.";
+            // wrong count -> clear only the gallery so the user re-picks it;
+            // ID, selfie and ownership docs stay saved
+            $_SESSION['photo_gallery'] = [];
+            header("location:$back");
+            exit;
+        }
+
+        if (!is_numeric($latitud) || !is_numeric($longitude) || empty($province1) || empty($municipality1) || empty($barangay1)) {
+            $_SESSION['error'] = "Please select property location using the map control.";
+            header("location:$back");
+            exit;
+        }
+
+        if (empty($property_type) || $property_type == "Select Property type") {
+            $_SESSION['error'] = "Please Select Property Type";
+            header("location:$back");
+            exit;
+        }
+
+        if (empty($property_name)) {
+            $_SESSION['error'] = "Please enter your property name";
+            header("location:$back");
+            exit;
+        }
+
+        if (!isset($_POST['terms_agree'])) {
+            $_SESSION['error'] = "Please agree to the Terms and Conditions.";
+            header("location:$back");
+            exit;
+        }
+
+        // property name must be unique among approved properties
+        $data_status = "Approved";
+        $check = $conn->prepare("SELECT `landlord_id` FROM `landlord` WHERE `property_name` = ? AND `status` = ?");
+        $check->bind_param("ss", $property_name, $data_status);
+        $check->execute();
+        if ($check->get_result()->num_rows > 0) {
+            $_SESSION['error'] = "Property name already exists. Please choose another one.";
+            header("location:$back");
+            exit;
+        }
+
+        $landlord_id = $property_name . '_' . rand(1000, 9999);
+    }
+
+    // ---------------------------------------------------------------
+    // 5. ACCOUNT VALIDATION
     // ---------------------------------------------------------------
     if ($repeat_password !== $password) {
         $_SESSION['error'] = "Password and Repeat Password do not Match!";
@@ -810,8 +827,9 @@ if (isset($_POST['register'])) {
         exit;
     }
 
-  
-
+    // ---------------------------------------------------------------
+    // 6. SEND VERIFICATION EMAIL
+    // ---------------------------------------------------------------
     $verification_code = rand(100000, 999999);
     $expiry_time       = time() + (5 * 60);
 
@@ -836,9 +854,38 @@ if (isset($_POST['register'])) {
     $mail = new PHPMailer(true);
 
     try {
-        include 'vendor/connect_mail.php';
+          /*
+        $mail->isSMTP();
+        $mail->Host       = 'mail.rentspace.asia';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'renthub@rentspace.asia';
+        $mail->Password   = 'paulobubloCflmanZ@123';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
+
+        $mail->setFrom('renthub@rentspace.asia', 'RENTHUB');
+        $mail->addAddress($email, $firstname);
+
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $message;
+        */
+        
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'rentspace4707@gmail.com';
+        $mail->Password   = 'hmmv thkm hoqs gzhi'; 
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        $mail->Port       = 465;
+
+        $mail->setFrom('rentspace4707@gmail.com', 'RENTSPACE');
+        $mail->addAddress($email, $firstname);
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $message;
         $mail->send();
-     
+
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
         // ---------------------------------------------------------------
@@ -913,14 +960,16 @@ if (isset($_POST['register'])) {
             exit;
         }
 
-    } catch (Exception $e) {
-        // if the DB throws, undo the partial inserts (harmless if no transaction is open)
-        try { $conn->rollback(); } catch (Throwable $t) {}
-        error_log("Register Error: " . $e->getMessage() . " | Mailer: " . $mail->ErrorInfo);
-        $_SESSION['error'] = "Registration failed. Please try again.";
-        header("Location: $back");
-        exit;
-    }
+   } catch (Throwable $e) {
+    try { $conn->rollback(); } catch (Throwable $t) {}
+    error_log("Register Error: " . $e->getMessage() . " | Mailer: " . $mail->ErrorInfo);
+
+    // TEMPORARY: show the real reason on screen, remove after debugging
+    $_SESSION['error'] = "DEBUG: " . get_class($e) . " - " . $e->getMessage() . " | Mailer: " . $mail->ErrorInfo;
+
+    header("Location: $back");
+    exit;
+}
 }
 
 
@@ -1095,7 +1144,36 @@ if(isset($_POST['approved_request_account'])){
     $mail = new PHPMailer(true);
 
     try {
-        include 'vendor/connect_mail.php';
+           /*
+        $mail->isSMTP();
+        $mail->Host       = 'mail.rentspace.asia';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'renthub@rentspace.asia';
+        $mail->Password   = 'paulobubloCflmanZ@123';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
+
+        $mail->setFrom('renthub@rentspace.asia', 'RENTHUB');
+        $mail->addAddress($email, $firstname);
+
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $message;
+        */
+        
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'rentspace4707@gmail.com';
+        $mail->Password   = 'hmmv thkm hoqs gzhi'; 
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        $mail->Port       = 465;
+
+        $mail->setFrom('rentspace4707@gmail.com', 'RENTSPACE');
+        $mail->addAddress($email, $firstname);
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $message;
         $mail->send();
 
             
@@ -1169,7 +1247,36 @@ if(isset($_POST['disapproved_request_account'])){
     $mail = new PHPMailer(true);
 
     try {
-        include 'vendor/connect_mail.php';
+           /*
+        $mail->isSMTP();
+        $mail->Host       = 'mail.rentspace.asia';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'renthub@rentspace.asia';
+        $mail->Password   = 'paulobubloCflmanZ@123';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
+
+        $mail->setFrom('renthub@rentspace.asia', 'RENTHUB');
+        $mail->addAddress($email, $firstname);
+
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $message;
+        */
+        
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'rentspace4707@gmail.com';
+        $mail->Password   = 'hmmv thkm hoqs gzhi'; 
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        $mail->Port       = 465;
+
+        $mail->setFrom('rentspace4707@gmail.com', 'RENTSPACE');
+        $mail->addAddress($email, $firstname);
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $message;
         $mail->send();
 
             
@@ -1245,7 +1352,36 @@ if(isset($_POST['forgot_password'])){
         $mail = new PHPMailer(true);
 
         try {
-            include 'vendor/connect_mail.php';
+               /*
+        $mail->isSMTP();
+        $mail->Host       = 'mail.rentspace.asia';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'renthub@rentspace.asia';
+        $mail->Password   = 'paulobubloCflmanZ@123';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
+
+        $mail->setFrom('renthub@rentspace.asia', 'RENTHUB');
+        $mail->addAddress($email, $firstname);
+
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $message;
+        */
+        
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'rentspace4707@gmail.com';
+        $mail->Password   = 'hmmv thkm hoqs gzhi'; 
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        $mail->Port       = 465;
+
+        $mail->setFrom('rentspace4707@gmail.com', 'RENTSPACE');
+        $mail->addAddress($email, $firstname);
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $message;
             $mail->send();
 
 
@@ -1453,7 +1589,36 @@ if (isset($_POST['change_credentials'])) {
             $mail = new PHPMailer(true);
 
             try {
-               include 'vendor/connect_mail.php';
+                  /*
+        $mail->isSMTP();
+        $mail->Host       = 'mail.rentspace.asia';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'renthub@rentspace.asia';
+        $mail->Password   = 'paulobubloCflmanZ@123';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
+
+        $mail->setFrom('renthub@rentspace.asia', 'RENTHUB');
+        $mail->addAddress($email, $firstname);
+
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $message;
+        */
+        
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'rentspace4707@gmail.com';
+        $mail->Password   = 'hmmv thkm hoqs gzhi'; 
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        $mail->Port       = 465;
+
+        $mail->setFrom('rentspace4707@gmail.com', 'RENTSPACE');
+        $mail->addAddress($email, $firstname);
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $message;
                 $mail->send();
 
                 $_SESSION['type'] = "username";
@@ -1523,7 +1688,36 @@ if (isset($_POST['change_credentials'])) {
             $mail = new PHPMailer(true);
 
             try {
-                include 'vendor/connect_mail.php';
+                   /*
+        $mail->isSMTP();
+        $mail->Host       = 'mail.rentspace.asia';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'renthub@rentspace.asia';
+        $mail->Password   = 'paulobubloCflmanZ@123';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
+
+        $mail->setFrom('renthub@rentspace.asia', 'RENTHUB');
+        $mail->addAddress($email, $firstname);
+
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $message;
+        */
+        
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'rentspace4707@gmail.com';
+        $mail->Password   = 'hmmv thkm hoqs gzhi'; 
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        $mail->Port       = 465;
+
+        $mail->setFrom('rentspace4707@gmail.com', 'RENTSPACE');
+        $mail->addAddress($email, $firstname);
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $message;
 
                 $mail->send();
 
@@ -1598,7 +1792,36 @@ if (isset($_POST['change_credentials'])) {
             $mail = new PHPMailer(true);
 
             try {
-                include 'vendor/connect_mail.php';
+                   /*
+        $mail->isSMTP();
+        $mail->Host       = 'mail.rentspace.asia';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'renthub@rentspace.asia';
+        $mail->Password   = 'paulobubloCflmanZ@123';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
+
+        $mail->setFrom('renthub@rentspace.asia', 'RENTHUB');
+        $mail->addAddress($email, $firstname);
+
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $message;
+        */
+        
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'rentspace4707@gmail.com';
+        $mail->Password   = 'hmmv thkm hoqs gzhi'; 
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        $mail->Port       = 465;
+
+        $mail->setFrom('rentspace4707@gmail.com', 'RENTSPACE');
+        $mail->addAddress($email, $firstname);
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $message;
                 $mail->send();
 
                 $_SESSION['type'] = "password&username";
@@ -5335,3 +5558,52 @@ if (isset($_POST['action']) && $_POST['action'] === 'reserve_bed') {
         $respond(false, 'Server error: ' . $e->getMessage());   // alisin ito pag live na
     }
 }
+
+if(isset($_POST['add_interested_apartment'])){
+    $apartment_id = $_POST['apartment_id'] ?? '';
+    $status = "Pending";
+    $get_data = $conn->prepare("SELECT * FROM apartment WHERE apartment_id = ?");
+    $get_data->bind_param("s", $apartment_id);
+    $get_data->execute();
+    $apartment_data = $get_data->get_result();
+
+    if ($apartment_data->num_rows > 0) {
+        while ($row = $apartment_data->fetch_assoc()) {
+            $rent_id = $row['rent_id'];
+        }
+    } else {
+        $_SESSION['error'] = "Apartment not found";
+        header("Location: users/interested.php");
+        exit();
+    }
+
+
+ $get_rent = $conn->prepare("SELECT * FROM rentspace WHERE rent_id = ?");
+$get_rent->bind_param("s", $rent_id);
+$get_rent->execute();
+$result_email = $get_rent->get_result();
+
+if ($result_email->num_rows > 0) {
+    $row = $result_email->fetch_assoc();
+    $landlord_id = $row['landlord_id'];
+}
+
+    $check = $conn->prepare("SELECT 1 FROM `interested` WHERE `user_id` = ? AND `data_id` = ? AND `status` = ?");   
+    $check->bind_param("sss", $user_id_login, $apartment_id, $status);
+    $check->execute();
+    if($check->get_result()->num_rows > 0){
+        $_SESSION['error'] = "You already sent a request for this apartment";
+        header("Location: users/apartment_details.php?id=" . urldecode($rent_id));
+        exit;
+    }
+
+    $insert = $conn->prepare("INSERT INTO interested (user_id, landlord_id, data_id, status, date_sent, time_sent) VALUES (?, ?, ?, ?, ?, ?)");
+    $insert->bind_param("ssssss", $user_id_login, $landlord_id, $apartment_id, $status, $datetoday, $timetoday1);
+    $insert->execute();
+    $_SESSION['success'] = "Successfully Requested, if 3 days doesnt Approved it will automatically Decline";
+    header("Location: users/interested.php");
+    exit;
+
+}
+
+ 

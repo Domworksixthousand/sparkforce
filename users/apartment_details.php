@@ -1,14 +1,11 @@
-
 <?php 
 include '../config.php';
 
-if(isset($_GET['id'])){
-    $rent_id = $_GET['id'];
-}
+$rent_id = $_GET['id'] ?? '';
 
 // RENTSPACE DETAILS
 $get_rent = $conn->prepare("
-    SELECT name, price, image_cover, other_info, landlord_id, user_id, type,rate
+    SELECT name, price, image_cover, other_info, landlord_id, user_id, type, rate
     FROM rentspace 
     WHERE rent_id = ?
 ");
@@ -16,7 +13,8 @@ $get_rent->bind_param("s", $rent_id);
 $get_rent->execute();
 $rent_res = $get_rent->get_result();
 
-$name = $price = $image_cover = $other_info = $landlord_id = $user_id = $type = "";
+$name = $price = $image_cover = $other_info = $landlord_id = $user_id = $type = $rate = "";
+$aparment_id = "";
 
 if ($rent_row = $rent_res->fetch_assoc()) {
     $name        = $rent_row['name'];
@@ -27,7 +25,6 @@ if ($rent_row = $rent_res->fetch_assoc()) {
     $user_id     = $rent_row['user_id'];
     $type        = $rent_row['type'];
     $rate        = $rent_row['rate'];
-    
 }
 
 // APARTMENT UNITS
@@ -37,28 +34,22 @@ $get_apartment->bind_param("s", $rent_id);
 $get_apartment->execute();
 $result_execute = $get_apartment->get_result();
 
-if ($result_execute->num_rows > 0) {
-    while ($row_apar = $result_execute->fetch_assoc()) {
-        $apartments[] = $row_apar;
-    }
+while ($row_apar = $result_execute->fetch_assoc()) {
+    $apartments[] = $row_apar;
+    $aparment_id  = $row_apar['apartment_id'] ?? '';
 }
 
 $totalApartments      = count($apartments);
 $availableApartments  = count(array_filter($apartments, fn($item) => $item['status'] === 'Available'));
-$occupiedApartments   = count(array_filter($apartments, fn($item) => $item['status'] === 'Not Available' || $item['status'] === 'Occupied'));
-$outOfOrderApartments = count(array_filter($apartments, fn($item) => $item['status'] === 'Out of Order'));
 
-// APARTMENT IMAGES / GALLERY
+// GALLERY
 $apartment_images = [];
 $get_gallery = $conn->prepare("SELECT * FROM `gallery2` WHERE `rent_id` = ?");
 $get_gallery->bind_param("s", $rent_id);
 $get_gallery->execute();
 $result_gallery = $get_gallery->get_result();
-
-if ($result_gallery->num_rows > 0) {
-    while ($row_gallery = $result_gallery->fetch_assoc()) {
-        $apartment_images[] = $row_gallery['image'];
-    }
+while ($row_gallery = $result_gallery->fetch_assoc()) {
+    $apartment_images[] = $row_gallery['image'];
 }
 
 // AMENITIES
@@ -81,22 +72,30 @@ while ($row = $amen_res->fetch_assoc()) {
     ];
 }
 
-// Helper function for status badges
 function apartmentStatusBadge($status) {
     switch ($status) {
-        case 'Available':
-            return 'badge-success text-white';
+        case 'Available': return 'badge-success text-white';
         case 'Occupied':
-        case 'Not Available':
-            return 'badge-error text-white';
-        case 'Out of Order':
-            return 'badge-warning text-white';
-        default:
-            return 'badge-neutral';
+        case 'Not Available': return 'badge-error text-white';
+        case 'Out of Order': return 'badge-warning text-white';
+        default: return 'badge-neutral';
     }
 }
 
-
+// Font Awesome stars (full / half / empty)
+function renderFaStars($avg) {
+    $html = '';
+    for ($i = 1; $i <= 5; $i++) {
+        if ($avg >= $i) {
+            $html .= '<i class="fa-solid fa-star"></i>';
+        } elseif ($avg >= $i - 0.5) {
+            $html .= '<i class="fa-solid fa-star-half-stroke"></i>';
+        } else {
+            $html .= '<i class="fa-regular fa-star"></i>';
+        }
+    }
+    return $html;
+}
 
 // LANDLORD DETAILS
 $get_landlord_info = $conn->prepare("SELECT * FROM `landlord` WHERE `landlord_id` = ?");
@@ -105,15 +104,13 @@ $get_landlord_info->execute();
 $result_landlord = $get_landlord_info->get_result();
 
 $province = $municipality = $barangay = $longitude = $latitude = $property_name = "";
-if($result_landlord->num_rows > 0){
-    if($row_landlord = mysqli_fetch_assoc($result_landlord)){
-        $province      = $row_landlord['province'];
-        $municipality  = $row_landlord['municipality'];
-        $barangay      = $row_landlord['barangay'];
-        $longitude     = $row_landlord['longitude'];
-        $latitude      = $row_landlord['latitude'];
-        $property_name = $row_landlord['property_name'];
-    }
+if ($row_landlord = $result_landlord->fetch_assoc()) {
+    $province      = $row_landlord['province'];
+    $municipality  = $row_landlord['municipality'];
+    $barangay      = $row_landlord['barangay'];
+    $longitude     = $row_landlord['longitude'];
+    $latitude      = $row_landlord['latitude'];
+    $property_name = $row_landlord['property_name'];
 }
 
 // ACCOUNT DETAILS
@@ -123,33 +120,95 @@ $account->execute();
 $result_account = $account->get_result();
 
 $contact_number = $email = "";
-if($result_account->num_rows > 0){
-    if($row_account = mysqli_fetch_assoc($result_account)){
-        $contact_number = $row_account['contact_number'];
-        $email          = $row_account['email'];
-    }
+if ($row_account = $result_account->fetch_assoc()) {
+    $contact_number = $row_account['contact_number'];
+    $email          = $row_account['email'];
 }
 
-//favorites
+// ============================================================
+// RATINGS & REVIEWS
+// ============================================================
+$get_avg = $conn->prepare("SELECT AVG(rating) AS avg_rating, COUNT(*) AS review_count FROM `reviews` WHERE `landlord_id` = ?");
+$get_avg->bind_param("s", $landlord_id);
+$get_avg->execute();
+$avg_row      = $get_avg->get_result()->fetch_assoc();
+$avg_rating   = (float)($avg_row['avg_rating'] ?? 0);
+$review_count = (int)($avg_row['review_count'] ?? 0);
+
+// star distribution
+$star_counts = [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0];
+$get_dist = $conn->prepare("SELECT rating, COUNT(*) AS c FROM `reviews` WHERE `landlord_id` = ? GROUP BY rating");
+$get_dist->bind_param("s", $landlord_id);
+$get_dist->execute();
+$dist_res = $get_dist->get_result();
+while ($d = $dist_res->fetch_assoc()) {
+    $r = (int)$d['rating'];
+    if (isset($star_counts[$r])) $star_counts[$r] = (int)$d['c'];
+}
+
+$get_reviews = $conn->prepare("
+    SELECT acc.firstname, acc.middlename, acc.lastname, acc.suffix, acc.username,
+           rv.rating, rv.comment, rv.date_sent, rv.time_sent, rv.review_id
+    FROM `reviews` AS rv
+    LEFT JOIN `accounts` AS acc ON acc.user_id = rv.user_id
+    WHERE rv.landlord_id = ?
+    ORDER BY rv.review_id DESC
+    LIMIT 20
+");
+$get_reviews->bind_param("s", $landlord_id);
+$get_reviews->execute();
+$reviews_res = $get_reviews->get_result();
+
+$reviews = [];
+while ($rv = $reviews_res->fetch_assoc()) {
+    $reviewer = trim(implode(' ', array_filter([
+        $rv['lastname']   ?? '',
+        $rv['firstname']  ?? '',
+        $rv['middlename'] ?? '',
+        $rv['suffix']     ?? '',
+    ])));
+    if ($reviewer === '') {
+        $reviewer = $rv['username'] ?? 'Anonymous';
+    }
+
+    $parts    = preg_split('/\s+/', trim($reviewer));
+    $initials = strtoupper(mb_substr($parts[0] ?? 'A', 0, 1) . (isset($parts[1]) ? mb_substr($parts[1], 0, 1) : ''));
+
+    $ts   = strtotime($rv['date_sent'] ?? '');
+    $date = $ts ? date('M j, Y', $ts) : ($rv['date_sent'] ?? '');
+
+    $reviews[] = [
+        'name'     => $reviewer,
+        'initials' => $initials,
+        'date'     => $date,
+        'rating'   => (int)$rv['rating'],
+        'comment'  => $rv['comment'] ?? '',
+    ];
+}
+
+// Can this user write a review? (not the owner, and hasn't reviewed yet)
+$is_owner     = ($user_id_login === $user_id);
+$has_reviewed = false;
+if (!empty($user_id_login)) {
+    $chk = $conn->prepare("SELECT 1 FROM `reviews` WHERE `landlord_id` = ? AND `user_id` = ?");
+    $chk->bind_param("ss", $landlord_id, $user_id_login);
+    $chk->execute();
+    $has_reviewed = $chk->get_result()->num_rows > 0;
+}
+
+// FAVORITES
 $favorites = $conn->prepare("SELECT * FROM `favorites` WHERE `rent_id` = ?");
 $favorites->bind_param("s", $rent_id);
 $favorites->execute();
 $result_fav = $favorites->get_result();
-if($result_fav->num_rows>0){
-  $switch = "on";
-}else{
-  $switch = "off";
-}
-$hidden = ($user_id_login === $user_id) ? 'hidden' : '';
+$switch = ($result_fav->num_rows > 0) ? "on" : "off";
+$hidden = $is_owner ? 'hidden' : '';
 
-//auto save viewed
-
+// AUTO SAVE VIEWED
 $check = $conn->prepare(
     "SELECT COUNT(*) AS already_viewed
      FROM `rent_views`
-     WHERE `rent_id` = ?
-       AND `user_id` = ?
-       AND `date_viewed` = ?"
+     WHERE `rent_id` = ? AND `user_id` = ? AND `date_viewed` = ?"
 );
 $check->bind_param("sss", $rent_id, $user_id_login, $datetoday);
 $check->execute();
@@ -171,9 +230,8 @@ if ($already_viewed == 0) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google-site-verification" content="u9XxwAs-OvAizH_6uuclWJ-izjdAxNuADcmPGo0UdQE" />
-    <title><?php echo $property_name . '-' . $name; ?></title>
-     <link rel="shortcut icon" href="../assets/images/logo-icon.png" type="image/x-icon"> 
-    <!-- CSS & Frameworks -->
+    <title><?= htmlspecialchars($property_name . '-' . $name); ?></title>
+    <link rel="shortcut icon" href="../assets/images/logo-icon.png" type="image/x-icon"> 
     <link rel="stylesheet" href="../assets/styles/daisy_ui.css">
     <link rel="stylesheet" href="../assets/styles/index.css">
     <script src="../assets/scripts/tailwind.js"></script>
@@ -182,21 +240,26 @@ if ($already_viewed == 0) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        /* clickable star input (row-reverse trick) */
+        .star-input { display:inline-flex; flex-direction:row-reverse; gap:4px; }
+        .star-input input { display:none; }
+        .star-input label { font-size:1.75rem; cursor:pointer; color:#d1d5db; transition:color .15s; }
+        .star-input label:hover,
+        .star-input label:hover ~ label,
+        .star-input input:checked ~ label { color:#facc15; }
+    </style>
 </head>
 <body class="bg-base-200 min-h-screen text-base-content antialiased">
 
- <?php 
-    include '../alerts.php'; 
-  ?>
+<?php include '../alerts.php'; ?>
 
 <div class="drawer lg:drawer-open">
   <input id="my-drawer-3" type="checkbox" class="drawer-toggle" />
   
-  <!-- MAIN CONTENT CONTAINER -->
   <div class="drawer-content flex flex-col">
     
-    <!-- Mobile Top Header -->
-    <header class="flex items-center py-3 px-2 bg-base-100 shadow-sm  lg:hidden sticky top-0 z-30">
+    <header class="flex items-center py-3 px-2 bg-base-100 shadow-sm lg:hidden sticky top-0 z-30">
       <div class="flex-none">
         <label for="my-drawer-3" class="btn btn-square btn-ghost">
           <i class="fa-solid fa-bars text-xl"></i>
@@ -208,82 +271,116 @@ if ($already_viewed == 0) {
     </header>
 
     <main class="p-4 md:p-8 max-w-7xl mx-auto w-full space-y-6">
-    <div class="flex justify-end items-end">
-        <a href="properties.php"><img src="../assets/images/back.png"></a>
-    </div>
-      <!-- HERO BANNER / COVER SECTION -->
+      <div class="flex justify-end items-end">
+        <a href="properties.php"><img src="../assets/images/back.png" alt="Back"></a>
+      </div>
+
+      <!-- HERO -->
+      <?php $is_fav = ($switch == 'on'); ?>
       <div class="bg-base-100 rounded-2xl p-4 md:p-6 shadow-sm border border-base-300">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          <!-- Cover Image -->
+
           <div class="lg:col-span-2">
             <div class="relative h-64 sm:h-80 md:h-[360px] w-full rounded-xl overflow-hidden bg-base-300 group shadow-inner">
-              <img src="../assets/uploads/<?= htmlspecialchars($image_cover); ?>" 
-                   alt="<?= htmlspecialchars($name); ?>" 
-                   class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                   onerror="this.src='../assets/images/placeholder.jpg';" />
+
+              <img src="../assets/uploads/<?= htmlspecialchars($image_cover); ?>"
+                  alt="<?= htmlspecialchars($name); ?>"
+                  class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  onerror="this.src='../assets/images/placeholder.jpg';" />
+
               <div class="absolute top-4 left-4">
                 <span class="badge badge-success text-white badge-lg gap-2 shadow-md">
                   <i class="fa-solid fa-building"></i> Apartment
                 </span>
               </div>
-            <a href="report.php?user_id=<?php echo urlencode($user_id); ?>&location_back=apartment_details.php&id=<?php echo urlencode($rent_id); ?>&report_type=Post" class="<?php echo $hidden; ?> tooltip tooltip-left absolute bottom-4 right-27 lg:top-4 h-fit text-blue-900 bg-green-300 hover:bg-blue-200 active:bg-red-400 rounded-lg p-1.5 flex items-center justify-center transition-all cursor-pointer border-none outline-none" data-tip="Report">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-circle-warning-icon lucide-message-circle-warning"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
-            </a>
-            <a href="chat_portal.php?id=<?php echo urlencode($user_id); ?>" class="<?php echo $hidden; ?> tooltip tooltip-left absolute bottom-4 right-15 lg:top-4 h-fit text-blue-900 bg-green-300 hover:bg-blue-200 active:bg-red-400 rounded-lg p-1.5 flex items-center justify-center transition-all cursor-pointer border-none outline-none" data-tip="Message Landlord">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-square-text-icon lucide-message-square-text"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/><path d="M7 11h10"/><path d="M7 15h6"/><path d="M7 7h8"/></svg>
-          </a>
-          <form action="../functions.php" method="POST" class="tooltip tooltip-left absolute bottom-4 right-4 h-fit lg:top-4 " data-tip="<?php echo ($switch == 'on') ? 'Remove from Favorites' : 'Add to my Favorites'; ?>">
 
-              <input type="hidden" name="type" value="<?php echo $type; ?>">
-              <input type="hidden" name="locate" value="apartment_details.php">
-              <input type="hidden" name="rent_id" value="<?php echo $rent_id; ?>">
-              <input type="hidden" name="current_status" value="<?php echo $switch; ?>">
+              <div class="absolute top-4 right-4 z-10 flex items-center gap-2">
 
-              <button type="submit" name="add_favorite_btn" value="1" class="bg-green-300 hover:bg-red-200 active:bg-red-400 rounded-lg p-1 flex items-center justify-center transition-all cursor-pointer border-none outline-none">
-                  
+                <!-- Report -->
+                <div class="<?= $hidden; ?>">
+                  <div class="tooltip tooltip-left" data-tip="Report">
+                    <a href="report.php?user_id=<?= urlencode($user_id); ?>&location_back=apartment_details.php&id=<?= urlencode($rent_id); ?>&report_type=Post"
+                      aria-label="Report this post"
+                      class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm text-emerald-700 shadow-md hover:bg-emerald-600 hover:text-white active:scale-95 transition-all">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                    </a>
+                  </div>
+                </div>
 
-                  <svg xmlns="http://www.w3.org/2000/svg" 
-                      width="28" 
-                      height="28" 
-                      viewBox="0 0 24 24" 
-                      fill="<?php echo ($switch == 'on') ? '#dc2626' : 'none'; ?>" 
-                      stroke="<?php echo ($switch == 'on') ? '#dc2626' : 'currentColor'; ?>" 
-                      stroke-width="2" 
-                      stroke-linecap="round" 
-                      stroke-linejoin="round" 
-                      class="<?php echo ($switch == 'on') ? 'text-red-600' : 'text-red-800 hover:fill-red-600 hover:text-red-600'; ?> transition-colors">
-                    <path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/>
-                  </svg>
+                <!-- Message landlord -->
+                <div class="<?= $hidden; ?>">
+                  <div class="tooltip tooltip-left" data-tip="Message Landlord">
+                    <a href="chat_portal.php?id=<?= urlencode($user_id); ?>"
+                      aria-label="Message landlord"
+                      class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm text-emerald-700 shadow-md hover:bg-emerald-600 hover:text-white active:scale-95 transition-all">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/><path d="M7 11h10"/><path d="M7 15h6"/><path d="M7 7h8"/></svg>
+                    </a>
+                  </div>
+                </div>
 
-              </button>
-          </form>
-          
+                <form action="../functions.php" method="POST" class="flex items-center gap-2">
+                  <input type="hidden" name="type" value="<?= htmlspecialchars($type); ?>">
+                  <input type="hidden" name="locate" value="apartment_details.php">
+                  <input type="hidden" name="rent_id" value="<?= htmlspecialchars($rent_id); ?>">
+                  <input type="hidden" name="current_status" value="<?= htmlspecialchars($switch); ?>">
+                  <input type="hidden" name="apartment_id" value="<?= htmlspecialchars($aparment_id); ?>">
+
+                  <!-- Heart -->
+                  <div class="tooltip tooltip-left" data-tip="Interested">
+                    <button type="submit" name="add_apartment_interested" value="1"
+                            aria-label="Interested"
+                            class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm shadow-md hover:bg-red-50 active:scale-95 transition-all cursor-pointer border-none outline-none <?= $is_fav ? 'text-red-600' : 'text-slate-600 hover:text-red-600'; ?>">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                          fill="<?= $is_fav ? 'currentColor' : 'none'; ?>" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/>
+                      </svg>
+                    </button>
+                  </div>
+
+                  <!-- House-heart -->
+                  <div class="tooltip tooltip-left" data-tip="<?= $is_fav ? 'Remove from Interested' : 'Add to Interested'; ?>">
+                    <button type="submit" name="add_interested_apartment" value="1"
+                            aria-label="<?= $is_fav ? 'Remove from Interested' : 'Add to Interested'; ?>"
+                            class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm shadow-md hover:bg-red-50 active:scale-95 transition-all cursor-pointer border-none outline-none <?= $is_fav ? 'text-red-600' : 'text-slate-600 hover:text-red-600'; ?>">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.62 13.8A2.25 2.25 0 1 1 12 10.836a2.25 2.25 0 1 1 3.38 2.966l-2.626 2.856a.998.998 0 0 1-1.507 0z"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                    </button>
+                  </div>
+                </form>
+
+              </div>
             </div>
           </div>
 
-          <!-- Quick Summary Side Panel -->
+          <!-- Summary -->
           <div class="flex flex-col justify-between space-y-4">
             <div>
               <h1 class="text-2xl md:text-3xl font-extrabold text-base-content">
-              <?= htmlspecialchars(mb_strlen($name) > 22 ? mb_substr($name, 0, 22) . '...' : $name); ?>
+                <?= htmlspecialchars(mb_strlen($name) > 22 ? mb_substr($name, 0, 22) . '...' : $name); ?>
               </h1>
-              <p class="text-sm text-base-content/70 mt-1 flex items-center gap-1.5">
-                <i class="fa-solid fa-location-dot text-error"></i> 
+
+              <!-- rating summary (jumps to reviews) -->
+              <a href="#reviews" class="flex items-center gap-2 mt-1">
+                <span class="flex text-warning text-sm gap-0.5"><?= renderFaStars($avg_rating); ?></span>
+                <span class="text-sm font-semibold"><?= $review_count ? number_format($avg_rating, 1) : 'No ratings'; ?></span>
+                <?php if ($review_count): ?>
+                  <span class="text-xs text-base-content/60">(<?= $review_count; ?>)</span>
+                <?php endif; ?>
+              </a>
+
+              <p class="text-sm text-base-content/70 mt-2 flex items-center gap-1.5">
+                <i class="fa-solid fa-location-dot text-error"></i>
                 <?= htmlspecialchars("$barangay, $municipality, $province"); ?>
               </p>
 
               <div class="divider my-3"></div>
 
-              <!-- Price Box -->
               <div class="bg-primary/10 p-4 rounded-xl border border-primary/20">
                 <span class="text-xs font-semibold text-success uppercase tracking-wider">Rental Rent</span>
                 <div class="text-3xl font-black text-success mt-1">
-                  ₱<?= number_format((float) $price, 2); ?> <span class="text-sm font-normal text-base-content/70">/ <?php echo $rate;  ?></span>
+                  ₱<?= number_format((float) $price, 2); ?> <span class="text-sm font-normal text-base-content/70">/ <?= htmlspecialchars($rate); ?></span>
                 </div>
               </div>
 
-              <!-- Apartment Units Overview Stats -->
               <div class="grid grid-cols-2 gap-3 mt-4">
                 <div class="stat bg-base-200/60 p-3 rounded-xl">
                   <div class="stat-title text-xs">Total Units</div>
@@ -296,7 +393,6 @@ if ($already_viewed == 0) {
               </div>
             </div>
 
-            <!-- Landlord Contact Box -->
             <div class="p-4 bg-base-200/50 rounded-xl border border-base-300 space-y-2">
               <p class="text-xs font-bold text-base-content/60 uppercase tracking-wider">Property Contact</p>
               <p class="text-sm font-semibold flex items-center gap-2">
@@ -311,23 +407,20 @@ if ($already_viewed == 0) {
         </div>
       </div>
 
-      <!-- DETAILS, UNITS & MAP SECTION -->
+      <!-- DETAILS, UNITS & MAP -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        <!-- Left 2-Cols: Info, Amenities, & Apartment Units -->
         <div class="lg:col-span-2 space-y-6">
 
-          <!-- About Apartment -->
           <div class="bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300">
             <h2 class="text-lg font-bold mb-3 flex items-center gap-2">
               <i class="fa-solid fa-circle-info text-success"></i> About This Apartment
             </h2>
             <p class="text-base-content/80 text-sm leading-relaxed whitespace-pre-line">
-              <?= $other_info ?: 'No description available for this apartment space.'; ?>
+              <?= $other_info ? htmlspecialchars($other_info) : 'No description available for this apartment space.'; ?>
             </p>
           </div>
 
-          <!-- Amenities List -->
           <div class="bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300">
             <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
               <i class="fa-solid fa-square-check text-success"></i> Apartment Features & Amenities
@@ -346,7 +439,6 @@ if ($already_viewed == 0) {
             <?php endif; ?>
           </div>
 
-          <!-- Apartment Units List -->
           <div class="bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300">
             <div class="flex items-center justify-between mb-4">
               <h2 class="text-lg font-bold flex items-center gap-2">
@@ -360,27 +452,19 @@ if ($already_viewed == 0) {
                 <?php foreach ($apartments as $apar): ?>
                   <?php 
                     $apar_status = $apar['status'] ?? 'Available';
-                    $apar_num    = $apar['apartment_no'] ?? $apar['apartment_id'] ?? 'Unit';
-                    $apar_img    = $apar['image'] ?? '';
                     $apar_price  = $apar['price'] ?? $price;
                   ?>
                   <div class="border border-base-300 rounded-xl p-4 flex gap-4 items-center bg-base-100 hover:border-primary transition-all shadow-2xs">
-
-
-                    <!-- Unit Info -->
                     <div class="flex-1 min-w-0">
                       <div class="flex items-center justify-between gap-1">
-                        <h3 class="font-bold text-base truncate">Unit #<?= htmlspecialchars($apar_num); ?></h3>
+                        <h3 class="font-bold text-base truncate"><?= htmlspecialchars($name); ?></h3>
                         <span class="badge badge-sm <?= apartmentStatusBadge($apar_status); ?>">
                           <?= htmlspecialchars($apar_status); ?>
                         </span>
                       </div>
-                      
                       <p class="text-xs font-semibold text-success mt-1">
                         ₱<?= number_format((float)$apar_price, 2); ?> <span class="font-normal text-base-content/60">/ mo</span>
                       </p>
-
-              
                     </div>
                   </div>
                 <?php endforeach; ?>
@@ -395,7 +479,6 @@ if ($already_viewed == 0) {
 
         </div>
 
-        <!-- Right 1-Col: Leaflet Map -->
         <div class="space-y-6">
           <div class="bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300 sticky top-6">
             <h2 class="text-lg font-bold mb-3 flex items-center gap-2">
@@ -404,18 +487,137 @@ if ($already_viewed == 0) {
             <p class="text-xs text-base-content/60 mb-3">
               <?= htmlspecialchars("$barangay, $municipality, $province"); ?>
             </p>
-            
-            <!-- Map Element -->
             <div id="map" class="w-full h-72 rounded-xl border border-base-300 z-10"></div>
           </div>
         </div>
 
       </div>
 
-      <!-- MASONRY GALLERY SECTION (LOWER PART) -->
+      <!-- ============================================ -->
+      <!-- RATINGS & COMMENTS (own card, no longer nested in gallery) -->
+      <!-- ============================================ -->
+      <div id="reviews" class="bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300 space-y-6 scroll-mt-6">
+
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-base-200">
+          <div>
+            <h2 class="text-lg font-bold flex items-center gap-2">
+              <i class="fa-solid fa-star text-warning"></i> Ratings & Reviews
+            </h2>
+            <p class="text-xs text-base-content/60">See what past visitors say about this space</p>
+          </div>
+          <span class="badge badge-success badge-outline font-semibold">
+            <?= $review_count; ?> Review<?= $review_count === 1 ? '' : 's'; ?>
+          </span>
+        </div>
+
+        <!-- Summary: average + breakdown -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="flex flex-col items-center justify-center bg-base-200/60 border border-base-300 rounded-xl p-6">
+            <div class="text-5xl font-black text-warning"><?= $review_count ? number_format($avg_rating, 1) : '0.0'; ?></div>
+            <div class="flex text-warning text-lg gap-0.5 mt-2"><?= renderFaStars($avg_rating); ?></div>
+            <p class="text-xs text-base-content/60 mt-1">
+              <?= $review_count ? "Based on $review_count review" . ($review_count > 1 ? 's' : '') : 'No reviews yet'; ?>
+            </p>
+          </div>
+
+          <div class="md:col-span-2 space-y-2 self-center">
+            <?php foreach ($star_counts as $star => $cnt):
+                $pct = $review_count ? round(($cnt / $review_count) * 100) : 0; ?>
+              <div class="flex items-center gap-3 text-sm">
+                <span class="w-10 flex items-center gap-1 font-semibold"><?= $star; ?> <i class="fa-solid fa-star text-warning text-xs"></i></span>
+                <progress class="progress progress-warning flex-1" value="<?= $pct; ?>" max="100"></progress>
+                <span class="w-8 text-right text-xs text-base-content/60"><?= $cnt; ?></span>
+              </div>
+            <?php endforeach; ?>
+          </div>
+        </div>
+
+        <!-- Write a review -->
+        <?php if ($is_owner): ?>
+          <div class="alert bg-base-200 text-sm">
+            <i class="fa-solid fa-circle-info text-success"></i>
+            <span>You can't review your own property.</span>
+          </div>
+        <?php elseif ($has_reviewed): ?>
+          <div class="alert alert-success text-white text-sm">
+            <i class="fa-solid fa-check"></i>
+            <span>You already reviewed this property. Thank you!</span>
+          </div>
+        <?php else: ?>
+          <form action="../functions.php" method="POST" class="border border-base-300 rounded-xl p-4 space-y-4 bg-base-100">
+            <input type="hidden" name="landlord_id" value="<?= htmlspecialchars($landlord_id); ?>">
+            <input type="hidden" name="rent_id" value="<?= htmlspecialchars($rent_id); ?>">
+            <input type="hidden" name="redirect" value="users/apartment_details.php">
+
+            <h3 class="font-bold text-base">Write a review</h3>
+
+            <div>
+              <label class="block text-xs font-semibold text-base-content/70 mb-1">Your rating <span class="text-error">*</span></label>
+              <div class="star-input">
+                <input type="radio" id="star5" name="rating" value="5" required><label for="star5" title="5 stars"><i class="fa-solid fa-star"></i></label>
+                <input type="radio" id="star4" name="rating" value="4"><label for="star4" title="4 stars"><i class="fa-solid fa-star"></i></label>
+                <input type="radio" id="star3" name="rating" value="3"><label for="star3" title="3 stars"><i class="fa-solid fa-star"></i></label>
+                <input type="radio" id="star2" name="rating" value="2"><label for="star2" title="2 stars"><i class="fa-solid fa-star"></i></label>
+                <input type="radio" id="star1" name="rating" value="1"><label for="star1" title="1 star"><i class="fa-solid fa-star"></i></label>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-base-content/70 mb-1">Comment <span class="text-error">*</span></label>
+              <textarea name="comment" rows="4" maxlength="1000" required
+                        class="textarea textarea-bordered w-full"
+                        placeholder="Share your experience with this property..."></textarea>
+            </div>
+
+            <div class="flex justify-end">
+              <button type="submit" name="submit_review" class="btn btn-success text-white gap-2">
+                <i class="fa-solid fa-paper-plane"></i> Submit Review
+              </button>
+            </div>
+          </form>
+        <?php endif; ?>
+
+        <!-- Reviews list -->
+        <div class="space-y-4">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-base-content/50">Recent Comments</h4>
+
+          <?php if (!empty($reviews)): ?>
+            <?php foreach ($reviews as $rv): ?>
+              <div class="p-4 rounded-xl border border-base-200 bg-base-100 space-y-2 hover:border-emerald-500/30 transition-all">
+                <div class="flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="w-9 h-9 rounded-full bg-emerald-500/10 text-emerald-700 font-bold flex items-center justify-center text-xs flex-shrink-0">
+                      <?= htmlspecialchars($rv['initials']); ?>
+                    </div>
+                    <div class="min-w-0">
+                      <h4 class="font-bold text-sm text-base-content truncate"><?= htmlspecialchars($rv['name']); ?></h4>
+                      <span class="text-[11px] text-base-content/50"><?= htmlspecialchars($rv['date']); ?></span>
+                    </div>
+                  </div>
+                  <div class="flex text-warning text-xs gap-0.5 flex-shrink-0">
+                    <?= renderFaStars($rv['rating']); ?>
+                  </div>
+                </div>
+                <p class="text-sm text-base-content/80 sm:pl-12 leading-relaxed break-words">
+                  <?= nl2br(htmlspecialchars($rv['comment'])); ?>
+                </p>
+              </div>
+            <?php endforeach; ?>
+          <?php else: ?>
+            <div class="text-center py-8 text-base-content/50 bg-base-200/50 rounded-xl">
+              <i class="fa-regular fa-comments text-3xl mb-2 block"></i>
+              <p class="text-sm">No comments yet. Be the first to review!</p>
+            </div>
+          <?php endif; ?>
+        </div>
+
+      </div>
+
+      <!-- GALLERY -->
       <div class="bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300">
-        <div class="flex  justify-between mb-6 pb-3 border-b border-base-200 flex-col lg:flex-row ">
-          <div class="mb-3 ">
+        <div class="flex justify-between mb-6 pb-3 border-b border-base-200 flex-col lg:flex-row">
+          <div class="mb-3 lg:mb-0">
             <h2 class="text-xl font-bold flex items-center gap-2 text-base-content">
               <i class="fa-solid fa-images text-success"></i> Photo Gallery
             </h2>
@@ -427,18 +629,16 @@ if ($already_viewed == 0) {
         </div>
 
         <?php if (!empty($apartment_images)): ?>
-          <!-- CSS Masonry Grid Layout -->
           <div class="columns-2 sm:columns-3 md:columns-4 gap-4 space-y-4">
             <?php foreach ($apartment_images as $img): ?>
               <div class="break-inside-avoid rounded-xl overflow-hidden border border-base-200 shadow-2xs hover:shadow-md transition-all group bg-base-200 relative">
-               <a href="../assets/uploads/<?= htmlspecialchars($img); ?>" target="_blank" class="block">
-                <img src="../assets/uploads/<?= htmlspecialchars($img); ?>" 
-                    alt="Gallery Image" 
-                    class="w-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
-                    loading="lazy"
-                    onerror="this.src='../assets/images/placeholder.jpg';" />
+                <a href="../assets/uploads/<?= htmlspecialchars($img); ?>" target="_blank" class="block">
+                  <img src="../assets/uploads/<?= htmlspecialchars($img); ?>" 
+                       alt="Gallery Image" 
+                       class="w-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
+                       loading="lazy"
+                       onerror="this.src='../assets/images/placeholder.jpg';" />
                 </a>
-                <!-- Hover Overlay -->
                 <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                   <i class="fa-solid fa-magnifying-glass-plus text-white text-lg"></i>
                 </div>
@@ -456,19 +656,18 @@ if ($already_viewed == 0) {
     </main>
   </div>
 
-  <!-- SIDEBAR (OTHER ROOMS / APARTMENTS) -->
+  <!-- SIDEBAR -->
   <div class="drawer-side z-40">
     <label for="my-drawer-3" aria-label="close sidebar" class="drawer-overlay"></label>
     <aside class="bg-base-100 min-h-full w-80 p-5 border-r border-base-300 flex flex-col justify-between">
       <div>
-        <!-- Brand Header -->
         <div class="flex items-center gap-3 mb-6 pb-4 border-b border-base-200">
           <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <img src="../assets/images/logo-icon.png" class="w-6 h-6 object-contain" alt="Logo" onerror="this.src='assets/images/placeholder.png';">
+            <img src="../assets/images/logo-icon.png" class="w-6 h-6 object-contain" alt="Logo" onerror="this.src='../assets/images/placeholder.png';">
           </div>
           <div class="min-w-0 flex-1">
             <h2 class="font-bold text-base text-base-content truncate">
-              <?= htmlspecialchars($property_name ?: 'RentSpace'); ?>
+              <?= htmlspecialchars($property_name ?: 'RentHub'); ?>
             </h2>
             <span class="text-xs text-base-content/60 flex items-center gap-1">
               <i class="fa-solid fa-building text-success text-[10px]"></i> Landlord Listings
@@ -476,7 +675,6 @@ if ($already_viewed == 0) {
           </div>
         </div>
 
-        <!-- Sidebar Navigation List -->
         <ul class="menu p-0 w-full gap-1">
           <li class="menu-title px-2 text-xs font-bold uppercase tracking-wider text-base-content/50">
             Other Listings
@@ -499,7 +697,7 @@ if ($already_viewed == 0) {
                   $other_price = $data_get['price'] ?? 0;
                   $other_img   = $data_get['image_cover'] ?? '';
 
-                  $isActive = ($other_id == $rent_id) ? 'active bg-success text-white  font-semibold' : 'hover:bg-base-200 text-base-content';
+                  $isActive = ($other_id == $rent_id) ? 'active bg-success text-white font-semibold' : 'hover:bg-base-200 text-base-content';
                   ?>
                   <li>
                     <a href="?id=<?= urlencode($other_id); ?>" 
@@ -529,7 +727,6 @@ if ($already_viewed == 0) {
         </ul>
       </div>
 
-      <!-- Footer -->
       <div class="border-t border-base-200 pt-4 mt-6">
         <div class="flex items-center justify-between text-xs text-base-content/60 px-1">
           <span>© <?= date('Y'); ?> RentSpace</span>
@@ -540,16 +737,15 @@ if ($already_viewed == 0) {
   </div>
 </div>
 
-<!-- Scripts -->
 <script src="../assets/scripts/jquery.js"></script>
 <script src="../assets/scripts/index.js"></script>
 
-<!-- Leaflet Map Setup -->
 <script>
   $(document).ready(function() {
-    var lat = <?= !empty($latitude) ? $latitude : '13.7565'; ?>;
-    var lng = <?= !empty($longitude) ? $longitude : '121.0583'; ?>;
+    var lat = <?= is_numeric($latitude) ? $latitude : '13.7565'; ?>;
+    var lng = <?= is_numeric($longitude) ? $longitude : '121.0583'; ?>;
     var propertyName = <?= json_encode($property_name); ?>;
+    var barangayName = <?= json_encode($barangay); ?>;
 
     var map = L.map('map').setView([lat, lng], 15);
 
@@ -558,14 +754,13 @@ if ($already_viewed == 0) {
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    L.marker([lat, lng]).addTo(map)
-      .bindPopup('<b>' + propertyName + '</b><br><?= htmlspecialchars($barangay); ?>')
-      .openPopup();
-  });
+    var popup = document.createElement('div');
+    popup.innerHTML = '<b></b><br><span></span>';
+    popup.querySelector('b').textContent = propertyName;
+    popup.querySelector('span').textContent = barangayName;
 
-  function openApartmentModal(apartmentId) {
-    console.log("Selected Apartment ID:", apartmentId);
-  }
+    L.marker([lat, lng]).addTo(map).bindPopup(popup).openPopup();
+  });
 </script>
 
 </body>

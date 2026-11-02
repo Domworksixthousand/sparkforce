@@ -200,6 +200,31 @@ document.addEventListener("DOMContentLoaded", ()=> {
 
 });
 
+
+    //get
+document.addEventListener("DOMContentLoaded", ()=> {
+
+        function fetchData() {
+        $.ajax({
+            url: "fetch_interested.php",
+            method: "GET",
+            success: function(data) {
+                $("#pending_interested").html(data);
+            },
+            error: function() {
+                $("#pending_interested").html("Error loading data");
+            }
+        });
+    }
+
+
+    setInterval(fetchData, 2000);
+
+
+    fetchData();
+
+});
+
 document.addEventListener("DOMContentLoaded", ()=> {
 
         function fetchData() {
@@ -224,12 +249,22 @@ document.addEventListener("DOMContentLoaded", ()=> {
 });
 
 
-/*
-  document.addEventListener("DOMContentLoaded", function(){
-      async function pollData() {
+
+document.addEventListener("DOMContentLoaded", function() {
+    async function pollData() {
         try {
-            let response = await fetch('noti_messages.php'); 
+            let response = await fetch('noti_messages.php');
             let result = await response.text();
             
             document.getElementById('get_mess').innerHTML = result;
-*/
+        } catch (error) {
+            console.error('Error fetching messages:', error);
+        }
+    }
+
+    // Tawagin ang function kapag loaded na ang DOM
+    pollData();
+
+    // Opsyonal: Kung gusto mong mag-poll ulit bawat ilang segundo (halimbawa: every 5 seconds)
+    // setInterval(pollData, 5000);
+});

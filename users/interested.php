@@ -31,6 +31,31 @@ function getInterestDetail($conn, $type, $data_id, $property_name) {
                 'link'   => 'boarding_details.php?id=' . urlencode($b['rent_id']),
             ];
 
+        case 'Apartment':
+            // data_id dito = apartment_id (hindi rent_id)
+            $q = $conn->prepare("
+                SELECT a.apartment_id, a.apartment_type, a.status, a.rent_id,
+                       r.name, r.price, r.rate, r.image_cover
+                FROM apartment AS a
+                LEFT JOIN rentspace AS r ON r.rent_id = a.rent_id
+                WHERE a.apartment_id = ?
+            ");
+            $q->bind_param("s", $data_id);
+            $q->execute();
+            $a = $q->get_result()->fetch_assoc();
+            if (!$a) return null;
+            return [
+                'title'  => $a['name'] ?? 'Apartment',
+                'image'  => '../assets/uploads/' . $a['image_cover'],
+                'status' => $a['status'],
+                'fields' => [
+                    'Type'     => $a['apartment_type'],
+                    'Price'    => '₱' . number_format((float)$a['price'], 2) . ' / ' . ($a['rate'] ?: 'month'),
+                    'Property' => $property_name,
+                ],
+                'link'   => 'apartment_details.php?id=' . urlencode($a['rent_id']),
+            ];
+
         case 'Commercial Space':
             // TODO: palitan ng actual table/columns ng commercial mo
             $q = $conn->prepare("SELECT rent_id, name, price, image_cover, other_info
@@ -50,7 +75,7 @@ function getInterestDetail($conn, $type, $data_id, $property_name) {
                 'link'   => null, // TODO: e.g. 'commercial_details.php?id=' . urlencode($r['rent_id'])
             ];
 
-        default: // Apartment, etc. (rentspace muna)
+        default: // fallback (rentspace muna)
             $q = $conn->prepare("SELECT rent_id, name, price, image_cover
                                  FROM rentspace WHERE rent_id = ?");
             $q->bind_param("s", $data_id);
@@ -174,6 +199,10 @@ function getInterestDetail($conn, $type, $data_id, $property_name) {
                         $bg_color = 'bg-warning';
                     } elseif ($status === "Decline") {
                         $bg_color = 'bg-error';
+                    } elseif ($status === "Reserved") {
+                        $bg_color = 'bg-primary';
+                    } elseif ($status === "Completed") {
+                        $bg_color = 'bg-primary text-white';
                     } else {
                         $bg_color = 'bg-success';
                     }
@@ -221,8 +250,7 @@ function getInterestDetail($conn, $type, $data_id, $property_name) {
         <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2 z-10">✕</button>
       </form>
       <div class="w-full h-64 sm:h-96 bg-base-200">
-        <img id="info_img" src="" alt="" class="w-full h-full object-cover"
-             onerror="this.src='../assets/images/placeholder-bed.jpg';" />
+        <img id="info_img" src="" alt="" class="w-full h-full object-cover" />
       </div>
       <div class="p-6 space-y-4">
         <div class="flex items-center justify-between">
@@ -254,6 +282,8 @@ function getInterestDetail($conn, $type, $data_id, $property_name) {
       if (!d.status) st.classList.add('hidden');
       else if (d.status === 'Available') st.classList.add('badge-success', 'text-white');
       else if (d.status === 'Occupied') st.classList.add('badge-error', 'text-white');
+      else if (d.status === 'Reserved') st.classList.add('badge-primary', 'text-white');
+      else if (d.status === 'Completed') st.classList.add('badge-secondary', 'text-white');
       else st.classList.add('badge-ghost');
 
       // Dynamic fields (kahit ilan, depende sa type)

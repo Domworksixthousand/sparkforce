@@ -15,6 +15,8 @@
     <script src="assets/scripts/daisy_ui.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- FontAwesome Icons (for rating stars) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
@@ -120,7 +122,7 @@
                     <span class="flex  flex-col lg:flex-row">
                     <input type="text" name="min" class="numbers_only input border-gray-300  mb-3 lg:mb-0 lg:me-3 w-[100%] rounded-[10px]  placeholder:text-black text-black" placeholder="Price Min">
                     <input type="text" name="max"  class="numbers_only input  border-gray-300 w-[100%] placeholder:text-black rounded-[10px] text-black" placeholder="Price Max">
-                    </span>x
+                    </span>
                 </div>
                 <div class="text-start w-[100%]">
                     <span>
@@ -357,6 +359,21 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-5">
           <?php
 
+          // Helper: Font Awesome stars (full / half / empty)
+          function renderFaStars($avg) {
+              $html = '';
+              for ($i = 1; $i <= 5; $i++) {
+                  if ($avg >= $i) {
+                      $html .= '<i class="fa-solid fa-star"></i>';
+                  } elseif ($avg >= $i - 0.5) {
+                      $html .= '<i class="fa-solid fa-star-half-stroke"></i>';
+                  } else {
+                      $html .= '<i class="fa-regular fa-star"></i>';
+                  }
+              }
+              return $html;
+          }
+
           $limit = 12;
           $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
           if ($page < 1) { $page = 1; }
@@ -375,7 +392,10 @@
           $total_pages = ceil($total_rentals / $limit);
 
           $get_rental = $conn->prepare("
-              SELECT r.*, l.province, l.municipality, l.barangay, l.property_name, r.rate, acc.user_id, l.user_id, acc.status
+              SELECT r.*, l.province, l.municipality, l.barangay, l.property_name, r.rate,
+                     acc.user_id, l.user_id, acc.status,
+                     (SELECT AVG(rv.rating) FROM reviews rv WHERE rv.landlord_id = r.landlord_id) AS avg_rating,
+                     (SELECT COUNT(*)       FROM reviews rv WHERE rv.landlord_id = r.landlord_id) AS review_count
               FROM rentspace r
               LEFT JOIN landlord l ON l.landlord_id = r.landlord_id
               LEFT JOIN accounts acc ON l.user_id = acc.user_id
@@ -396,6 +416,21 @@
                   $property_name = htmlspecialchars($row_rentals['property_name'] ?? '');
                   $rate = htmlspecialchars($row_rentals['rate'] ?? '');
                   $price        = $row_rentals['price'] ?? 0;
+
+                  // Ratings (per landlord / property)
+                  $avg_rating   = (float)($row_rentals['avg_rating'] ?? 0);
+                  $review_count = (int)($row_rentals['review_count'] ?? 0);
+
+                  if ($review_count > 0) {
+                      $rating_html = '
+                          <div class="flex items-center gap-1.5 mb-3">
+                              <div class="flex text-yellow-400 text-[0.7rem] gap-0.5">' . renderFaStars($avg_rating) . '</div>
+                              <span class="text-xs font-semibold text-gray-600">' . number_format($avg_rating, 1) . '</span>
+                              <span class="text-xs text-gray-400">(' . $review_count . ')</span>
+                          </div>';
+                  } else {
+                      $rating_html = '<div class="mb-3 text-xs text-gray-400">No reviews yet</div>';
+                  }
 
                   $location = trim(
                       ($row_rentals['barangay'] ?? '') . ', ' .
@@ -460,13 +495,15 @@
                               ' . $name . '
                           </h2>
 
-                          <div class="flex items-center gap-1 text-xs text-gray-500 mb-3 truncate">
+                          <div class="flex items-center gap-1 text-xs text-gray-500 mb-2 truncate">
                               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0">
                                   <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
                                   <circle cx="12" cy="10" r="3"/>
                               </svg>
                               <span class="truncate">' . ($location !== '' ? $location : 'Location not set') . '</span>
                           </div>
+
+                          ' . $rating_html . '
 
                           <div class="mt-auto flex items-center justify-between pt-3 border-t border-gray-100">
                               <p class="text-sm font-bold text-emerald-600">
@@ -905,5 +942,3 @@
   <script src="assets/scripts/index.js"></script>
 </body>
 </html>
-
-
