@@ -854,7 +854,7 @@ if (isset($_POST['register'])) {
     $mail = new PHPMailer(true);
 
     try {
-          /*
+     
         $mail->isSMTP();
         $mail->Host       = 'mail.rentspace.asia';
         $mail->SMTPAuth   = true;
@@ -869,8 +869,8 @@ if (isset($_POST['register'])) {
         $mail->isHTML(true);
         $mail->Subject = $subject;
         $mail->Body    = $message;
-        */
-        
+      
+             /*
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
@@ -884,6 +884,7 @@ if (isset($_POST['register'])) {
         $mail->isHTML(true);
         $mail->Subject = $subject;
         $mail->Body    = $message;
+          */
         $mail->send();
 
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
@@ -1144,7 +1145,7 @@ if(isset($_POST['approved_request_account'])){
     $mail = new PHPMailer(true);
 
     try {
-           /*
+           
         $mail->isSMTP();
         $mail->Host       = 'mail.rentspace.asia';
         $mail->SMTPAuth   = true;
@@ -1159,8 +1160,8 @@ if(isset($_POST['approved_request_account'])){
         $mail->isHTML(true);
         $mail->Subject = $subject;
         $mail->Body    = $message;
-        */
-        
+   
+        /*
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
@@ -1174,6 +1175,7 @@ if(isset($_POST['approved_request_account'])){
         $mail->isHTML(true);
         $mail->Subject = $subject;
         $mail->Body    = $message;
+          */
         $mail->send();
 
             
@@ -1247,7 +1249,7 @@ if(isset($_POST['disapproved_request_account'])){
     $mail = new PHPMailer(true);
 
     try {
-           /*
+        
         $mail->isSMTP();
         $mail->Host       = 'mail.rentspace.asia';
         $mail->SMTPAuth   = true;
@@ -1262,8 +1264,8 @@ if(isset($_POST['disapproved_request_account'])){
         $mail->isHTML(true);
         $mail->Subject = $subject;
         $mail->Body    = $message;
-        */
-        
+       
+           /*
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
@@ -1277,6 +1279,7 @@ if(isset($_POST['disapproved_request_account'])){
         $mail->isHTML(true);
         $mail->Subject = $subject;
         $mail->Body    = $message;
+         */
         $mail->send();
 
             
@@ -1352,7 +1355,7 @@ if(isset($_POST['forgot_password'])){
         $mail = new PHPMailer(true);
 
         try {
-               /*
+              
         $mail->isSMTP();
         $mail->Host       = 'mail.rentspace.asia';
         $mail->SMTPAuth   = true;
@@ -1367,8 +1370,8 @@ if(isset($_POST['forgot_password'])){
         $mail->isHTML(true);
         $mail->Subject = $subject;
         $mail->Body    = $message;
-        */
-        
+       
+         /*
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
@@ -1382,6 +1385,7 @@ if(isset($_POST['forgot_password'])){
         $mail->isHTML(true);
         $mail->Subject = $subject;
         $mail->Body    = $message;
+         */
             $mail->send();
 
 
@@ -1589,7 +1593,7 @@ if (isset($_POST['change_credentials'])) {
             $mail = new PHPMailer(true);
 
             try {
-                  /*
+               
         $mail->isSMTP();
         $mail->Host       = 'mail.rentspace.asia';
         $mail->SMTPAuth   = true;
@@ -1604,8 +1608,8 @@ if (isset($_POST['change_credentials'])) {
         $mail->isHTML(true);
         $mail->Subject = $subject;
         $mail->Body    = $message;
-        */
-        
+       
+           /*
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
@@ -1619,6 +1623,7 @@ if (isset($_POST['change_credentials'])) {
         $mail->isHTML(true);
         $mail->Subject = $subject;
         $mail->Body    = $message;
+         */
                 $mail->send();
 
                 $_SESSION['type'] = "username";
@@ -1688,7 +1693,7 @@ if (isset($_POST['change_credentials'])) {
             $mail = new PHPMailer(true);
 
             try {
-                   /*
+                   
         $mail->isSMTP();
         $mail->Host       = 'mail.rentspace.asia';
         $mail->SMTPAuth   = true;
@@ -1703,8 +1708,8 @@ if (isset($_POST['change_credentials'])) {
         $mail->isHTML(true);
         $mail->Subject = $subject;
         $mail->Body    = $message;
-        */
-        
+     
+        /*
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
@@ -1718,7 +1723,7 @@ if (isset($_POST['change_credentials'])) {
         $mail->isHTML(true);
         $mail->Subject = $subject;
         $mail->Body    = $message;
-
+   */
                 $mail->send();
 
                 $_SESSION['type'] = "password";
@@ -1792,7 +1797,7 @@ if (isset($_POST['change_credentials'])) {
             $mail = new PHPMailer(true);
 
             try {
-                   /*
+                   
         $mail->isSMTP();
         $mail->Host       = 'mail.rentspace.asia';
         $mail->SMTPAuth   = true;
@@ -1807,8 +1812,8 @@ if (isset($_POST['change_credentials'])) {
         $mail->isHTML(true);
         $mail->Subject = $subject;
         $mail->Body    = $message;
-        */
-        
+      
+        /*
         $mail->isSMTP();
         $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
@@ -1822,6 +1827,7 @@ if (isset($_POST['change_credentials'])) {
         $mail->isHTML(true);
         $mail->Subject = $subject;
         $mail->Body    = $message;
+          */
                 $mail->send();
 
                 $_SESSION['type'] = "password&username";
