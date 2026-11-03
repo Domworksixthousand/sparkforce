@@ -56,6 +56,36 @@ function getInterestDetail($conn, $type, $data_id, $property_name) {
                 'link'   => 'apartment_details.php?id=' . urlencode($a['rent_id']),
             ];
 
+        case 'Condominium':
+            // data_id dito = condo_id (hindi rent_id)
+            $q = $conn->prepare("
+                SELECT c.condo_id, c.square_area, c.bedroom_type, c.bathrooms,
+                       c.cond_condition, c.flooring, c.status, c.rent_id,
+                       r.name, r.price, r.rate, r.image_cover
+                FROM condo AS c
+                LEFT JOIN rentspace AS r ON r.rent_id = c.rent_id
+                WHERE c.condo_id = ?
+            ");
+            $q->bind_param("s", $data_id);
+            $q->execute();
+            $c = $q->get_result()->fetch_assoc();
+            if (!$c) return null;
+            return [
+                'title'  => $c['name'] ?? 'Condominium',
+                'image'  => '../assets/uploads/' . $c['image_cover'],
+                'status' => $c['status'] ?? '',
+                'fields' => [
+                    'Bedroom Type' => $c['bedroom_type'] ?: '-',
+                    'Bathrooms'    => $c['bathrooms'] ?: '-',
+                    'Area'         => $c['square_area'] ? $c['square_area'] . ' sqm' : '-',
+                    'Condition'    => $c['cond_condition'] ?: '-',
+                    'Flooring'     => $c['flooring'] ?: '-',
+                    'Price'        => '₱' . number_format((float)$c['price'], 2) . ' / ' . ($c['rate'] ?: 'month'),
+                    'Property'     => $property_name,
+                ],
+                'link'   => 'condo_details.php?id=' . urlencode($c['rent_id']) . '&location_back=' . urlencode($_SERVER['PHP_SELF']), // set to null kung wala pang page
+            ];
+
         case 'Commercial Space':
             // TODO: palitan ng actual table/columns ng commercial mo
             $q = $conn->prepare("SELECT rent_id, name, price, image_cover, other_info

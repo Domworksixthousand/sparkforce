@@ -222,6 +222,12 @@ if ($already_viewed == 0) {
     $insert_viewed->bind_param("sssss", $landlord_id, $user_id_login, $datetoday, $timetoday1, $rent_id);
     $insert_viewed->execute();
 }
+
+if(isset($_GET['location_back'])) {
+    $location_back = $_GET['location_back'];
+} else {
+    $location_back = 'properties.php';
+}
 ?>
 
 <!DOCTYPE html>
@@ -272,7 +278,7 @@ if ($already_viewed == 0) {
 
     <main class="p-4 md:p-8 max-w-7xl mx-auto w-full space-y-6">
       <div class="flex justify-end items-end">
-        <a href="properties.php"><img src="../assets/images/back.png" alt="Back"></a>
+        <a href="<?php echo htmlspecialchars($location_back); ?>"><img src="../assets/images/back.png" alt="Back"></a>
       </div>
 
       <!-- HERO -->
@@ -402,6 +408,21 @@ if ($already_viewed == 0) {
                 <i class="fa-solid fa-envelope text-success"></i> <?= htmlspecialchars($email ?: 'N/A'); ?>
               </p>
             </div>
+
+            <!-- Prominent Interest Button -->
+            <form action="../functions.php" method="POST" class="w-full">
+              <input type="hidden" name="type" value="<?= htmlspecialchars($type); ?>">
+              <input type="hidden" name="locate" value="apartment_details.php">
+              <input type="hidden" name="rent_id" value="<?= htmlspecialchars($rent_id); ?>">
+              <input type="hidden" name="current_status" value="<?= htmlspecialchars($switch); ?>">
+              <input type="hidden" name="apartment_id" value="<?= htmlspecialchars($aparment_id); ?>">
+              <button type="submit" name="add_interested_apartment" value="1"
+                      class="btn w-full btn-<?= $is_fav ? 'error' : 'success' ?> text-white py-3 flex items-center justify-center gap-2 font-semibold"
+                      <?= $is_owner ? 'disabled opacity-50' : ''; ?>>
+                <i class="fa-solid fa-heart"></i>
+                <?= $is_fav ? 'Remove from Interested' : 'Mark as Interested'; ?>
+              </button>
+            </form>
           </div>
 
         </div>

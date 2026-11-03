@@ -5607,3 +5607,50 @@ if ($result_email->num_rows > 0) {
 }
 
  
+
+if(isset($_POST['add_interested_condo'])){
+    $condo_id = $_POST['condo_id'] ?? '';
+    $status = "Pending";
+    $get_data = $conn->prepare("SELECT * FROM condo WHERE condo_id = ?");
+    $get_data->bind_param("s", $condo_id);
+    $get_data->execute();
+    $condo_data = $get_data->get_result();
+
+    if ($condo_data->num_rows > 0) {
+        while ($row = $condo_data->fetch_assoc()) {
+            $rent_id = $row['rent_id'];
+        }
+    } else {
+        $_SESSION['error'] = "Condo not found";
+        header("Location: users/interested.php");
+        exit();
+    }
+
+    
+    $get_rent = $conn->prepare("SELECT * FROM rentspace WHERE rent_id = ?");
+    $get_rent->bind_param("s", $rent_id);
+    $get_rent->execute();
+    $result_email = $get_rent->get_result();
+
+    if ($result_email->num_rows > 0) {
+        $row = $result_email->fetch_assoc();
+        $landlord_id = $row['landlord_id'];
+    }
+
+    $check = $conn->prepare("SELECT 1 FROM `interested` WHERE `user_id` = ? AND `data_id` = ? AND `status` = ?");   
+    $check->bind_param("sss", $user_id_login, $condo_id, $status);
+    $check->execute();
+    if($check->get_result()->num_rows > 0){
+        $_SESSION['error'] = "You already sent a request for this condo";
+        header("Location: users/condo_details.php?id=" . urldecode($rent_id));
+        exit;
+    }
+
+        $insert = $conn->prepare("INSERT INTO interested (user_id, landlord_id, data_id, status, date_sent, time_sent) VALUES (?, ?, ?, ?, ?, ?)");
+    $insert->bind_param("ssssss", $user_id_login, $landlord_id, $condo_id, $status, $datetoday, $timetoday1);
+    $insert->execute();
+    $_SESSION['success'] = "Successfully Requested, if 3 days doesnt Approved it will automatically Decline";
+    header("Location: users/interested.php");
+    exit;
+
+}

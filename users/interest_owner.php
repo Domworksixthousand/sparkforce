@@ -13,12 +13,13 @@ if (empty($_SESSION['csrf_token'])) {
 /**
  * I-normalize ang type: trim, collapse spaces, lowercase.
  * Para hindi masira ng trailing space / ibang casing / "Boarding House/Bedspace".
- * Return: 'bh' | 'commercial' | 'apartment' | 'default'
+ * Return: 'bh' | 'commercial' | 'condo' | 'apartment' | 'default'
  */
 function getTypeKind($type) {
     $t = strtolower(trim(preg_replace('/\s+/', ' ', (string)$type)));
     if (strpos($t, 'boarding') !== false || strpos($t, 'bedspace') !== false) return 'bh';
     if (strpos($t, 'commercial') !== false) return 'commercial';
+    if (strpos($t, 'condo') !== false) return 'condo';   // "Condominium", "Condo"
     if (strpos($t, 'apartment') !== false) return 'apartment';
     return 'default';
 }
@@ -121,11 +122,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['int_action'])) {
 
 /**
  * Pages per type kind. Palitan ang file names ayon sa actual pages mo.
- * Keys: 'bh', 'commercial', 'apartment', 'default'
+ * Keys: 'bh', 'commercial', 'condo', 'apartment', 'default'
  */
 $type_pages = [
     'bh'         => ['page' => 'my_bh_info.php',         'text' => 'View Boarding House'],
     'commercial' => ['page' => 'my_commercial_info.php', 'text' => 'View Commercial Space'],
+    'condo'      => ['page' => 'condo_details.php',      'text' => 'View Condominium'],
     'apartment'  => ['page' => 'apartment_details.php',  'text' => 'View Apartment'],
     'default'    => ['page' => 'my_apartment_info.php',  'text' => 'View Property'],
 ];
@@ -137,7 +139,7 @@ $type_pages = [
 function getTypeLink($type_pages, $type, $id, $landlord_id) {
     $kind = getTypeKind($type);
     $cfg  = $type_pages[$kind] ?? $type_pages['default'];
-    return [$cfg['page'] . '?id=' . urlencode($id) . '&property_id=' . urlencode($landlord_id), $cfg['text']];
+  return [$cfg['page'] . '?id=' . urlencode($id) . '&property_id=' . urlencode($landlord_id), $cfg['text'] ];
 }
 
 /**
@@ -240,6 +242,84 @@ function getInterestDetail($conn, $type_pages, $type, $data_id, $property_name, 
                     'Decks'    => $b['num_decks'],
                     'Property' => $property_name,
                 ],
+                'link'      => $link,
+                'link_text' => $link_text,
+            ];
+
+        case 'condo':
+            // data_id = condo_id (galing sa add_interested_condo sa functions.php)
+            $sql_condo = "
+                SELECT c.condo_id, c.status, c.rent_id, c.bedroom_type, c.square_area, c.bathrooms,
+                       r.name, r.price, r.image_cover
+                FROM `condo` AS c
+                INNER JOIN rentspace AS r ON r.rent_id = c.rent_id
+                WHERE c.%s = ? LIMIT 1
+            ";
+            $c = null;
+
+            $q = $conn->prepare(sprintf($sql_condo, 'condo_id'));
+            if (!$q) {
+                error_log('[interest_owner] condo prepare failed: ' . $conn->error);
+                return getFallbackDetail($type, $data_id, $property_name, 'Query error');
+            }
+            $q->bind_param("s", $data_id);
+            $q->execute();
+            $c = $q->get_result()->fetch_assoc();
+
+            // Fallback: baka rent_id ang naka-save sa interested.data_id
+            if (!$c) {
+                $q2 = $conn->prepare(sprintf($sql_condo, 'rent_id'));
+                if ($q2) {
+                    $q2->bind_param("s", $data_id);
+                    $q2->execute();
+                    $c = $q2->get_result()->fetch_assoc();
+                }
+            }
+
+            // Fallback 2: rentspace mismo ang naka-save
+            if (!$c) {
+                $q3 = $conn->prepare("SELECT rent_id, name, price, image_cover FROM rentspace WHERE rent_id = ? LIMIT 1");
+                if ($q3) {
+                    $q3->bind_param("s", $data_id);
+                    $q3->execute();
+                    $r = $q3->get_result()->fetch_assoc();
+                    if ($r) {
+                        [$link, $link_text] = getTypeLink($type_pages, $type, $r['rent_id'], $landlord_id);
+                        return [
+                            'title'     => $r['name'],
+                            'image'     => '../assets/uploads/' . $r['image_cover'],
+                            'status'    => '',
+                            'fields'    => [
+                                'Price'    => '₱' . number_format((float)$r['price'], 2) . ' / month',
+                                'Property' => $property_name,
+                            ],
+                            'link'      => $link,
+                            'link_text' => $link_text,
+                        ];
+                    }
+                }
+            }
+
+            if (!$c) {
+                error_log("[interest_owner] No condo row for data_id=[$data_id] type=[$type]");
+                return getFallbackDetail($type, $data_id, $property_name, 'Condominium record not found');
+            }
+
+            $fields = [
+                'Price' => '₱' . number_format((float)$c['price'], 2) . ' / month',
+            ];
+            if (!empty($c['bedroom_type'])) $fields['Bedroom Type'] = $c['bedroom_type'];
+            if (!empty($c['square_area']))  $fields['Area']         = $c['square_area'] . ' sqm';
+            if (!empty($c['bathrooms']))    $fields['Bathrooms']    = $c['bathrooms'];
+            $fields['Property'] = $property_name;
+
+            // condo_details.php?id=<rent_id>
+            [$link, $link_text] = getTypeLink($type_pages, $type, $c['rent_id'], $landlord_id);
+            return [
+                'title'     => $c['name'],
+                'image'     => '../assets/uploads/' . $c['image_cover'],
+                'status'    => $c['status'],
+                'fields'    => $fields,
                 'link'      => $link,
                 'link_text' => $link_text,
             ];
@@ -514,7 +594,7 @@ function getInterestDetail($conn, $type_pages, $type, $data_id, $property_name, 
         </div>
         <div id="info_fields" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
         <div class="flex justify-end">
-          <a id="info_link" href="#" class="btn btn-success btn-sm text-white hidden">View Property</a>
+          <a id="info_link" href="#" class="btn btn-success btn-sm text-white hidden ">View Property</a>
         </div>
       </div>
     </div>
