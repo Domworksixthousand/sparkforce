@@ -53,7 +53,20 @@
     $mail = new PHPMailer(true);
 
     try {
-        include '../vendor/connect_mail.php';
+        $mail->isSMTP();
+        $mail->Host       = 'mail.rentspace.asia';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'renthub@rentspace.asia';
+        $mail->Password   = 'paulobubloCflmanZ@123';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
+
+        $mail->setFrom('renthub@rentspace.asia', 'RENTHUB');
+        $mail->addAddress($email, $firstname);
+
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $message;
         $mail->send();
 
         if($user_type === "2"){

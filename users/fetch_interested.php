@@ -1,7 +1,8 @@
 <?php
+include '../config.php';
 $fetch_pending = $conn->prepare("SELECT COUNT(*) as count FROM interested as i 
     JOIN landlord as l ON 
-    l.landlord_id = i.owner_id
+    l.landlord_id = i.landlord_id
     WHERE i.status = 'Pending' AND l.user_id = ?");
     $fetch_pending->bind_param("s", $user_id_login);
     $fetch_pending->execute();
