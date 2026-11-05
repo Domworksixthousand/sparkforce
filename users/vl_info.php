@@ -85,6 +85,46 @@ while ($row = $saved_amen_res->fetch_assoc()) {
     ];
 }
 
+// REVIEWS / RATINGS
+// Based on the reviews table (landlord_id). LEFT JOIN accounts so a review
+// is never hidden just because the account row can't be matched.
+$get_reviews = $conn->prepare("
+    SELECT acc.firstname, acc.middlename, acc.lastname, acc.suffix, acc.username,
+           rv.rating, rv.comment, rv.date_sent, rv.time_sent
+    FROM `reviews` AS rv
+    LEFT JOIN `accounts` AS acc ON acc.user_id = rv.user_id
+    WHERE rv.landlord_id = ?
+    ORDER BY rv.date_sent DESC, rv.time_sent DESC
+");
+$get_reviews->bind_param("s", $landlord_id);
+$get_reviews->execute();
+$reviews_res = $get_reviews->get_result();
+
+$reviews = [];
+while ($rv = $reviews_res->fetch_assoc()) {
+    // Name format: lastname firstname middlename suffix
+    $reviewer = trim(implode(' ', array_filter([
+        $rv['lastname']   ?? '',
+        $rv['firstname']  ?? '',
+        $rv['middlename'] ?? '',
+        $rv['suffix']     ?? '',
+    ])));
+    if ($reviewer === '') {
+        $reviewer = $rv['username'] ?? 'Anonymous';
+    }
+
+    $parts    = preg_split('/\s+/', trim($reviewer));
+    $initials = strtoupper(mb_substr($parts[0] ?? 'A', 0, 1) . (isset($parts[1]) ? mb_substr($parts[1], 0, 1) : ''));
+
+    $reviews[] = [
+        'name'     => $reviewer,
+        'initials' => $initials,
+        'date'     => trim(($rv['date_sent'] ?? '') . ' ' . ($rv['time_sent'] ?? '')),
+        'rating'   => (int)$rv['rating'],
+        'comment'  => $rv['comment'] ?? '',
+    ];
+}
+
 // Status badge helper
 function vlStatusBadge($status) {
     switch (strtolower($status ?? '')) {
@@ -123,7 +163,9 @@ function vlStatusBadge($status) {
         <h2 class="text-2xl font-bold drop-shadow-sm"><?php echo htmlspecialchars($name); ?></h2>
         <p class="text-lg font-semibold">
           &#x20B1;<?php echo htmlspecialchars(number_format((float) $price, 2)); ?>
-          <span class="text-sm font-normal opacity-80">/ <?php echo htmlspecialchars($rate); ?></span>
+          <?php if (!empty($rate)): ?>
+            <span class="text-sm font-normal opacity-80">/ <?php echo htmlspecialchars($rate); ?></span>
+          <?php endif; ?>
         </p>
       </div>
       <div class="absolute top-3 left-3 flex gap-2">
@@ -142,6 +184,7 @@ function vlStatusBadge($status) {
       <a role="tab" class="tab room-tab" data-tab="details">Lot Details</a>
       <a role="tab" class="tab room-tab" data-tab="gallery">Gallery (<?php echo count($gallery_images); ?>)</a>
       <a role="tab" class="tab room-tab" data-tab="amenities">Amenities (<?php echo count($saved_amenities); ?>)</a>
+      <a role="tab" class="tab room-tab" data-tab="reviews">Reviews (<?php echo count($reviews); ?>)</a>
     </div>
 
     <!-- TAB CONTENT -->
@@ -150,7 +193,7 @@ function vlStatusBadge($status) {
       <!-- OVERVIEW -->
       <div class="tab-panel" data-panel="overview">
         <h3 class="font-semibold text-sm text-gray-500 uppercase tracking-wide mb-2">About this vacant lot</h3>
-        <div class="text-sm leading-relaxed text-gray-700">
+        <div class="text-sm leading-relaxed text-gray-700 whitespace-pre-line">
           <?php echo !empty($other_info) ? $other_info : 'No additional information provided.'; ?>
         </div>
       </div>
@@ -176,7 +219,7 @@ function vlStatusBadge($status) {
             <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-base-200 text-xs text-gray-600">
               <div>
                 <span class="font-semibold text-gray-700">Area:</span>
-                <?php echo htmlspecialchars($square_area !== '' ? $square_area : 'N/A'); ?> sqm
+                <?php echo htmlspecialchars($square_area !== '' ? $square_area : 'N/A'); ?><?php echo $square_area !== '' ? ' sqm' : ''; ?>
               </div>
               <div>
                 <span class="font-semibold text-gray-700">Type:</span>
@@ -184,7 +227,10 @@ function vlStatusBadge($status) {
               </div>
               <div>
                 <span class="font-semibold text-gray-700">Rate:</span>
-                &#x20B1;<?php echo htmlspecialchars(number_format((float) $price, 2)); ?> / <?php echo htmlspecialchars($rate); ?>
+                &#x20B1;<?php echo htmlspecialchars(number_format((float) $price, 2)); ?>
+                <?php if (!empty($rate)): ?>
+                  / <?php echo htmlspecialchars($rate); ?>
+                <?php endif; ?>
               </div>
               <div>
                 <span class="font-semibold text-gray-700">Status:</span>
@@ -230,6 +276,35 @@ function vlStatusBadge($status) {
           </div>
         <?php else: ?>
           <p class="text-sm text-gray-500 italic">No amenities listed for this vacant lot.</p>
+        <?php endif; ?>
+      </div>
+
+      <!-- REVIEWS -->
+      <div class="tab-panel hidden" data-panel="reviews">
+        <?php if (!empty($reviews)): ?>
+          <?php foreach ($reviews as $rv): ?>
+            <div class="p-3 bg-base-200/50 rounded-xl border border-base-200 mb-3">
+              <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs flex-shrink-0">
+                  <?php echo htmlspecialchars($rv['initials']); ?>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-1 flex-wrap">
+                    <span class="text-xs font-semibold text-gray-700"><?php echo htmlspecialchars($rv['name']); ?></span>
+                    <span class="text-xs text-gray-500"><?php echo htmlspecialchars($rv['date']); ?></span>
+                  </div>
+                  <div class="flex text-xs mb-1">
+                    <?php for ($s = 1; $s <= 5; $s++): ?>
+                      <span class="<?php echo $s <= $rv['rating'] ? 'text-warning' : 'text-gray-300'; ?>">★</span>
+                    <?php endfor; ?>
+                  </div>
+                  <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-line"><?php echo htmlspecialchars($rv['comment']); ?></p>
+                </div>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        <?php else: ?>
+          <p class="text-sm text-gray-500 italic">No reviews yet.</p>
         <?php endif; ?>
       </div>
 

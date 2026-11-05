@@ -329,7 +329,7 @@ while ($rv = $reviews_res->fetch_assoc()) {
               <i class="fa-solid fa-circle-info text-success"></i> About This Space
             </h2>
             <p class="text-base-content/80 text-sm leading-relaxed whitespace-pre-line">
-              <?= $other_info ? htmlspecialchars($other_info) : 'No additional details provided.'; ?>
+              <?= $other_info ? $other_info : 'No additional details provided.'; ?>
             </p>
           </div>
 

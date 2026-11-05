@@ -11,7 +11,7 @@ if (isset($_GET['id']) && isset($_GET['property_id'])) {
 
 // 1. FETCH MAIN RENTSPACE DETAILS
 $get_rent = $conn->prepare("
-    SELECT name, price, image_cover, other_info,rate
+    SELECT name, price, image_cover, other_info, rate
     FROM rentspace 
     WHERE rent_id = ?
 ");
@@ -23,13 +23,14 @@ $name        = "";
 $price       = 0;
 $image_cover = "";
 $other_info  = "";
+$rate        = "";
 
 if ($rent_row = $rent_res->fetch_assoc()) {
     $name        = $rent_row['name'];
     $price       = $rent_row['price'];
     $image_cover = $rent_row['image_cover'];
     $other_info  = $rent_row['other_info'];
-    $rate  = $rent_row['rate'];
+    $rate        = $rent_row['rate'];
 }
 
 // 2. FETCH HOUSE SPECIFICATIONS
@@ -90,6 +91,25 @@ while ($row = $amen_res->fetch_assoc()) {
         "rent_amen_id" => $row['rent_amen_id']
     ];
 }
+
+// 5. REVIEWS / RATINGS
+// Based on the reviews table only (landlord_id). LEFT JOIN accounts so a review
+// is never hidden just because the account row can't be matched.
+$get_reviews = $conn->prepare("
+    SELECT r.rating, r.comment, r.date_sent, r.time_sent, a.firstname, a.lastname
+    FROM `reviews` AS r
+    LEFT JOIN `accounts` AS a ON a.user_id = r.user_id
+    WHERE r.landlord_id = ?
+    ORDER BY r.date_sent DESC, r.time_sent DESC
+");
+$get_reviews->bind_param("s", $landlord_id);
+$get_reviews->execute();
+$reviews_res = $get_reviews->get_result();
+
+$reviews = [];
+while ($row = $reviews_res->fetch_assoc()) {
+    $reviews[] = $row;
+}
 ?>
 
 <dialog id="my_modal_3" class="modal" open>
@@ -114,7 +134,7 @@ while ($row = $amen_res->fetch_assoc()) {
       <div class="absolute bottom-0 left-0 p-5 text-white">
         <h2 class="text-2xl font-bold drop-shadow-sm"><?php echo htmlspecialchars($name); ?></h2>
         <p class="text-lg font-semibold text-success-content">
-          <span class="text-white">&#x20B1;<?php echo htmlspecialchars(number_format((float) $price, 2)); ?> <span class="text-sm font-normal opacity-80">/ <?php echo $rate; ?></span></span>
+          <span class="text-white">&#x20B1;<?php echo htmlspecialchars(number_format((float) $price, 2)); ?> <span class="text-sm font-normal opacity-80">/ <?php echo htmlspecialchars($rate); ?></span></span>
         </p>
       </div>
 
@@ -138,6 +158,7 @@ while ($row = $amen_res->fetch_assoc()) {
       <a role="tab" class="tab room-tab" data-tab="details">House Details</a>
       <a role="tab" class="tab room-tab" data-tab="gallery">Gallery (<?php echo count($apartment_images); ?>)</a>
       <a role="tab" class="tab room-tab" data-tab="amenities">Amenities (<?php echo count($saved_amenities); ?>)</a>
+      <a role="tab" class="tab room-tab" data-tab="reviews">Reviews (<?php echo count($reviews); ?>)</a>
     </div>
 
     <!-- TAB CONTENT PANELS -->
@@ -145,26 +166,6 @@ while ($row = $amen_res->fetch_assoc()) {
 
       <!-- 1. OVERVIEW PANEL -->
       <div class="tab-panel" data-panel="overview">
-        <!-- Quick Specs Summary 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5 p-3 bg-base-200 rounded-lg text-center text-xs">
-          <div>
-            <span class="block text-gray-500 font-semibold">Bedrooms</span>
-            <span class="text-sm font-bold text-gray-800"><?php// echo !empty($bedroom) ? htmlspecialchars($bedroom) : 'N/A'; ?></span>
-          </div>
-          <div>
-            <span class="block text-gray-500 font-semibold">Bathrooms</span>
-            <span class="text-sm font-bold text-gray-800"><?php// echo !empty($bathrooms) ? htmlspecialchars($bathrooms) : 'N/A'; ?></span>
-          </div>
-          <div>
-            <span class="block text-gray-500 font-semibold">Area</span>
-            <span class="text-sm font-bold text-gray-800"><?php// echo !empty($area) ? htmlspecialchars($area) . ' sqm' : 'N/A'; ?></span>
-          </div>
-          <div>
-            <span class="block text-gray-500 font-semibold">Parking</span>
-            <span class="text-sm font-bold text-gray-800"><?php// echo !empty($parking) ? htmlspecialchars($parking) : 'N/A'; ?></span>
-          </div>
-        </div>-->
-
         <h3 class="font-semibold text-sm text-gray-500 uppercase tracking-wide mb-2">About this Property</h3>
         <p class="text-sm leading-relaxed text-gray-700 whitespace-pre-line">
           <?php echo !empty($other_info) ? $other_info : 'No additional information provided.'; ?>
@@ -175,7 +176,7 @@ while ($row = $amen_res->fetch_assoc()) {
       <div class="tab-panel hidden" data-panel="details">
         <h3 class="font-semibold text-sm text-gray-500 uppercase tracking-wide mb-3">Property Specifications</h3>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          
+
           <div class="card bg-base-100 border border-base-200 shadow-sm p-4">
             <span class="text-xs text-gray-500 font-semibold uppercase">House Type</span>
             <p class="text-base font-bold text-gray-800 mt-1"><?php echo !empty($type) ? htmlspecialchars($type) : 'N/A'; ?></p>
@@ -241,6 +242,43 @@ while ($row = $amen_res->fetch_assoc()) {
           </div>
         <?php else: ?>
           <p class="text-sm text-gray-500 italic">No amenities listed for this house.</p>
+        <?php endif; ?>
+      </div>
+
+      <!-- 5. REVIEWS PANEL -->
+      <div class="tab-panel hidden" data-panel="reviews">
+        <?php if (!empty($reviews)): ?>
+          <?php foreach ($reviews as $rv): ?>
+            <?php
+              // Reviewer name (falls back to "Anonymous" if the account can't be found)
+              $reviewer = trim(($rv['firstname'] ?? '') . ' ' . ($rv['lastname'] ?? ''));
+              if ($reviewer === '') $reviewer = 'Anonymous';
+
+              $initials = strtoupper(mb_substr($rv['firstname'] ?? '', 0, 1) . mb_substr($rv['lastname'] ?? '', 0, 1));
+              if ($initials === '') $initials = 'A';
+            ?>
+            <div class="p-3 bg-base-200/50 rounded-xl border border-base-200 mb-3">
+              <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                  <?php echo htmlspecialchars($initials); ?>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="text-xs font-semibold text-gray-700"><?php echo htmlspecialchars($reviewer); ?></span>
+                    <span class="text-xs text-gray-500"><?php echo htmlspecialchars(($rv['date_sent'] ?? '') . ' ' . ($rv['time_sent'] ?? '')); ?></span>
+                  </div>
+                  <div class="flex text-warning text-xs mb-1">
+                    <?php for ($s = 1; $s <= 5; $s++): ?>
+                      <span class="<?php echo $s <= (int)$rv['rating'] ? 'text-warning' : 'text-gray-300'; ?>">★</span>
+                    <?php endfor; ?>
+                  </div>
+                  <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-line"><?php echo htmlspecialchars($rv['comment'] ?? ''); ?></p>
+                </div>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        <?php else: ?>
+          <p class="text-sm text-gray-500 italic">No reviews yet.</p>
         <?php endif; ?>
       </div>
 

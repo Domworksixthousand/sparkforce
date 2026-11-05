@@ -85,6 +85,25 @@ while ($row = $saved_amen_res->fetch_assoc()) {
     ];
 }
 
+// REVIEWS / RATINGS
+// Based on the reviews table only (landlord_id). LEFT JOIN accounts so a review
+// is never hidden just because the account row can't be matched.
+$get_reviews = $conn->prepare("
+    SELECT r.rating, r.comment, r.date_sent, r.time_sent, a.firstname, a.lastname
+    FROM `reviews` AS r
+    LEFT JOIN `accounts` AS a ON a.user_id = r.user_id
+    WHERE r.landlord_id = ?
+    ORDER BY r.date_sent DESC, r.time_sent DESC
+");
+$get_reviews->bind_param("s", $landlord_id);
+$get_reviews->execute();
+$reviews_res = $get_reviews->get_result();
+
+$reviews = [];
+while ($row = $reviews_res->fetch_assoc()) {
+    $reviews[] = $row;
+}
+
 // Helper for status badges (reused pattern from transient_info.php)
 function psStatusBadge($status) {
     switch (strtolower($status ?? '')) {
@@ -141,6 +160,7 @@ function psStatusBadge($status) {
       <a role="tab" class="tab room-tab" data-tab="details">Space Details</a>
       <a role="tab" class="tab room-tab" data-tab="gallery">Gallery (<?php echo count($gallery_images); ?>)</a>
       <a role="tab" class="tab room-tab" data-tab="amenities">Amenities (<?php echo count($saved_amenities); ?>)</a>
+      <a role="tab" class="tab room-tab" data-tab="reviews">Reviews (<?php echo count($reviews); ?>)</a>
     </div>
 
     <!-- TAB CONTENT -->
@@ -183,13 +203,22 @@ function psStatusBadge($status) {
               </div>
               <div>
                 <span class="font-semibold text-gray-700">Rate:</span>
-                &#x20B1;<?php echo htmlspecialchars(number_format((float) $price, 2)); ?> / <?php echo htmlspecialchars($rate); ?>
+                &#x20B1;<?php echo htmlspecialchars(number_format((float) $price, 2)); ?><?php if (!empty($rate)): ?> / <?php echo htmlspecialchars($rate); ?><?php endif; ?>
               </div>
               <div>
                 <span class="font-semibold text-gray-700">Status:</span>
                 <?php echo htmlspecialchars($status !== '' ? $status : 'N/A'); ?>
               </div>
             </div>
+          </div>
+
+          <!-- Rate card (same style as event space) -->
+          <div class="mt-4 p-4 rounded-xl bg-base-100 border border-base-200 flex items-center justify-between text-xs text-gray-500">
+            <div class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+              <span>Rental Rate: <strong>&#x20B1;<?php echo htmlspecialchars(number_format((float)$price, 2)); ?><?php if (!empty($rate)): ?> / <?php echo htmlspecialchars($rate); ?><?php endif; ?></strong></span>
+            </div>
+            <span class="italic">Subject to booking availability</span>
           </div>
         <?php else: ?>
           <p class="text-sm text-gray-500 italic">No parking space registered for this property.</p>
@@ -229,6 +258,43 @@ function psStatusBadge($status) {
           </div>
         <?php else: ?>
           <p class="text-sm text-gray-500 italic">No amenities listed for this space.</p>
+        <?php endif; ?>
+      </div>
+
+      <!-- REVIEWS -->
+      <div class="tab-panel hidden" data-panel="reviews">
+        <?php if (!empty($reviews)): ?>
+          <?php foreach ($reviews as $rv): ?>
+            <?php
+              // Reviewer name (falls back to "Anonymous" if the account can't be found)
+              $reviewer = trim(($rv['firstname'] ?? '') . ' ' . ($rv['lastname'] ?? ''));
+              if ($reviewer === '') $reviewer = 'Anonymous';
+
+              $initials = strtoupper(mb_substr($rv['firstname'] ?? '', 0, 1) . mb_substr($rv['lastname'] ?? '', 0, 1));
+              if ($initials === '') $initials = 'A';
+            ?>
+            <div class="p-3 bg-base-200/50 rounded-xl border border-base-200 mb-3">
+              <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                  <?php echo htmlspecialchars($initials); ?>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="text-xs font-semibold text-gray-700"><?php echo htmlspecialchars($reviewer); ?></span>
+                    <span class="text-xs text-gray-500"><?php echo htmlspecialchars(($rv['date_sent'] ?? '') . ' ' . ($rv['time_sent'] ?? '')); ?></span>
+                  </div>
+                  <div class="flex text-warning text-xs mb-1">
+                    <?php for ($s = 1; $s <= 5; $s++): ?>
+                      <span class="<?php echo $s <= (int)$rv['rating'] ? 'text-warning' : 'text-gray-300'; ?>">★</span>
+                    <?php endfor; ?>
+                  </div>
+                  <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-line"><?php echo htmlspecialchars($rv['comment'] ?? ''); ?></p>
+                </div>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        <?php else: ?>
+          <p class="text-sm text-gray-500 italic">No reviews yet.</p>
         <?php endif; ?>
       </div>
 

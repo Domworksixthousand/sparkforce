@@ -322,7 +322,7 @@ function renderStars($rating, $size = 'text-sm') {
               <i class="fa-solid fa-circle-info text-success"></i> About This Apartment
             </h2>
             <p class="text-base-content/80 text-sm leading-relaxed whitespace-pre-line">
-              <?= $other_info ? htmlspecialchars($other_info) : 'No description available for this apartment space.'; ?>
+              <?= $other_info ? $other_info : 'No description available for this apartment space.'; ?>
             </p>
           </div>
 

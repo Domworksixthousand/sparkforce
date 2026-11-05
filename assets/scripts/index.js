@@ -867,3 +867,32 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 });
+// Featured Properties filter (main index)
+document.addEventListener("DOMContentLoaded", function() {
+  var tabs = document.getElementById("filterTabs");
+  if (!tabs) return;
+  var cards = document.querySelectorAll(".rental-card");
+  var noMsg = document.getElementById("noResultsMsg");
+  tabs.addEventListener("click", function(e) {
+    var btn = e.target.closest(".filter-btn");
+    if (!btn) return;
+    var filter = btn.getAttribute("data-filter");
+    tabs.querySelectorAll(".filter-btn").forEach(function(b) {
+      b.classList.remove("bg-emerald-600", "text-white");
+      b.classList.add("bg-[#f3f2ee]", "text-black");
+    });
+    btn.classList.add("bg-emerald-600", "text-white");
+    btn.classList.remove("bg-[#f3f2ee]", "text-black");
+    var shown = 0;
+    cards.forEach(function(card) {
+      var type = card.getAttribute("data-type");
+      if (filter === "all" || type === filter) {
+        card.style.display = "";
+        shown++;
+      } else {
+        card.style.display = "none";
+      }
+    });
+    if (noMsg) noMsg.style.display = shown ? "none" : "flex";
+  });
+});

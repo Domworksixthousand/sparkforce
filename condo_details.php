@@ -1,10 +1,9 @@
 <?php 
 include 'config.php';
 
-
 $rent_id       = $_GET['id'] ?? null;
 
-$name = $price = $image_cover = $other_info = $landlord_id = $user_id = $type = "";
+$name = $price = $image_cover = $other_info = $landlord_id = $user_id = $type = $rate = "";
 $condo_units = [];
 $availableCondos = 0;
 $apartment_images = [];
@@ -13,7 +12,7 @@ $saved_amenities = [];
 if ($rent_id) {
     // 1. RENTSPACE DETAILS
     $get_rent = $conn->prepare("
-        SELECT name, price, image_cover, other_info, landlord_id, user_id, type,rate
+        SELECT name, price, image_cover, other_info, landlord_id, user_id, type, rate
         FROM rentspace 
         WHERE rent_id = ?
     ");
@@ -32,7 +31,7 @@ if ($rent_id) {
         $rate        = $rent_row['rate'];
     }
 
-    // 2. CONDO / APARTMENT UNITS DETAILS
+    // 2. CONDO UNITS DETAILS
     $get_condo = $conn->prepare("SELECT * FROM `condo` WHERE `rent_id` = ?");
     $get_condo->bind_param("s", $rent_id);
     $get_condo->execute();
@@ -47,7 +46,7 @@ if ($rent_id) {
         }
     }
 
-    // 3. APARTMENT IMAGES / GALLERY
+    // 3. GALLERY
     $get_gallery = $conn->prepare("SELECT * FROM `gallery2` WHERE `rent_id` = ?");
     $get_gallery->bind_param("s", $rent_id);
     $get_gallery->execute();
@@ -96,6 +95,21 @@ function apartmentStatusBadge($status) {
     }
 }
 
+// Font Awesome stars (full / half / empty)
+function renderFaStars($avg) {
+    $html = '';
+    for ($i = 1; $i <= 5; $i++) {
+        if ($avg >= $i) {
+            $html .= '<i class="fa-solid fa-star"></i>';
+        } elseif ($avg >= $i - 0.5) {
+            $html .= '<i class="fa-solid fa-star-half-stroke"></i>';
+        } else {
+            $html .= '<i class="fa-regular fa-star"></i>';
+        }
+    }
+    return $html;
+}
+
 // 5. LANDLORD DETAILS
 $province = $municipality = $barangay = $longitude = $latitude = $property_name = "";
 if ($landlord_id) {
@@ -125,6 +139,71 @@ if ($user_id) {
     if ($result_account->num_rows > 0 && $row_account = $result_account->fetch_assoc()) {
         $contact_number = $row_account['contact_number'];
         $email          = $row_account['email'];
+    }
+}
+
+// 6.5 RATINGS & COMMENTS (display only, from database)
+$avg_rating   = 0;
+$review_count = 0;
+$star_counts  = [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0];
+$reviews      = [];
+
+if ($landlord_id) {
+    $get_avg = $conn->prepare("SELECT AVG(rating) AS avg_rating, COUNT(*) AS review_count FROM `reviews` WHERE `landlord_id` = ?");
+    $get_avg->bind_param("s", $landlord_id);
+    $get_avg->execute();
+    $avg_row      = $get_avg->get_result()->fetch_assoc();
+    $avg_rating   = (float)($avg_row['avg_rating'] ?? 0);
+    $review_count = (int)($avg_row['review_count'] ?? 0);
+
+    // star distribution
+    $get_dist = $conn->prepare("SELECT rating, COUNT(*) AS c FROM `reviews` WHERE `landlord_id` = ? GROUP BY rating");
+    $get_dist->bind_param("s", $landlord_id);
+    $get_dist->execute();
+    $dist_res = $get_dist->get_result();
+    while ($d = $dist_res->fetch_assoc()) {
+        $r = (int)$d['rating'];
+        if (isset($star_counts[$r])) $star_counts[$r] = (int)$d['c'];
+    }
+
+    // latest reviews
+    $get_reviews = $conn->prepare("
+        SELECT acc.firstname, acc.middlename, acc.lastname, acc.suffix, acc.username,
+               rv.rating, rv.comment, rv.date_sent, rv.time_sent, rv.review_id
+        FROM `reviews` AS rv
+        LEFT JOIN `accounts` AS acc ON acc.user_id = rv.user_id
+        WHERE rv.landlord_id = ?
+        ORDER BY rv.review_id DESC
+        LIMIT 20
+    ");
+    $get_reviews->bind_param("s", $landlord_id);
+    $get_reviews->execute();
+    $reviews_res = $get_reviews->get_result();
+
+    while ($rv = $reviews_res->fetch_assoc()) {
+        $reviewer = trim(implode(' ', array_filter([
+            $rv['lastname']   ?? '',
+            $rv['firstname']  ?? '',
+            $rv['middlename'] ?? '',
+            $rv['suffix']     ?? '',
+        ])));
+        if ($reviewer === '') {
+            $reviewer = $rv['username'] ?? 'Anonymous';
+        }
+
+        $parts    = preg_split('/\s+/', trim($reviewer));
+        $initials = strtoupper(mb_substr($parts[0] ?? 'A', 0, 1) . (isset($parts[1]) ? mb_substr($parts[1], 0, 1) : ''));
+
+        $ts   = strtotime($rv['date_sent'] ?? '');
+        $date = $ts ? date('M j, Y', $ts) : ($rv['date_sent'] ?? '');
+
+        $reviews[] = [
+            'name'     => $reviewer,
+            'initials' => $initials,
+            'date'     => $date,
+            'rating'   => (int)$rv['rating'],
+            'comment'  => $rv['comment'] ?? '',
+        ];
     }
 }
 
@@ -161,87 +240,6 @@ if ($rent_id && $user_id_login) {
         $insert_viewed->execute();
     }
 }
-
-// 9. RATINGS & REVIEWS
-$get_avg = $conn->prepare("SELECT AVG(rating) AS avg_rating, COUNT(*) AS review_count FROM `reviews` WHERE `landlord_id` = ?");
-$get_avg->bind_param("s", $landlord_id);
-$get_avg->execute();
-$avg_row      = $get_avg->get_result()->fetch_assoc();
-$avg_rating   = (float)($avg_row['avg_rating'] ?? 0);
-$review_count = (int)($avg_row['review_count'] ?? 0);
-
-$star_counts = [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0];
-$get_dist = $conn->prepare("SELECT rating, COUNT(*) AS c FROM `reviews` WHERE `landlord_id` = ? GROUP BY rating");
-$get_dist->bind_param("s", $landlord_id);
-$get_dist->execute();
-$dist_res = $get_dist->get_result();
-while ($d = $dist_res->fetch_assoc()) {
-    $r = (int)$d['rating'];
-    if (isset($star_counts[$r])) $star_counts[$r] = (int)$d['c'];
-}
-
-$get_reviews = $conn->prepare("
-    SELECT acc.firstname, acc.middlename, acc.lastname, acc.suffix, acc.username,
-           rv.rating, rv.comment, rv.date_sent, rv.time_sent, rv.review_id
-    FROM `reviews` AS rv
-    LEFT JOIN `accounts` AS acc ON acc.user_id = rv.user_id
-    WHERE rv.landlord_id = ?
-    ORDER BY rv.review_id DESC
-    LIMIT 20
-");
-$get_reviews->bind_param("s", $landlord_id);
-$get_reviews->execute();
-$reviews_res = $get_reviews->get_result();
-
-$reviews = [];
-while ($rv = $reviews_res->fetch_assoc()) {
-    $reviewer = trim(implode(' ', array_filter([
-        $rv['lastname']   ?? '',
-        $rv['firstname']  ?? '',
-        $rv['middlename'] ?? '',
-        $rv['suffix']     ?? '',
-    ])));
-    if ($reviewer === '') {
-        $reviewer = $rv['username'] ?? 'Anonymous';
-    }
-
-    $parts    = preg_split('/\s+/', trim($reviewer));
-    $initials = strtoupper(mb_substr($parts[0] ?? 'A', 0, 1) . (isset($parts[1]) ? mb_substr($parts[1], 0, 1) : ''));
-
-    $ts   = strtotime($rv['date_sent'] ?? '');
-    $date = $ts ? date('M j, Y', $ts) : ($rv['date_sent'] ?? '');
-
-    $reviews[] = [
-        'name'     => $reviewer,
-        'initials' => $initials,
-        'date'     => $date,
-        'rating'   => (int)$rv['rating'],
-        'comment'  => $rv['comment'] ?? '',
-    ];
-}
-
-$is_owner     = ($user_id_login === $user_id);
-$has_reviewed = false;
-if (!empty($user_id_login)) {
-    $chk = $conn->prepare("SELECT 1 FROM `reviews` WHERE `landlord_id` = ? AND `user_id` = ?");
-    $chk->bind_param("ss", $landlord_id, $user_id_login);
-    $chk->execute();
-    $has_reviewed = $chk->get_result()->num_rows > 0;
-}
-
-function renderFaStars($avg) {
-    $html = '';
-    for ($i = 1; $i <= 5; $i++) {
-        if ($avg >= $i) {
-            $html .= '<i class="fa-solid fa-star"></i>';
-        } elseif ($avg >= $i - 0.5) {
-            $html .= '<i class="fa-solid fa-star-half-stroke"></i>';
-        } else {
-            $html .= '<i class="fa-regular fa-star"></i>';
-        }
-    }
-    return $html;
-}
 ?>
 
 <!DOCTYPE html>
@@ -260,14 +258,6 @@ function renderFaStars($avg) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <style>
-        .star-input { display:inline-flex; flex-direction:row-reverse; gap:4px; }
-        .star-input input { display:none; }
-        .star-input label { font-size:1.75rem; cursor:pointer; color:#d1d5db; transition:color .15s; }
-        .star-input label:hover,
-        .star-input label:hover ~ label,
-        .star-input input:checked ~ label { color:#facc15; }
-    </style>
 </head>
 <body class="bg-base-200 min-h-screen text-base-content antialiased">
 
@@ -300,15 +290,13 @@ function renderFaStars($avg) {
               <img src="assets/uploads/<?= htmlspecialchars($image_cover); ?>" 
                    alt="<?= htmlspecialchars($name); ?>" 
                    class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                   onerror="this.src='../assets/images/placeholder.jpg';" />
+                   onerror="this.src='assets/images/placeholder.jpg';" />
               
               <div class="absolute top-4 left-4">
                 <span class="badge badge-success text-white badge-lg gap-2 shadow-md">
                   <i class="fa-solid fa-building"></i> <?= htmlspecialchars(ucfirst($type ?: 'Apartment')); ?>
                 </span>
               </div>
-
-           
             </div>
           </div>
 
@@ -316,8 +304,18 @@ function renderFaStars($avg) {
             <div>
               <h1 class="text-2xl md:text-3xl font-extrabold text-base-content">
                 <?= htmlspecialchars(mb_strlen($name) > 22 ? mb_substr($name, 0, 22) . '...' : $name); ?>
-            </h1>
-              <p class="text-sm text-base-content/70 mt-1 flex items-center gap-1.5">
+              </h1>
+
+              <!-- rating summary (jumps to reviews) -->
+              <a href="#reviews" class="flex items-center gap-2 mt-1">
+                <span class="flex text-warning text-sm gap-0.5"><?= renderFaStars($avg_rating); ?></span>
+                <span class="text-sm font-semibold"><?= $review_count ? number_format($avg_rating, 1) : 'No ratings'; ?></span>
+                <?php if ($review_count): ?>
+                  <span class="text-xs text-base-content/60">(<?= $review_count; ?>)</span>
+                <?php endif; ?>
+              </a>
+
+              <p class="text-sm text-base-content/70 mt-2 flex items-center gap-1.5">
                 <i class="fa-solid fa-location-dot text-error"></i> 
                 <?= htmlspecialchars(trim("$barangay, $municipality, $province", ", ")); ?>
               </p>
@@ -327,7 +325,7 @@ function renderFaStars($avg) {
               <div class="bg-primary/10 p-4 rounded-xl border border-primary/20">
                 <span class="text-xs font-semibold text-success uppercase tracking-wider">Rental Rent</span>
                 <div class="text-3xl font-black text-success mt-1">
-                  ₱<?= number_format((float)$price, 2); ?> <span class="text-sm font-normal text-base-content/70">/ <?php echo $rate;  ?></span>
+                  ₱<?= number_format((float)$price, 2); ?> <span class="text-sm font-normal text-base-content/70">/ <?= htmlspecialchars($rate); ?></span>
                 </div>
               </div>
 
@@ -366,7 +364,7 @@ function renderFaStars($avg) {
               <i class="fa-solid fa-circle-info text-success"></i> About This Property
             </h2>
             <p class="text-base-content/80 text-sm leading-relaxed whitespace-pre-line">
-              <?= $other_info ?: 'No description available for this space.'; ?>
+              <?= $other_info ? $other_info : 'No description available for this space.'; ?>
             </p>
           </div>
 
@@ -490,6 +488,75 @@ function renderFaStars($avg) {
 
       </div>
 
+      <!-- RATINGS & COMMENTS -->
+      <div id="reviews" class="bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300 space-y-6 scroll-mt-6">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-base-200">
+          <div>
+            <h2 class="text-lg font-bold flex items-center gap-2">
+              <i class="fa-solid fa-star text-warning"></i> Ratings & Reviews
+            </h2>
+            <p class="text-xs text-base-content/60">See what past visitors say about this space</p>
+          </div>
+          <span class="badge badge-success badge-outline font-semibold">
+            <?= $review_count; ?> Review<?= $review_count === 1 ? '' : 's'; ?>
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="flex flex-col items-center justify-center bg-base-200/60 border border-base-300 rounded-xl p-6">
+            <div class="text-5xl font-black text-warning"><?= $review_count ? number_format($avg_rating, 1) : '0.0'; ?></div>
+            <div class="flex text-warning text-lg gap-0.5 mt-2"><?= renderFaStars($avg_rating); ?></div>
+            <p class="text-xs text-base-content/60 mt-1">
+              <?= $review_count ? "Based on $review_count review" . ($review_count > 1 ? 's' : '') : 'No reviews yet'; ?>
+            </p>
+          </div>
+
+          <div class="md:col-span-2 space-y-2 self-center">
+            <?php foreach ($star_counts as $star => $cnt):
+                $pct = $review_count ? round(($cnt / $review_count) * 100) : 0; ?>
+              <div class="flex items-center gap-3 text-sm">
+                <span class="w-10 flex items-center gap-1 font-semibold"><?= $star; ?> <i class="fa-solid fa-star text-warning text-xs"></i></span>
+                <progress class="progress progress-warning flex-1" value="<?= $pct; ?>" max="100"></progress>
+                <span class="w-8 text-right text-xs text-base-content/60"><?= $cnt; ?></span>
+              </div>
+            <?php endforeach; ?>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-base-content/50">Recent Comments</h4>
+
+          <?php if (!empty($reviews)): ?>
+            <?php foreach ($reviews as $rv): ?>
+              <div class="p-4 rounded-xl border border-base-200 bg-base-100 space-y-2 hover:border-emerald-500/30 transition-all">
+                <div class="flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="w-9 h-9 rounded-full bg-emerald-500/10 text-emerald-700 font-bold flex items-center justify-center text-xs flex-shrink-0">
+                      <?= htmlspecialchars($rv['initials']); ?>
+                    </div>
+                    <div class="min-w-0">
+                      <h4 class="font-bold text-sm text-base-content truncate"><?= htmlspecialchars($rv['name']); ?></h4>
+                      <span class="text-[11px] text-base-content/50"><?= htmlspecialchars($rv['date']); ?></span>
+                    </div>
+                  </div>
+                  <div class="flex text-warning text-xs gap-0.5 flex-shrink-0">
+                    <?= renderFaStars($rv['rating']); ?>
+                  </div>
+                </div>
+                <p class="text-sm text-base-content/80 sm:pl-12 leading-relaxed break-words">
+                  <?= nl2br(htmlspecialchars($rv['comment'])); ?>
+                </p>
+              </div>
+            <?php endforeach; ?>
+          <?php else: ?>
+            <div class="text-center py-8 text-base-content/50 bg-base-200/50 rounded-xl">
+              <i class="fa-regular fa-comments text-3xl mb-2 block"></i>
+              <p class="text-sm">No comments yet.</p>
+            </div>
+          <?php endif; ?>
+        </div>
+      </div>
+
       <div class="bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300">
         <div class="flex justify-between mb-6 pb-3 border-b border-base-200 flex-col lg:flex-row">
           <div class="mb-3">
@@ -528,118 +595,6 @@ function renderFaStars($avg) {
         <?php endif; ?>
       </div>
 
-      <!-- RATINGS & REVIEWS -->
-      <div id="reviews" class="bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300 space-y-6 scroll-mt-6">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-base-200">
-          <div>
-            <h2 class="text-lg font-bold flex items-center gap-2">
-              <i class="fa-solid fa-star text-warning"></i> Ratings & Reviews
-            </h2>
-            <p class="text-xs text-base-content/60">See what past visitors say about this space</p>
-          </div>
-          <span class="badge badge-success badge-outline font-semibold">
-            <?= $review_count; ?> Review<?= $review_count === 1 ? '' : 's'; ?>
-          </span>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="flex flex-col items-center justify-center bg-base-200/60 border border-base-300 rounded-xl p-6">
-            <div class="text-5xl font-black text-warning"><?= $review_count ? number_format($avg_rating, 1) : '0.0'; ?></div>
-            <div class="flex text-warning text-lg gap-0.5 mt-2"><?= renderFaStars($avg_rating); ?></div>
-            <p class="text-xs text-base-content/60 mt-1">
-              <?= $review_count ? "Based on $review_count review" . ($review_count > 1 ? 's' : '') : 'No reviews yet'; ?>
-            </p>
-          </div>
-
-          <div class="md:col-span-2 space-y-2 self-center">
-            <?php foreach ($star_counts as $star => $cnt):
-                $pct = $review_count ? round(($cnt / $review_count) * 100) : 0; ?>
-              <div class="flex items-center gap-3 text-sm">
-                <span class="w-10 flex items-center gap-1 font-semibold"><?= $star; ?> <i class="fa-solid fa-star text-warning text-xs"></i></span>
-                <progress class="progress progress-warning flex-1" value="<?= $pct; ?>" max="100"></progress>
-                <span class="w-8 text-right text-xs text-base-content/60"><?= $cnt; ?></span>
-              </div>
-            <?php endforeach; ?>
-          </div>
-        </div>
-
-        <?php if ($is_owner): ?>
-          <div class="alert bg-base-200 text-sm">
-            <i class="fa-solid fa-circle-info text-success"></i>
-            <span>You can't review your own property.</span>
-          </div>
-        <?php elseif ($has_reviewed): ?>
-          <div class="alert alert-success text-white text-sm">
-            <i class="fa-solid fa-check"></i>
-            <span>You already reviewed this property. Thank you!</span>
-          </div>
-        <?php else: ?>
-          <form action="functions.php" method="POST" class="border border-base-300 rounded-xl p-4 space-y-4 bg-base-100">
-            <input type="hidden" name="landlord_id" value="<?= htmlspecialchars($landlord_id); ?>">
-            <input type="hidden" name="rent_id" value="<?= htmlspecialchars($rent_id); ?>">
-            <input type="hidden" name="redirect" value="condo_details.php">
-
-            <h3 class="font-bold text-base">Write a review</h3>
-
-            <div>
-              <label class="block text-xs font-semibold text-base-content/70 mb-1">Your rating <span class="text-error">*</span></label>
-              <div class="star-input">
-                <input type="radio" id="star5" name="rating" value="5" required><label for="star5" title="5 stars"><i class="fa-solid fa-star"></i></label>
-                <input type="radio" id="star4" name="rating" value="4"><label for="star4" title="4 stars"><i class="fa-solid fa-star"></i></label>
-                <input type="radio" id="star3" name="rating" value="3"><label for="star3" title="3 stars"><i class="fa-solid fa-star"></i></label>
-                <input type="radio" id="star2" name="rating" value="2"><label for="star2" title="2 stars"><i class="fa-solid fa-star"></i></label>
-                <input type="radio" id="star1" name="rating" value="1"><label for="star1" title="1 star"><i class="fa-solid fa-star"></i></label>
-              </div>
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-base-content/70 mb-1">Comment <span class="text-error">*</span></label>
-              <textarea name="comment" rows="4" maxlength="1000" required
-                        class="textarea textarea-bordered w-full"
-                        placeholder="Share your experience with this property..."></textarea>
-            </div>
-
-            <div class="flex justify-end">
-              <button type="submit" name="submit_review" class="btn btn-success text-white gap-2">
-                <i class="fa-solid fa-paper-plane"></i> Submit Review
-              </button>
-            </div>
-          </form>
-        <?php endif; ?>
-
-        <div class="space-y-4">
-          <h4 class="text-xs font-bold uppercase tracking-wider text-base-content/50">Recent Comments</h4>
-
-          <?php if (!empty($reviews)): ?>
-            <?php foreach ($reviews as $rv): ?>
-              <div class="p-4 rounded-xl border border-base-200 bg-base-100 space-y-2 hover:border-emerald-500/30 transition-all">
-                <div class="flex items-center justify-between gap-2">
-                  <div class="flex items-center gap-2.5 min-w-0">
-                    <div class="w-9 h-9 rounded-full bg-emerald-500/10 text-emerald-700 font-bold flex items-center justify-center text-xs flex-shrink-0">
-                      <?= htmlspecialchars($rv['initials']); ?>
-                    </div>
-                    <div class="min-w-0">
-                      <h4 class="font-bold text-sm text-base-content truncate"><?= htmlspecialchars($rv['name']); ?></h4>
-                      <span class="text-[11px] text-base-content/50"><?= htmlspecialchars($rv['date']); ?></span>
-                    </div>
-                  </div>
-                  <div class="flex text-warning text-xs gap-0.5 flex-shrink-0">
-                    <?= renderFaStars($rv['rating']); ?>
-                  </div>
-                </div>
-                <p class="text-sm text-base-content/80 sm:pl-12 leading-relaxed break-words">
-                  <?= nl2br(htmlspecialchars($rv['comment'])); ?>
-                </p>
-              </div>
-            <?php endforeach; ?>
-          <?php else: ?>
-            <div class="text-center py-8 text-base-content/50 bg-base-200/50 rounded-xl">
-              <i class="fa-regular fa-comments text-3xl mb-2 block"></i>
-              <p class="text-sm">No comments yet. Be the first to review!</p>
-            </div>
-          <?php endif; ?>
-        </div>
-      </div>
     </main>
   </div>
 
@@ -649,7 +604,7 @@ function renderFaStars($avg) {
       <div>
         <div class="flex items-center gap-3 mb-6 pb-4 border-b border-base-200">
           <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <img src="assets/images/logo-icon.png" class="w-6 h-6 object-contain" alt="Logo" onerror="this.src='../assets/images/placeholder.jpg';">
+            <img src="assets/images/logo-icon.png" class="w-6 h-6 object-contain" alt="Logo" onerror="this.src='assets/images/placeholder.jpg';">
           </div>
           <div class="min-w-0 flex-1">
             <h2 class="font-bold text-base text-base-content truncate">
@@ -729,9 +684,10 @@ function renderFaStars($avg) {
 
 <script>
   $(document).ready(function() {
-    var lat = <?= !empty($latitude) ? json_encode($latitude) : '13.7565'; ?>;
-    var lng = <?= !empty($longitude) ? json_encode($longitude) : '121.0583'; ?>;
+    var lat = <?= is_numeric($latitude) ? $latitude : '13.7565'; ?>;
+    var lng = <?= is_numeric($longitude) ? $longitude : '121.0583'; ?>;
     var propertyName = <?= json_encode($property_name); ?>;
+    var barangayName = <?= json_encode($barangay); ?>;
 
     var map = L.map('map').setView([lat, lng], 15);
 
@@ -740,9 +696,12 @@ function renderFaStars($avg) {
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    L.marker([lat, lng]).addTo(map)
-      .bindPopup('<b>' + propertyName + '</b><br><?= htmlspecialchars($barangay); ?>')
-      .openPopup();
+    var popup = document.createElement('div');
+    popup.innerHTML = '<b></b><br><span></span>';
+    popup.querySelector('b').textContent = propertyName;
+    popup.querySelector('span').textContent = barangayName;
+
+    L.marker([lat, lng]).addTo(map).bindPopup(popup).openPopup();
   });
 </script>
 

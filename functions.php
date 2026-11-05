@@ -5660,3 +5660,310 @@ if(isset($_POST['add_interested_condo'])){
     exit;
 
 }
+
+if(isset($_POST['add_house_interested'])){
+    $house_id = $_POST['house_id'] ?? '';
+    $status = "Pending";
+
+     $get_data = $conn->prepare("SELECT * FROM house WHERE house_id = ?");
+    $get_data->bind_param("s", $house_id);
+    $get_data->execute();
+    $condo_data = $get_data->get_result();
+
+    if ($condo_data->num_rows > 0) {
+        while ($row = $condo_data->fetch_assoc()) {
+            $rent_id = $row['rent_id'];
+        }
+    } else {
+        $_SESSION['error'] = "House not found";
+        header("Location: users/interested.php");
+        exit();
+    }
+
+
+       
+    $get_rent = $conn->prepare("SELECT * FROM rentspace WHERE rent_id = ?");
+    $get_rent->bind_param("s", $rent_id);
+    $get_rent->execute();
+    $result_email = $get_rent->get_result();
+
+    if ($result_email->num_rows > 0) {
+        $row = $result_email->fetch_assoc();
+        $landlord_id = $row['landlord_id'];
+    }
+
+
+    
+    $check = $conn->prepare("SELECT 1 FROM `interested` WHERE `user_id` = ? AND `data_id` = ? AND `status` = ?");   
+    $check->bind_param("sss", $user_id_login, $house_id, $status);
+    $check->execute();
+    if($check->get_result()->num_rows > 0){
+        $_SESSION['error'] = "You already sent a request for this house";
+        header("Location: users/house_details.php?id=" . urldecode($rent_id));
+        exit;
+    }
+
+        $insert = $conn->prepare("INSERT INTO interested (user_id, landlord_id, data_id, status, date_sent, time_sent) VALUES (?, ?, ?, ?, ?, ?)");
+    $insert->bind_param("ssssss", $user_id_login, $landlord_id, $house_id, $status, $datetoday, $timetoday1);
+    $insert->execute();
+    $_SESSION['success'] = "Successfully Requested, if 3 days doesnt Approved it will automatically Decline";
+    header("Location: users/interested.php");
+    exit;
+
+
+
+}
+
+if(isset($_POST['add_interested_cs'])){
+    $cs_id = $_POST['cs_id'] ?? '';
+    $status = "Pending";
+
+    $get_data = $conn->prepare("SELECT * FROM commercial_space WHERE cs_id = ?");
+    $get_data->bind_param("s", $cs_id);
+    $get_data->execute();
+    $condo_data = $get_data->get_result();
+
+    if ($condo_data->num_rows > 0) {
+        while ($row = $condo_data->fetch_assoc()) {
+            $rent_id = $row['rent_id'];
+        }
+    } else {
+        $_SESSION['error'] = "Commercial space not found";
+        header("Location: users/interested.php");
+        exit();
+    }
+
+
+    $get_rent = $conn->prepare("SELECT * FROM rentspace WHERE rent_id = ?");
+    $get_rent->bind_param("s", $rent_id);
+    $get_rent->execute();
+    $result_email = $get_rent->get_result();
+
+    if ($result_email->num_rows > 0) {
+        $row = $result_email->fetch_assoc();
+        $landlord_id = $row['landlord_id'];
+    }
+
+
+    $check = $conn->prepare("SELECT 1 FROM `interested` WHERE `user_id` = ? AND `data_id` = ? AND `status` = ?");   
+    $check->bind_param("sss", $user_id_login, $cs_id, $status);
+    $check->execute();
+    if($check->get_result()->num_rows > 0){
+        $_SESSION['error'] = "You already sent a request for this commercial space";
+        header("Location: users/cs_details.php?id=" . urldecode($rent_id));
+        exit;
+    }
+
+    $insert = $conn->prepare("INSERT INTO interested (user_id, landlord_id, data_id, status, date_sent, time_sent) VALUES (?, ?, ?, ?, ?, ?)");
+    $insert->bind_param("ssssss", $user_id_login, $landlord_id, $cs_id, $status, $datetoday, $timetoday1);
+    $insert->execute();
+    $_SESSION['success'] = "Successfully Requested, if 3 days doesnt Approved it will automatically Decline";
+    header("Location: users/interested.php");
+    exit;
+
+}
+
+if (isset($_POST['add_interested_es'])) {
+    $es_id = $_POST['es_id'] ?? '';
+    $status = "Pending";
+
+    $get_data = $conn->prepare("SELECT * FROM event_space WHERE es_id = ?");
+    $get_data->bind_param("s", $es_id);
+    $get_data->execute();
+    $condo_data = $get_data->get_result();
+
+    if ($condo_data->num_rows > 0) {
+        while ($row = $condo_data->fetch_assoc()) {
+            $rent_id = $row['rent_id'];
+        }
+    } else {
+        $_SESSION['error'] = "Event space not found";
+        header("Location: users/interested.php");
+        exit();
+    }
+
+
+    $get_rent = $conn->prepare("SELECT * FROM rentspace WHERE rent_id = ?");
+    $get_rent->bind_param("s", $rent_id);
+    $get_rent->execute();
+    $result_email = $get_rent->get_result();
+
+    if ($result_email->num_rows > 0) {
+        $row = $result_email->fetch_assoc();
+        $landlord_id = $row['landlord_id'];
+    }
+
+
+    $check = $conn->prepare("SELECT 1 FROM `interested` WHERE `user_id` = ? AND `data_id` = ? AND `status` = ?");   
+    $check->bind_param("sss", $user_id_login, $es_id, $status);
+    $check->execute();
+    if($check->get_result()->num_rows > 0){
+        $_SESSION['error'] = "You already sent a request for this commercial space";
+        header("Location: users/es_details.php?id=" . urldecode($rent_id));
+        exit;
+    }
+
+    $insert = $conn->prepare("INSERT INTO interested (user_id, landlord_id, data_id, status, date_sent, time_sent) VALUES (?, ?, ?, ?, ?, ?)");
+    $insert->bind_param("ssssss", $user_id_login, $landlord_id, $es_id, $status, $datetoday, $timetoday1);
+    $insert->execute();
+    $_SESSION['success'] = "Successfully Requested, if 3 days doesnt Approved it will automatically Decline";
+    header("Location: users/interested.php");
+    exit;
+
+}
+
+if(isset($_POST['add_interested_transient'])){
+    $transient_id = $_POST['transient_id'] ?? '';
+    $status = "Pending";
+
+
+      $get_data = $conn->prepare("SELECT * FROM transient WHERE transient_id = ?");
+    $get_data->bind_param("s", $transient_id);
+    $get_data->execute();
+    $condo_data = $get_data->get_result();
+
+    if ($condo_data->num_rows > 0) {
+        while ($row = $condo_data->fetch_assoc()) {
+            $rent_id = $row['rent_id'];
+        }
+    } else {
+        $_SESSION['error'] = "Trasient not found";
+        header("Location: users/interested.php");
+        exit();
+    }
+
+
+    
+    $get_rent = $conn->prepare("SELECT * FROM rentspace WHERE rent_id = ?");
+    $get_rent->bind_param("s", $rent_id);
+    $get_rent->execute();
+    $result_email = $get_rent->get_result();
+
+    if ($result_email->num_rows > 0) {
+        $row = $result_email->fetch_assoc();
+        $landlord_id = $row['landlord_id'];
+    }
+
+    
+
+    $check = $conn->prepare("SELECT 1 FROM `interested` WHERE `user_id` = ? AND `data_id` = ? AND `status` = ?");   
+    $check->bind_param("sss", $user_id_login, $transient_id, $status);
+    $check->execute();
+    if($check->get_result()->num_rows > 0){
+        $_SESSION['error'] = "You already sent a request for this Trasient space";
+        header("Location: users/es_details.php?id=" . urldecode($rent_id));
+        exit;
+    }
+
+    $insert = $conn->prepare("INSERT INTO interested (user_id, landlord_id, data_id, status, date_sent, time_sent) VALUES (?, ?, ?, ?, ?, ?)");
+    $insert->bind_param("ssssss", $user_id_login, $landlord_id, $transient_id, $status, $datetoday, $timetoday1);
+    $insert->execute();
+    $_SESSION['success'] = "Successfully Requested, if 3 days doesnt Approved it will automatically Decline";
+    header("Location: users/interested.php");
+    exit;
+
+
+}
+
+if (isset($_POST['add_interested_ps'])) {
+  $ps_id = $_POST['ps_id'] ?? '';
+    $status = "Pending";
+
+
+      $get_data = $conn->prepare("SELECT * FROM parking_space WHERE ps_id = ?");
+    $get_data->bind_param("s", $ps_id);
+    $get_data->execute();
+    $condo_data = $get_data->get_result();
+
+    if ($condo_data->num_rows > 0) {
+        while ($row = $condo_data->fetch_assoc()) {
+            $rent_id = $row['rent_id'];
+        }
+    } else {
+        $_SESSION['error'] = "Parking Space not found";
+        header("Location: users/interested.php");
+        exit();
+    }
+
+
+    
+    $get_rent = $conn->prepare("SELECT * FROM rentspace WHERE rent_id = ?");
+    $get_rent->bind_param("s", $rent_id);
+    $get_rent->execute();
+    $result_email = $get_rent->get_result();
+
+    if ($result_email->num_rows > 0) {
+        $row = $result_email->fetch_assoc();
+        $landlord_id = $row['landlord_id'];
+    }
+
+    
+
+    $check = $conn->prepare("SELECT 1 FROM `interested` WHERE `user_id` = ? AND `data_id` = ? AND `status` = ?");   
+    $check->bind_param("sss", $user_id_login, $ps_id, $status);
+    $check->execute();
+    if($check->get_result()->num_rows > 0){
+        $_SESSION['error'] = "You already sent a request for this Parking Space";
+        header("Location: users/ps_details.php?id=" . urldecode($rent_id));
+        exit;
+    }
+
+    $insert = $conn->prepare("INSERT INTO interested (user_id, landlord_id, data_id, status, date_sent, time_sent) VALUES (?, ?, ?, ?, ?, ?)");
+    $insert->bind_param("ssssss", $user_id_login, $landlord_id, $ps_id, $status, $datetoday, $timetoday1);
+    $insert->execute();
+    $_SESSION['success'] = "Successfully Requested, if 3 days doesnt Approved it will automatically Decline";
+    header("Location: users/interested.php");
+    exit;
+
+}
+
+if(isset($_POST['add_interested_vl'])){
+      $vl_id = $_POST['vl_id'] ?? '';
+    $status = "Pending";
+
+
+      $get_data = $conn->prepare("SELECT * FROM vacant_lot WHERE vl_id = ?");
+    $get_data->bind_param("s", $vl_id);
+    $get_data->execute();
+    $condo_data = $get_data->get_result();
+
+    if ($condo_data->num_rows > 0) {
+        while ($row = $condo_data->fetch_assoc()) {
+            $rent_id = $row['rent_id'];
+        }
+    } else {
+        $_SESSION['error'] = "Vacant Lot not found";
+        header("Location: users/interested.php");
+        exit();
+    }
+
+
+    
+    $get_rent = $conn->prepare("SELECT * FROM rentspace WHERE rent_id = ?");
+    $get_rent->bind_param("s", $rent_id);
+    $get_rent->execute();
+    $result_email = $get_rent->get_result();
+
+    if ($result_email->num_rows > 0) {
+        $row = $result_email->fetch_assoc();
+        $landlord_id = $row['landlord_id'];
+    }
+
+    
+
+    $check = $conn->prepare("SELECT 1 FROM `interested` WHERE `user_id` = ? AND `data_id` = ? AND `status` = ?");   
+    $check->bind_param("sss", $user_id_login, $vl_id, $status);
+    $check->execute();
+    if($check->get_result()->num_rows > 0){
+        $_SESSION['error'] = "You already sent a request for this Vacant Lot";
+        header("Location: users/vl_details.php?id=" . urldecode($rent_id));
+        exit;
+    }
+
+    $insert = $conn->prepare("INSERT INTO interested (user_id, landlord_id, data_id, status, date_sent, time_sent) VALUES (?, ?, ?, ?, ?, ?)");
+    $insert->bind_param("ssssss", $user_id_login, $landlord_id, $vl_id, $status, $datetoday, $timetoday1);
+    $insert->execute();
+    $_SESSION['success'] = "Successfully Requested, if 3 days doesnt Approved it will automatically Decline";
+    header("Location: users/interested.php");
+    exit;
+}

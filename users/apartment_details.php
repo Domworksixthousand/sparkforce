@@ -333,7 +333,7 @@ if(isset($_GET['location_back'])) {
 
                   <!-- Heart -->
                   <div class="tooltip tooltip-left" data-tip="Interested">
-                    <button type="submit" name="add_apartment_interested" value="1"
+                    <button type="submit" name="add_favorite_btn" value="1"
                             aria-label="Interested"
                             class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm shadow-md hover:bg-red-50 active:scale-95 transition-all cursor-pointer border-none outline-none <?= $is_fav ? 'text-red-600' : 'text-slate-600 hover:text-red-600'; ?>">
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
@@ -438,7 +438,7 @@ if(isset($_GET['location_back'])) {
               <i class="fa-solid fa-circle-info text-success"></i> About This Apartment
             </h2>
             <p class="text-base-content/80 text-sm leading-relaxed whitespace-pre-line">
-              <?= $other_info ? htmlspecialchars($other_info) : 'No description available for this apartment space.'; ?>
+              <?= $other_info ? $other_info : 'No description available for this apartment space.'; ?>
             </p>
           </div>
 

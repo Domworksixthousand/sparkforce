@@ -3,17 +3,19 @@ include '../config.php';
 
 $rent_id = $_GET['id'] ?? null;
 
-$name = $price = $image_cover = $other_info = $landlord_id = $user_id = $type = "";
-$rate = "";
+$name = $price = $image_cover = $other_info = $landlord_id = $user_id = $type = $rate = "";
 $ps_id = $square_area = $type_ps = $status = "";
 $apartment_images = [];
 $saved_amenities = [];
+
+// Logged-in viewer (empty when not logged in)
+$user_id_login = $user_id_login ?? '';
 
 if ($rent_id) {
     // 1. RENTSPACE DETAILS
     $get_rent = $conn->prepare("
         SELECT name, price, image_cover, other_info, landlord_id, user_id, type, rate
-        FROM rentspace 
+        FROM rentspace
         WHERE rent_id = ?
     ");
     $get_rent->bind_param("s", $rent_id);
@@ -51,10 +53,8 @@ if ($rent_id) {
     $get_gallery->execute();
     $result_gallery = $get_gallery->get_result();
 
-    if ($result_gallery->num_rows > 0) {
-        while ($row_gallery = $result_gallery->fetch_assoc()) {
-            $apartment_images[] = $row_gallery['image'];
-        }
+    while ($row_gallery = $result_gallery->fetch_assoc()) {
+        $apartment_images[] = $row_gallery['image'];
     }
 
     // 4. AMENITIES
@@ -94,6 +94,21 @@ function parkingStatusBadge($status) {
     }
 }
 
+// Font Awesome stars (full / half / empty)
+function renderFaStars($avg) {
+    $html = '';
+    for ($i = 1; $i <= 5; $i++) {
+        if ($avg >= $i) {
+            $html .= '<i class="fa-solid fa-star"></i>';
+        } elseif ($avg >= $i - 0.5) {
+            $html .= '<i class="fa-solid fa-star-half-stroke"></i>';
+        } else {
+            $html .= '<i class="fa-regular fa-star"></i>';
+        }
+    }
+    return $html;
+}
+
 // 5. LANDLORD DETAILS
 $province = $municipality = $barangay = $longitude = $latitude = $property_name = "";
 if ($landlord_id) {
@@ -126,7 +141,71 @@ if ($user_id) {
     }
 }
 
-// 7. FAVORITES
+// 7. RATINGS & COMMENTS (read-only)
+$avg_rating   = 0.0;
+$review_count = 0;
+$star_counts  = [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0];
+$reviews      = [];
+$is_owner     = (!empty($user_id_login) && $user_id_login === $user_id);
+
+if ($landlord_id) {
+    $get_avg = $conn->prepare("SELECT AVG(rating) AS avg_rating, COUNT(*) AS review_count FROM `reviews` WHERE `landlord_id` = ?");
+    $get_avg->bind_param("s", $landlord_id);
+    $get_avg->execute();
+    $avg_row      = $get_avg->get_result()->fetch_assoc();
+    $avg_rating   = (float)($avg_row['avg_rating'] ?? 0);
+    $review_count = (int)($avg_row['review_count'] ?? 0);
+
+    $get_dist = $conn->prepare("SELECT rating, COUNT(*) AS c FROM `reviews` WHERE `landlord_id` = ? GROUP BY rating");
+    $get_dist->bind_param("s", $landlord_id);
+    $get_dist->execute();
+    $dist_res = $get_dist->get_result();
+    while ($d = $dist_res->fetch_assoc()) {
+        $r = (int)$d['rating'];
+        if (isset($star_counts[$r])) $star_counts[$r] = (int)$d['c'];
+    }
+
+    $get_reviews = $conn->prepare("
+        SELECT acc.firstname, acc.middlename, acc.lastname, acc.suffix, acc.username,
+               rv.rating, rv.comment, rv.date_sent, rv.time_sent, rv.review_id
+        FROM `reviews` AS rv
+        LEFT JOIN `accounts` AS acc ON acc.user_id = rv.user_id
+        WHERE rv.landlord_id = ?
+        ORDER BY rv.review_id DESC
+        LIMIT 20
+    ");
+    $get_reviews->bind_param("s", $landlord_id);
+    $get_reviews->execute();
+    $reviews_res = $get_reviews->get_result();
+
+    while ($rv = $reviews_res->fetch_assoc()) {
+        $reviewer = trim(implode(' ', array_filter([
+            $rv['lastname']   ?? '',
+            $rv['firstname']  ?? '',
+            $rv['middlename'] ?? '',
+            $rv['suffix']     ?? '',
+        ])));
+        if ($reviewer === '') {
+            $reviewer = $rv['username'] ?? 'Anonymous';
+        }
+
+        $parts    = preg_split('/\s+/', trim($reviewer));
+        $initials = strtoupper(mb_substr($parts[0] ?? 'A', 0, 1) . (isset($parts[1]) ? mb_substr($parts[1], 0, 1) : ''));
+
+        $ts   = strtotime($rv['date_sent'] ?? '');
+        $date = $ts ? date('M j, Y', $ts) : ($rv['date_sent'] ?? '');
+
+        $reviews[] = [
+            'name'     => $reviewer,
+            'initials' => $initials,
+            'date'     => $date,
+            'rating'   => (int)$rv['rating'],
+            'comment'  => $rv['comment'] ?? '',
+        ];
+    }
+}
+
+// 8. FAVORITES / INTERESTED
 $switch = "off";
 if ($rent_id) {
     $favorites = $conn->prepare("SELECT * FROM `favorites` WHERE `rent_id` = ?");
@@ -137,10 +216,11 @@ if ($rent_id) {
         $switch = "on";
     }
 }
-$hidden = ($user_id_login === $user_id) ? 'hidden' : '';
+$is_fav = ($switch == 'on');
+$hidden = $is_owner ? 'hidden' : '';
 
-// 8. AUTO-SAVE VIEWED
-if ($rent_id && $user_id_login) {
+// 9. AUTO-SAVE VIEWED
+if ($rent_id && !empty($user_id_login)) {
     $check = $conn->prepare(
         "SELECT COUNT(*) AS already_viewed
          FROM `rent_views`
@@ -174,12 +254,15 @@ if ($rent_id && $user_id_login) {
     <link rel="stylesheet" href="../assets/styles/index.css">
     <script src="../assets/scripts/tailwind.js"></script>
     <script src="../assets/scripts/daisy_ui.js"></script>
+    <script src="../assets/scripts/cool_alert.js"></script>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body class="bg-base-200 min-h-screen text-base-content antialiased">
+
+<?php include '../alerts.php'; ?>
 
 <div class="drawer lg:drawer-open">
   <input id="my-drawer-3" type="checkbox" class="drawer-toggle" />
@@ -199,9 +282,10 @@ if ($rent_id && $user_id_login) {
 
     <main class="p-4 md:p-8 max-w-7xl mx-auto w-full space-y-6">
       <div class="flex justify-end items-end">
-        <a href="properties.php"><img src="../assets/images/back.png" alt="Back"></a>
+        <a href="<?= htmlspecialchars($location_back ?? 'properties.php'); ?>"><img src="../assets/images/back.png" alt="Back"></a>
       </div>
 
+      <!-- HERO -->
       <div class="bg-base-100 rounded-2xl p-4 md:p-6 shadow-sm border border-base-300">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -218,36 +302,60 @@ if ($rent_id && $user_id_login) {
                 </span>
               </div>
 
-               <a href="report.php?user_id=<?php echo urlencode($user_id); ?>&location_back=ps_details.php&id=<?php echo urlencode($rent_id); ?>&report_type=Post" class="<?php echo $hidden; ?> tooltip tooltip-left absolute bottom-4 right-27 lg:top-4 h-fit text-blue-900 bg-green-300 hover:bg-blue-200 active:bg-red-400 rounded-lg p-1.5 flex items-center justify-center transition-all cursor-pointer border-none outline-none" data-tip="Report">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-circle-warning-icon lucide-message-circle-warning"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
-              </a>
-              <a href="chat_portal.php?id=<?= urlencode($user_id); ?>"
-                 class="<?= $hidden; ?> tooltip tooltip-left absolute bottom-4 right-15 lg:top-4 h-fit text-blue-900 bg-green-300 hover:bg-blue-200 active:bg-red-400 rounded-lg p-1.5 flex items-center justify-center transition-all cursor-pointer border-none outline-none"
-                 data-tip="Message Landlord">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-square-text"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/><path d="M7 11h10"/><path d="M7 15h6"/><path d="M7 7h8"/></svg>
-              </a>
+              <div class="absolute top-4 right-4 z-10 flex items-center gap-2">
 
-              <form action="../functions.php" method="POST" class="tooltip tooltip-left absolute bottom-4 right-4 h-fit lg:top-4" data-tip="<?= ($switch == 'on') ? 'Remove from Favorites' : 'Add to my Favorites'; ?>">
-                <input type="hidden" name="type" value="<?= htmlspecialchars($type); ?>">
-                <input type="hidden" name="locate" value="ps_details.php">
-                <input type="hidden" name="rent_id" value="<?= htmlspecialchars($rent_id); ?>">
-                <input type="hidden" name="current_status" value="<?= htmlspecialchars($switch); ?>">
+                <!-- Report -->
+                <div class="<?= $hidden; ?>">
+                  <div class="tooltip tooltip-left" data-tip="Report">
+                    <a href="report.php?user_id=<?= urlencode($user_id); ?>&location_back=ps_details.php&id=<?= urlencode($rent_id); ?>&report_type=Post"
+                      aria-label="Report this post"
+                      class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm text-emerald-700 shadow-md hover:bg-emerald-600 hover:text-white active:scale-95 transition-all">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                    </a>
+                  </div>
+                </div>
 
-                <button type="submit" name="add_favorite_btn" value="1" class="bg-green-300 hover:bg-red-200 active:bg-red-400 rounded-lg p-1 flex items-center justify-center transition-all cursor-pointer border-none outline-none">
-                  <svg xmlns="http://www.w3.org/2000/svg"
-                       width="28"
-                       height="28"
-                       viewBox="0 0 24 24"
-                       fill="<?= ($switch == 'on') ? '#dc2626' : 'none'; ?>"
-                       stroke="<?= ($switch == 'on') ? '#dc2626' : 'currentColor'; ?>"
-                       stroke-width="2"
-                       stroke-linecap="round"
-                       stroke-linejoin="round"
-                       class="<?= ($switch == 'on') ? 'text-red-600' : 'text-red-800 hover:fill-red-600 hover:text-red-600'; ?> transition-colors">
-                    <path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/>
-                  </svg>
-                </button>
-              </form>
+                <!-- Message landlord -->
+                <div class="<?= $hidden; ?>">
+                  <div class="tooltip tooltip-left" data-tip="Message Landlord">
+                    <a href="chat_portal.php?id=<?= urlencode($user_id); ?>"
+                      aria-label="Message landlord"
+                      class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm text-emerald-700 shadow-md hover:bg-emerald-600 hover:text-white active:scale-95 transition-all">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/><path d="M7 11h10"/><path d="M7 15h6"/><path d="M7 7h8"/></svg>
+                    </a>
+                  </div>
+                </div>
+
+                <form action="../functions.php" method="POST" class="flex items-center gap-2">
+                  <input type="hidden" name="type" value="<?= htmlspecialchars($type); ?>">
+                  <input type="hidden" name="locate" value="ps_details.php">
+                  <input type="hidden" name="rent_id" value="<?= htmlspecialchars($rent_id); ?>">
+                  <input type="hidden" name="current_status" value="<?= htmlspecialchars($switch); ?>">
+                  <input type="hidden" name="ps_id" value="<?= htmlspecialchars($ps_id); ?>">
+
+                  <!-- Heart (favorite) -->
+                  <div class="tooltip tooltip-left" data-tip="<?= $is_fav ? 'Remove from Favorites' : 'Add to my Favorites'; ?>">
+                    <button type="submit" name="add_favorite_btn" value="1"
+                            aria-label="Favorite"
+                            class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm shadow-md hover:bg-red-50 active:scale-95 transition-all cursor-pointer border-none outline-none <?= $is_fav ? 'text-red-600' : 'text-slate-600 hover:text-red-600'; ?>">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                          fill="<?= $is_fav ? 'currentColor' : 'none'; ?>" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/>
+                      </svg>
+                    </button>
+                  </div>
+
+                  <!-- Interested -->
+                  <div class="tooltip tooltip-left" data-tip="<?= $is_fav ? 'Remove from Interested' : 'Add to Interested'; ?>">
+                    <button type="submit" name="add_interested_ps" value="1"
+                            aria-label="<?= $is_fav ? 'Remove from Interested' : 'Add to Interested'; ?>"
+                            class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm shadow-md hover:bg-red-50 active:scale-95 transition-all cursor-pointer border-none outline-none <?= $is_fav ? 'text-red-600' : 'text-slate-600 hover:text-red-600'; ?>">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.62 13.8A2.25 2.25 0 1 1 12 10.836a2.25 2.25 0 1 1 3.38 2.966l-2.626 2.856a.998.998 0 0 1-1.507 0z"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                    </button>
+                  </div>
+                </form>
+
+              </div>
             </div>
           </div>
 
@@ -256,7 +364,17 @@ if ($rent_id && $user_id_login) {
               <h1 class="text-2xl md:text-3xl font-extrabold text-base-content">
                 <?= htmlspecialchars(mb_strlen($name) > 22 ? mb_substr($name, 0, 22) . '...' : $name); ?>
               </h1>
-              <p class="text-sm text-base-content/70 mt-1 flex items-center gap-1.5">
+
+              <!-- rating summary (jumps to reviews) -->
+              <a href="#reviews" class="flex items-center gap-2 mt-1">
+                <span class="flex text-warning text-sm gap-0.5"><?= renderFaStars($avg_rating); ?></span>
+                <span class="text-sm font-semibold"><?= $review_count ? number_format($avg_rating, 1) : 'No ratings'; ?></span>
+                <?php if ($review_count): ?>
+                  <span class="text-xs text-base-content/60">(<?= $review_count; ?>)</span>
+                <?php endif; ?>
+              </a>
+
+              <p class="text-sm text-base-content/70 mt-2 flex items-center gap-1.5">
                 <i class="fa-solid fa-location-dot text-error"></i>
                 <?= htmlspecialchars(trim("$barangay, $municipality, $province", ", ")); ?>
               </p>
@@ -266,7 +384,10 @@ if ($rent_id && $user_id_login) {
               <div class="bg-primary/10 p-4 rounded-xl border border-primary/20">
                 <span class="text-xs font-semibold text-success uppercase tracking-wider">Rental Rate</span>
                 <div class="text-3xl font-black text-success mt-1">
-                  ₱<?= number_format((float)$price, 2); ?> <span class="text-sm font-normal text-base-content/70">/ <?php echo htmlspecialchars($rate); ?></span>
+                  ₱<?= number_format((float)$price, 2); ?>
+                  <?php if (!empty($rate)): ?>
+                    <span class="text-sm font-normal text-base-content/70">/ <?= htmlspecialchars($rate); ?></span>
+                  <?php endif; ?>
                 </div>
               </div>
 
@@ -293,15 +414,32 @@ if ($rent_id && $user_id_login) {
                 <i class="fa-solid fa-envelope text-success"></i> <?= htmlspecialchars($email ?: 'N/A'); ?>
               </p>
             </div>
+
+            <!-- Prominent Interest Button
+            <form action="../functions.php" method="POST" class="w-full">
+              <input type="hidden" name="type" value="<?= htmlspecialchars($type); ?>">
+              <input type="hidden" name="locate" value="ps_details.php">
+              <input type="hidden" name="rent_id" value="<?= htmlspecialchars($rent_id); ?>">
+              <input type="hidden" name="current_status" value="<?= htmlspecialchars($switch); ?>">
+              <input type="hidden" name="ps_id" value="<?= htmlspecialchars($ps_id); ?>">
+              <button type="submit" name="add_interested_ps" value="1"
+                      class="btn w-full btn-<?= $is_fav ? 'error' : 'success' ?> text-white py-3 flex items-center justify-center gap-2 font-semibold"
+                      <?= $is_owner ? 'disabled' : ''; ?>>
+                <i class="fa-solid fa-heart"></i>
+                <?= $is_fav ? 'Remove from Interested' : 'Mark as Interested'; ?>
+              </button>
+            </form> -->
           </div>
 
         </div>
       </div>
 
+      <!-- CONTENT GRID -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         <div class="lg:col-span-2 space-y-6">
 
+          <!-- About -->
           <div class="bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300">
             <h2 class="text-lg font-bold mb-3 flex items-center gap-2">
               <i class="fa-solid fa-circle-info text-success"></i> About This Parking Space
@@ -311,6 +449,7 @@ if ($rent_id && $user_id_login) {
             </p>
           </div>
 
+          <!-- Amenities -->
           <div class="bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300">
             <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
               <i class="fa-solid fa-square-check text-success"></i> Features & Amenities
@@ -329,6 +468,7 @@ if ($rent_id && $user_id_login) {
             <?php endif; ?>
           </div>
 
+          <!-- Parking Unit Details -->
           <div class="bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300">
             <div class="flex items-center justify-between mb-4">
               <h2 class="text-lg font-bold flex items-center gap-2">
@@ -366,7 +506,10 @@ if ($rent_id && $user_id_login) {
                 <div class="pt-1 border-t border-base-200 flex items-center justify-between">
                   <span class="text-xs text-base-content/60">Rate:</span>
                   <p class="text-xs font-semibold text-success">
-                    ₱<?= number_format((float)$price, 2); ?> <span class="font-normal text-base-content/60">/ <?= htmlspecialchars($rate); ?></span>
+                    ₱<?= number_format((float)$price, 2); ?>
+                    <?php if (!empty($rate)): ?>
+                      <span class="font-normal text-base-content/60">/ <?= htmlspecialchars($rate); ?></span>
+                    <?php endif; ?>
                   </p>
                 </div>
 
@@ -377,6 +520,77 @@ if ($rent_id && $user_id_login) {
                 No parking unit registered under this space yet.
               </div>
             <?php endif; ?>
+          </div>
+
+          <!-- RATINGS & COMMENTS -->
+          <div id="reviews" class="bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300 space-y-6 scroll-mt-6">
+
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-base-200">
+              <div>
+                <h2 class="text-lg font-bold flex items-center gap-2">
+                  <i class="fa-solid fa-star text-warning"></i> Ratings & Reviews
+                </h2>
+                <p class="text-xs text-base-content/60">See what past visitors say about this parking space</p>
+              </div>
+              <span class="badge badge-success badge-outline font-semibold">
+                <?= $review_count; ?> Review<?= $review_count === 1 ? '' : 's'; ?>
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div class="flex flex-col items-center justify-center bg-base-200/60 border border-base-300 rounded-xl p-6">
+                <div class="text-5xl font-black text-warning"><?= $review_count ? number_format($avg_rating, 1) : '0.0'; ?></div>
+                <div class="flex text-warning text-lg gap-0.5 mt-2"><?= renderFaStars($avg_rating); ?></div>
+                <p class="text-xs text-base-content/60 mt-1">
+                  <?= $review_count ? "Based on $review_count review" . ($review_count > 1 ? 's' : '') : 'No reviews yet'; ?>
+                </p>
+              </div>
+
+              <div class="md:col-span-2 space-y-2 self-center">
+                <?php foreach ($star_counts as $star => $cnt):
+                    $pct = $review_count ? round(($cnt / $review_count) * 100) : 0; ?>
+                  <div class="flex items-center gap-3 text-sm">
+                    <span class="w-10 flex items-center gap-1 font-semibold"><?= $star; ?> <i class="fa-solid fa-star text-warning text-xs"></i></span>
+                    <progress class="progress progress-warning flex-1" value="<?= $pct; ?>" max="100"></progress>
+                    <span class="w-8 text-right text-xs text-base-content/60"><?= $cnt; ?></span>
+                  </div>
+                <?php endforeach; ?>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-base-content/50">Recent Comments</h4>
+
+              <?php if (!empty($reviews)): ?>
+                <?php foreach ($reviews as $rv): ?>
+                  <div class="p-4 rounded-xl border border-base-200 bg-base-100 space-y-2 hover:border-emerald-500/30 transition-all">
+                    <div class="flex items-center justify-between gap-2">
+                      <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-9 h-9 rounded-full bg-emerald-500/10 text-emerald-700 font-bold flex items-center justify-center text-xs flex-shrink-0">
+                          <?= htmlspecialchars($rv['initials']); ?>
+                        </div>
+                        <div class="min-w-0">
+                          <h4 class="font-bold text-sm text-base-content truncate"><?= htmlspecialchars($rv['name']); ?></h4>
+                          <span class="text-[11px] text-base-content/50"><?= htmlspecialchars($rv['date']); ?></span>
+                        </div>
+                      </div>
+                      <div class="flex text-warning text-xs gap-0.5 flex-shrink-0">
+                        <?= renderFaStars($rv['rating']); ?>
+                      </div>
+                    </div>
+                    <p class="text-sm text-base-content/80 sm:pl-12 leading-relaxed break-words">
+                      <?= nl2br(htmlspecialchars($rv['comment'])); ?>
+                    </p>
+                  </div>
+                <?php endforeach; ?>
+              <?php else: ?>
+                <div class="text-center py-8 text-base-content/50 bg-base-200/50 rounded-xl">
+                  <i class="fa-regular fa-comments text-3xl mb-2 block"></i>
+                  <p class="text-sm">No comments yet.</p>
+                </div>
+              <?php endif; ?>
+            </div>
+
           </div>
 
         </div>
@@ -396,6 +610,7 @@ if ($rent_id && $user_id_login) {
 
       </div>
 
+      <!-- Photo Gallery -->
       <div class="bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300">
         <div class="flex justify-between mb-6 pb-3 border-b border-base-200 flex-col lg:flex-row">
           <div class="mb-3">
@@ -437,6 +652,7 @@ if ($rent_id && $user_id_login) {
     </main>
   </div>
 
+  <!-- Drawer Sidebar -->
   <div class="drawer-side z-40">
     <label for="my-drawer-3" aria-label="close sidebar" class="drawer-overlay"></label>
     <aside class="bg-base-100 min-h-full w-80 p-5 border-r border-base-300 flex flex-col justify-between">
@@ -463,8 +679,8 @@ if ($rent_id && $user_id_login) {
           <?php
           if ($landlord_id) {
               $get_rentspace = $conn->prepare("
-                SELECT rent_id, name, price, image_cover 
-                FROM `rentspace` 
+                SELECT rent_id, name, price, image_cover
+                FROM `rentspace`
                 WHERE `landlord_id` = ? AND `type` = ?
               ");
               $get_rentspace->bind_param("ss", $landlord_id, $type);
@@ -523,9 +739,10 @@ if ($rent_id && $user_id_login) {
 
 <script>
   $(document).ready(function() {
-    var lat = <?= !empty($latitude) ? json_encode($latitude) : '13.7565'; ?>;
-    var lng = <?= !empty($longitude) ? json_encode($longitude) : '121.0583'; ?>;
+    var lat = <?= is_numeric($latitude) ? $latitude : '13.7565'; ?>;
+    var lng = <?= is_numeric($longitude) ? $longitude : '121.0583'; ?>;
     var propertyName = <?= json_encode($property_name); ?>;
+    var barangayName = <?= json_encode($barangay); ?>;
 
     var map = L.map('map').setView([lat, lng], 15);
 
@@ -534,9 +751,12 @@ if ($rent_id && $user_id_login) {
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    L.marker([lat, lng]).addTo(map)
-      .bindPopup('<b>' + propertyName + '</b><br><?= htmlspecialchars($barangay); ?>')
-      .openPopup();
+    var popup = document.createElement('div');
+    popup.innerHTML = '<b></b><br><span></span>';
+    popup.querySelector('b').textContent = propertyName;
+    popup.querySelector('span').textContent = barangayName;
+
+    L.marker([lat, lng]).addTo(map).bindPopup(popup).openPopup();
   });
 </script>
 

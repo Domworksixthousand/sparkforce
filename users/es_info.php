@@ -11,8 +11,8 @@ if (isset($_GET['id']) && isset($_GET['property_id'])) {
 
 // 1. FETCH MAIN RENTSPACE DETAILS
 $get_rent = $conn->prepare("
-    SELECT name, price, image_cover, other_info ,rate
-    FROM rentspace 
+    SELECT name, price, image_cover, other_info, rate
+    FROM rentspace
     WHERE rent_id = ?
 ");
 $get_rent->bind_param("s", $rent_id);
@@ -23,13 +23,14 @@ $name        = "";
 $price       = 0;
 $image_cover = "";
 $other_info  = "";
+$rate        = "";
 
 if ($rent_row = $rent_res->fetch_assoc()) {
     $name        = $rent_row['name'];
     $price       = $rent_row['price'];
     $image_cover = $rent_row['image_cover'];
     $other_info  = $rent_row['other_info'];
-    $rate  = $rent_row['rate'];
+    $rate        = $rent_row['rate'];
 }
 
 // 2. FETCH EVENT SPACE SPECIFICATIONS
@@ -85,6 +86,25 @@ while ($row = $amen_res->fetch_assoc()) {
     ];
 }
 
+// 5. REVIEWS / RATINGS
+// Based on the reviews table only (landlord_id). LEFT JOIN accounts so a review
+// is never hidden just because the account row can't be matched.
+$get_reviews = $conn->prepare("
+    SELECT r.rating, r.comment, r.date_sent, r.time_sent, a.firstname, a.lastname
+    FROM `reviews` AS r
+    LEFT JOIN `accounts` AS a ON a.user_id = r.user_id
+    WHERE r.landlord_id = ?
+    ORDER BY r.date_sent DESC, r.time_sent DESC
+");
+$get_reviews->bind_param("s", $landlord_id);
+$get_reviews->execute();
+$reviews_res = $get_reviews->get_result();
+
+$reviews = [];
+while ($row = $reviews_res->fetch_assoc()) {
+    $reviews[] = $row;
+}
+
 // Helper badge class for event space status
 function getStatusBadgeClass($status) {
     switch (strtolower($status ?? '')) {
@@ -107,25 +127,29 @@ function getStatusBadgeClass($status) {
   <div class="modal-box w-11/12 max-w-4xl p-0 overflow-hidden">
 
     <!-- Close button -->
-    <a 
-        href="my_property.php?property_id=<?php echo urlencode($landlord_id); ?>" 
+    <a
+        href="my_property.php?property_id=<?php echo urlencode($landlord_id); ?>"
         class="btn btn-sm btn-circle bg-white/90 hover:bg-white border-none shadow-md absolute right-3 top-3 z-20">
         ✕
     </a>
 
     <!-- HERO HEADER -->
     <div class="relative w-full h-56 sm:h-64">
-      <img 
-        src="../assets/uploads/<?php echo htmlspecialchars($image_cover); ?>" 
+      <img
+        src="../assets/uploads/<?php echo htmlspecialchars($image_cover); ?>"
         alt="<?php echo htmlspecialchars($name); ?>"
         class="w-full h-full object-cover"
         onerror="this.src='../assets/uploads/default.jpg';" />
       <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-      
+
       <div class="absolute bottom-0 left-0 p-5 text-white">
         <h2 class="text-2xl font-bold drop-shadow-sm"><?php echo htmlspecialchars($name); ?></h2>
         <p class="text-lg font-semibold text-success-content">
-          <span class="text-white">&#x20B1;<?php echo htmlspecialchars(number_format((float) $price, 2)); ?> <span class="text-sm font-normal opacity-80">/ <?php echo $rate; ?></span></span>
+          <span class="text-white">&#x20B1;<?php echo htmlspecialchars(number_format((float) $price, 2)); ?>
+            <?php if (!empty($rate)): ?>
+              <span class="text-sm font-normal opacity-80">/ <?php echo htmlspecialchars($rate); ?></span>
+            <?php endif; ?>
+          </span>
         </p>
       </div>
 
@@ -149,6 +173,7 @@ function getStatusBadgeClass($status) {
       <a role="tab" class="tab room-tab" data-tab="details">Event Space Details</a>
       <a role="tab" class="tab room-tab" data-tab="gallery">Gallery (<?php echo count($apartment_images); ?>)</a>
       <a role="tab" class="tab room-tab" data-tab="amenities">Amenities (<?php echo count($saved_amenities); ?>)</a>
+      <a role="tab" class="tab room-tab" data-tab="reviews">Reviews (<?php echo count($reviews); ?>)</a>
     </div>
 
     <!-- TAB CONTENT PANELS -->
@@ -162,7 +187,7 @@ function getStatusBadgeClass($status) {
         </p>
       </div>
 
-      <!-- 2. EVENT SPACE DETAILS PANEL (ENHANCED UI) -->
+      <!-- 2. EVENT SPACE DETAILS PANEL -->
       <div class="tab-panel hidden" data-panel="details">
         <div class="flex items-center justify-between mb-4 pb-2 border-b border-base-200">
           <div>
@@ -172,8 +197,8 @@ function getStatusBadgeClass($status) {
           <span class="badge badge-ghost text-xs font-mono">ID: <?php echo !empty($es_id) ? htmlspecialchars($es_id) : 'N/A'; ?></span>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
           <!-- Venue Type Card -->
           <div class="flex items-start gap-3 p-4 rounded-xl bg-base-200/50 border border-base-200 hover:border-primary/30 transition-colors">
             <div class="p-2.5 bg-primary/10 text-primary rounded-lg">
@@ -200,6 +225,26 @@ function getStatusBadgeClass($status) {
             <div>
               <span class="text-xs text-gray-500 font-semibold uppercase tracking-wider block">Floor Area</span>
               <p class="text-base font-bold text-gray-800 mt-0.5"><?php echo !empty($area) ? htmlspecialchars($area) . ' sqm' : 'N/A'; ?></p>
+            </div>
+          </div>
+
+          <!-- Rate Card -->
+          <div class="flex items-start gap-3 p-4 rounded-xl bg-base-200/50 border border-base-200 hover:border-primary/30 transition-colors">
+            <div class="p-2.5 bg-primary/10 text-primary rounded-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/>
+                <path d="M12 18V6"/>
+              </svg>
+            </div>
+            <div>
+              <span class="text-xs text-gray-500 font-semibold uppercase tracking-wider block">Rate</span>
+              <p class="text-base font-bold text-gray-800 mt-0.5">
+                &#x20B1;<?php echo htmlspecialchars(number_format((float) $price, 2)); ?>
+                <?php if (!empty($rate)): ?>
+                  <span class="text-sm font-normal text-gray-500">/ <?php echo htmlspecialchars($rate); ?></span>
+                <?php endif; ?>
+              </p>
             </div>
           </div>
 
@@ -231,7 +276,7 @@ function getStatusBadgeClass($status) {
         <div class="mt-4 p-4 rounded-xl bg-base-100 border border-base-200 flex items-center justify-between text-xs text-gray-500">
           <div class="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="size-4 text-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-            <span>Rental Rate: <strong>&#x20B1;<?php echo htmlspecialchars(number_format((float)$price, 2)); ?> / event</strong></span>
+            <span>Rental Rate: <strong>&#x20B1;<?php echo htmlspecialchars(number_format((float)$price, 2)); ?><?php if (!empty($rate)): ?> / <?php echo htmlspecialchars($rate); ?><?php endif; ?></strong></span>
           </div>
           <span class="italic">Subject to booking availability</span>
         </div>
@@ -243,9 +288,9 @@ function getStatusBadgeClass($status) {
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <?php foreach ($apartment_images as $img): ?>
               <div class="h-32 bg-base-200 rounded-lg overflow-hidden border border-base-200">
-                <img 
-                  src="../assets/uploads/<?php echo htmlspecialchars($img); ?>" 
-                  alt="Gallery Image" 
+                <img
+                  src="../assets/uploads/<?php echo htmlspecialchars($img); ?>"
+                  alt="Gallery Image"
                   class="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
                   onerror="this.src='../assets/uploads/default.jpg';">
               </div>
@@ -269,6 +314,43 @@ function getStatusBadgeClass($status) {
           </div>
         <?php else: ?>
           <p class="text-sm text-gray-500 italic">No amenities listed for this event space.</p>
+        <?php endif; ?>
+      </div>
+
+      <!-- 5. REVIEWS PANEL -->
+      <div class="tab-panel hidden" data-panel="reviews">
+        <?php if (!empty($reviews)): ?>
+          <?php foreach ($reviews as $rv): ?>
+            <?php
+              // Reviewer name (falls back to "Anonymous" if the account can't be found)
+              $reviewer = trim(($rv['firstname'] ?? '') . ' ' . ($rv['lastname'] ?? ''));
+              if ($reviewer === '') $reviewer = 'Anonymous';
+
+              $initials = strtoupper(mb_substr($rv['firstname'] ?? '', 0, 1) . mb_substr($rv['lastname'] ?? '', 0, 1));
+              if ($initials === '') $initials = 'A';
+            ?>
+            <div class="p-3 bg-base-200/50 rounded-xl border border-base-200 mb-3">
+              <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                  <?php echo htmlspecialchars($initials); ?>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="text-xs font-semibold text-gray-700"><?php echo htmlspecialchars($reviewer); ?></span>
+                    <span class="text-xs text-gray-500"><?php echo htmlspecialchars(($rv['date_sent'] ?? '') . ' ' . ($rv['time_sent'] ?? '')); ?></span>
+                  </div>
+                  <div class="flex text-warning text-xs mb-1">
+                    <?php for ($s = 1; $s <= 5; $s++): ?>
+                      <span class="<?php echo $s <= (int)$rv['rating'] ? 'text-warning' : 'text-gray-300'; ?>">★</span>
+                    <?php endfor; ?>
+                  </div>
+                  <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-line"><?php echo htmlspecialchars($rv['comment'] ?? ''); ?></p>
+                </div>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        <?php else: ?>
+          <p class="text-sm text-gray-500 italic">No reviews yet.</p>
         <?php endif; ?>
       </div>
 

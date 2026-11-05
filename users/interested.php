@@ -31,6 +31,37 @@ function getInterestDetail($conn, $type, $data_id, $property_name) {
                 'link'   => 'boarding_details.php?id=' . urlencode($b['rent_id']),
             ];
 
+        case 'House':
+            // data_id dito = house_id (hindi rent_id)
+            $q = $conn->prepare("
+                SELECT h.house_id, h.area, h.type AS house_type, h.bedroom, h.bathrooms,
+                       h.flooring, h.parking, h.rent_id,
+                       r.name, r.price, r.rate, r.image_cover
+                FROM `house` AS h
+                LEFT JOIN rentspace AS r ON r.rent_id = h.rent_id
+                WHERE h.house_id = ?
+            ");
+            $q->bind_param("s", $data_id);
+            $q->execute();
+            $h = $q->get_result()->fetch_assoc();
+            if (!$h) return null;
+            return [
+                'title'  => $h['name'] ?? 'House',
+                'image'  => '../assets/uploads/' . $h['image_cover'],
+                'status' => '',
+                'fields' => [
+                    'Type'      => $h['house_type'] ?: '-',
+                    'Area'      => $h['area'] ? $h['area'] . ' sqm' : '-',
+                    'Bedrooms'  => $h['bedroom'] ?: '-',
+                    'Bathrooms' => $h['bathrooms'] ?: '-',
+                    'Flooring'  => $h['flooring'] ?: '-',
+                    'Parking'   => $h['parking'] ?: '-',
+                    'Price'     => '₱' . number_format((float)$h['price'], 2) . ' / ' . ($h['rate'] ?: 'month'),
+                    'Property'  => $property_name,
+                ],
+                'link'   => 'house_details.php?id=' . urlencode($h['rent_id']),
+            ];
+
         case 'Apartment':
             // data_id dito = apartment_id (hindi rent_id)
             $q = $conn->prepare("
@@ -83,26 +114,137 @@ function getInterestDetail($conn, $type, $data_id, $property_name) {
                     'Price'        => '₱' . number_format((float)$c['price'], 2) . ' / ' . ($c['rate'] ?: 'month'),
                     'Property'     => $property_name,
                 ],
-                'link'   => 'condo_details.php?id=' . urlencode($c['rent_id']) . '&location_back=' . urlencode($_SERVER['PHP_SELF']), // set to null kung wala pang page
+                'link'   => 'condo_details.php?id=' . urlencode($c['rent_id']) . '&location_back=' . urlencode($_SERVER['PHP_SELF']),
             ];
 
         case 'Commercial Space':
-            // TODO: palitan ng actual table/columns ng commercial mo
-            $q = $conn->prepare("SELECT rent_id, name, price, image_cover, other_info
-                                 FROM rentspace WHERE rent_id = ?");
+            // data_id dito = cs_id (hindi rent_id)
+            $q = $conn->prepare("
+                SELECT cs.cs_id, cs.type AS cs_type, cs.area, cs.status, cs.rent_id,
+                       r.name, r.price, r.rate, r.image_cover
+                FROM `commercial_space` AS cs
+                LEFT JOIN rentspace AS r ON r.rent_id = cs.rent_id
+                WHERE cs.cs_id = ?
+            ");
             $q->bind_param("s", $data_id);
             $q->execute();
-            $r = $q->get_result()->fetch_assoc();
-            if (!$r) return null;
+            $cs = $q->get_result()->fetch_assoc();
+            if (!$cs) return null;
             return [
-                'title'  => $r['name'],
-                'image'  => '../assets/uploads/' . $r['image_cover'],
-                'status' => '',
+                'title'  => $cs['name'] ?? 'Commercial Space',
+                'image'  => '../assets/uploads/' . $cs['image_cover'],
+                'status' => $cs['status'] ?? '',
                 'fields' => [
-                    'Price'    => '₱' . number_format((float)$r['price'], 2) . ' / month',
+                    'Space Type' => $cs['cs_type'] ? ucfirst($cs['cs_type']) : '-',
+                    'Area'       => $cs['area'] ? $cs['area'] . ' sqm' : '-',
+                    'Price'      => '₱' . number_format((float)$cs['price'], 2) . ' / ' . ($cs['rate'] ?: 'month'),
+                    'Property'   => $property_name,
+                ],
+                'link'   => 'cs_details.php?id=' . urlencode($cs['rent_id']),
+            ];
+
+        case 'Event Space':
+            // data_id dito = es_id (hindi rent_id)
+            $q = $conn->prepare("
+                SELECT es.es_id, es.type AS es_type, es.area, es.status, es.rent_id,
+                       r.name, r.price, r.rate, r.image_cover
+                FROM `event_space` AS es
+                LEFT JOIN rentspace AS r ON r.rent_id = es.rent_id
+                WHERE es.es_id = ?
+            ");
+            $q->bind_param("s", $data_id);
+            $q->execute();
+            $es = $q->get_result()->fetch_assoc();
+            if (!$es) return null;
+            return [
+                'title'  => $es['name'] ?? 'Event Space',
+                'image'  => '../assets/uploads/' . $es['image_cover'],
+                'status' => $es['status'] ?? '',
+                'fields' => [
+                    'Venue Type' => $es['es_type'] ? ucfirst($es['es_type']) : '-',
+                    'Area'       => $es['area'] ? $es['area'] . ' sqm' : '-',
+                    'Price'      => '₱' . number_format((float)$es['price'], 2) . ' / ' . ($es['rate'] ?: 'month'),
+                    'Property'   => $property_name,
+                ],
+                'link'   => 'es_details.php?id=' . urlencode($es['rent_id']),
+            ];
+
+        case 'Transient House':
+            // data_id dito = transient_id (hindi rent_id)
+            $q = $conn->prepare("
+                SELECT t.transient_id, t.square_area, t.type AS transient_type, t.status, t.rent_id,
+                       r.name, r.price, r.rate, r.image_cover
+                FROM `transient` AS t
+                LEFT JOIN rentspace AS r ON r.rent_id = t.rent_id
+                WHERE t.transient_id = ?
+            ");
+            $q->bind_param("s", $data_id);
+            $q->execute();
+            $t = $q->get_result()->fetch_assoc();
+            if (!$t) return null;
+            return [
+                'title'  => $t['name'] ?? 'Transient House',
+                'image'  => '../assets/uploads/' . $t['image_cover'],
+                'status' => $t['status'] ?? '',
+                'fields' => [
+                    'Unit Type'  => $t['transient_type'] ? ucfirst($t['transient_type']) : '-',
+                    'Floor Area' => $t['square_area'] ? $t['square_area'] . ' sqm' : '-',
+                    'Price'      => '₱' . number_format((float)$t['price'], 2) . ' / ' . ($t['rate'] ?: 'month'),
+                    'Property'   => $property_name,
+                ],
+                'link'   => 'trasient_details.php?id=' . urlencode($t['rent_id']),
+            ];
+
+        case 'Parking Space':
+            // data_id dito = ps_id (hindi rent_id)
+            $q = $conn->prepare("
+                SELECT ps.ps_id, ps.square_area, ps.type AS ps_type, ps.status, ps.rent_id,
+                       r.name, r.price, r.rate, r.image_cover
+                FROM `parking_space` AS ps
+                LEFT JOIN rentspace AS r ON r.rent_id = ps.rent_id
+                WHERE ps.ps_id = ?
+            ");
+            $q->bind_param("s", $data_id);
+            $q->execute();
+            $ps = $q->get_result()->fetch_assoc();
+            if (!$ps) return null;
+            return [
+                'title'  => $ps['name'] ?? 'Parking Space',
+                'image'  => '../assets/uploads/' . $ps['image_cover'],
+                'status' => $ps['status'] ?? '',
+                'fields' => [
+                    'Parking Type' => $ps['ps_type'] ? ucfirst($ps['ps_type']) : '-',
+                    'Area'         => $ps['square_area'] ? $ps['square_area'] . ' sqm' : '-',
+                    'Price'        => '₱' . number_format((float)$ps['price'], 2) . ' / ' . ($ps['rate'] ?: 'month'),
+                    'Property'     => $property_name,
+                ],
+                'link'   => 'ps_details.php?id=' . urlencode($ps['rent_id']),
+            ];
+
+        case 'Vacant Lot':
+            // data_id dito = vl_id (hindi rent_id)
+            $q = $conn->prepare("
+                SELECT vl.vl_id, vl.square_area, vl.type AS vl_type, vl.status, vl.rent_id,
+                       r.name, r.price, r.rate, r.image_cover
+                FROM `vacant_lot` AS vl
+                LEFT JOIN rentspace AS r ON r.rent_id = vl.rent_id
+                WHERE vl.vl_id = ?
+            ");
+            $q->bind_param("s", $data_id);
+            $q->execute();
+            $vl = $q->get_result()->fetch_assoc();
+            if (!$vl) return null;
+            return [
+                'title'  => $vl['name'] ?? 'Vacant Lot',
+                'image'  => '../assets/uploads/' . $vl['image_cover'],
+                'status' => $vl['status'] ?? '',
+                'fields' => [
+                    'Lot Type' => $vl['vl_type'] ? ucfirst($vl['vl_type']) : '-',
+                    'Lot Area' => $vl['square_area'] ? $vl['square_area'] . ' sqm' : '-',
+                    'Price'    => '₱' . number_format((float)$vl['price'], 2) . ' / ' . ($vl['rate'] ?: 'month'),
                     'Property' => $property_name,
                 ],
-                'link'   => null, // TODO: e.g. 'commercial_details.php?id=' . urlencode($r['rent_id'])
+                'link'   => 'vl_details.php?id=' . urlencode($vl['rent_id']),
             ];
 
         default: // fallback (rentspace muna)
