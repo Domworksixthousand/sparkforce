@@ -37,7 +37,36 @@
         <label for="my-drawer" aria-label="open sidebar" class="btn btn-square btn-ghost lg:hidden">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-linejoin="round" stroke-linecap="round" stroke-width="2" fill="none" stroke="currentColor" class="size-5 text-white"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
         </label>
-        <div class="flex-1 font-bold text-white">Properties</div>
+        <div class="flex justify-between items-center w-[100%] z-999">
+         <div class="font-bold text-white">Properties</div>
+          <div class="dropdown dropdown-left">
+            <div tabindex="0" role="button" class="cursor-pointer m-1">
+              <div class="avatar avatar-online">
+                <div class="w-10  rounded-full">
+                  <img alt="Tailwind-CSS-Avatar-component" src="<?php echo $final_profileko; ?>" />
+                </div>
+              </div>
+            </div>
+            <ul tabindex="-1" class="dropdown-content menu bg-white rounded-box z-1 w-52 p-2 shadow-sm">
+              <li >
+                <div class="flex">
+                   <img alt="Tailwind-CSS-Avatar-component  rounded-full" class="w-10 " src="<?php echo $final_profileko; ?>" />
+                  <div class="flex flex-col">
+                    <p class="text-[12px]"><?php echo $fullnameko; ?></p>
+                    <p class="text-[10px] text-gray-500">Verified <?php echo $usertypeko; ?></p>
+                  </div>
+                </div>
+              </li>
+              <hr class="text-gray-300">
+              <li>
+                <a href="signout.php?location_back=index.php&property_id=<?php echo $_GET['property_id'] ?? '' ?>" class="flex items-center gap-3 active text-sm ">                                                    
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15"  height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-log-out-icon lucide-log-out"><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></svg>
+                          <span class="text-sm">Sign Out</span>
+                </a>
+              </li>
+            </ul>
+        </div>
+       </div>
       </nav>
       <main class="flex-1 flex flex-col overflow-hidden">
         <div class="flex justify-end p-4 gap-2 lg:hidden bg-white border-b border-slate-200">

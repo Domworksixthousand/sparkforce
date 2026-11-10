@@ -135,7 +135,7 @@
 </style>
 
 <script>
-  const dueDate = new Date("2026-11-07");
+  const dueDate = new Date("2031-11-07");
   const today = new Date();
 
   if (today >= dueDate) {

@@ -80,6 +80,8 @@
             $final_profileko = empty($profileko) 
                 ? '../assets/images/logo-icon.png' 
                 : "../assets/uploads/$profileko";
+
+            $usertypeko = ($user_type == 2) ? "Landlord" : (($user_type == 3) ? "Tenant" : "Admin");
         }
     }
 
@@ -114,7 +116,7 @@
     }
 
 
-
+  
 
 
 
