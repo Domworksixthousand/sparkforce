@@ -8,9 +8,10 @@ if (isset($_GET['id']) && isset($_GET['property_id'])) {
     exit;
 }
 
-// RENTSPACE DETAILS
+// RENTSPACE DETAILS (including saved location)
 $get_rent = $conn->prepare("
-    SELECT name, price, image_cover, other_info, rate
+    SELECT name, price, image_cover, other_info, rate,
+           latitude, longitude, barangay, municipality, province
     FROM rentspace
     WHERE rent_id = ?
 ");
@@ -19,47 +20,56 @@ $get_rent->execute();
 $rent_res = $get_rent->get_result();
 
 $name = $price = $image_cover = $other_info = $rate = "";
+$latitude = $longitude = $barangay = $municipality = $province = "";
+
 if ($rent_row = $rent_res->fetch_assoc()) {
-    $name        = $rent_row['name'];
-    $price       = $rent_row['price'];
-    $image_cover = $rent_row['image_cover'];
-    $other_info  = $rent_row['other_info'];
-    $rate        = $rent_row['rate'];
+    $name         = $rent_row['name'] ?? '';
+    $price        = $rent_row['price'] ?? '';
+    $image_cover  = $rent_row['image_cover'] ?? '';
+    $other_info   = $rent_row['other_info'] ?? '';
+    $rate         = $rent_row['rate'] ?? '';
+    $latitude     = $rent_row['latitude'] ?? '';
+    $longitude    = $rent_row['longitude'] ?? '';
+    $barangay     = $rent_row['barangay'] ?? '';
+    $municipality = $rent_row['municipality'] ?? '';
+    $province     = $rent_row['province'] ?? '';
+} else {
+    // Room does not exist: do not render an empty edit form
+    $get_rent->close();
+    echo "<script>location.href='my_property.php?property_id=" . urlencode($landlord_id) . "';</script>";
+    exit;
 }
 $get_rent->close();
 
-// BOARDING HOUSES (one row per deck) + SAVED LOCATION OF THIS ROOM
+// SAVED LOCATION: valid only if both coordinates exist and are not 0,0
+$hasCoords = (
+    $latitude !== '' && $latitude !== null &&
+    $longitude !== '' && $longitude !== null &&
+    !((float)$latitude == 0.0 && (float)$longitude == 0.0)
+);
+
+$cur_lat  = $hasCoords ? number_format((float)$latitude, 7, '.', '') : '';
+$cur_lng  = $hasCoords ? number_format((float)$longitude, 7, '.', '') : '';
+$cur_prov = (string)$province;
+$cur_mun  = (string)$municipality;
+$cur_brgy = (string)$barangay;
+
+// BOARDING HOUSES (one row per deck)
 $get_bh = $conn->prepare("
-    SELECT boarding_id, status, num_decks, image, bed_number,
-           latitude, longitude, province, municipality, barangay
+    SELECT boarding_id, status, num_decks, image, bed_number
     FROM boarding_house
     WHERE rent_id = ?
-    ORDER BY bed_number, num_decks ASC
+    ORDER BY bed_number ASC
 ");
 $get_bh->bind_param("s", $rent_id);
 $get_bh->execute();
 $bh_res = $get_bh->get_result();
 
 $boarding_houses = [];
-$saved_loc = null; // first valid pinned row for this room
 
 while ($row = $bh_res->fetch_assoc()) {
-    // Location: only from this room's own rows (never from the landlord table)
-    if ($saved_loc === null
-        && $row['latitude'] !== null && $row['longitude'] !== null
-        && is_numeric($row['latitude']) && is_numeric($row['longitude'])
-        && !((float)$row['latitude'] == 0.0 && (float)$row['longitude'] == 0.0)) {
-        $saved_loc = [
-            'lat'          => (string)$row['latitude'],
-            'lng'          => (string)$row['longitude'],
-            'province'     => (string)($row['province'] ?? ''),
-            'municipality' => (string)($row['municipality'] ?? ''),
-            'barangay'     => (string)($row['barangay'] ?? '')
-        ];
-    }
-
     // Group deck rows by base bed name ("Bed 1 - Deck 2" -> "Bed 1")
-    $base_bed_name = preg_replace('/\s*-\s*Deck\s*\d+/i', '', $row['bed_number']);
+    $base_bed_name = trim(preg_replace('/\s*-\s*Deck\s*\d+/i', '', (string)$row['bed_number']));
 
     if (!isset($boarding_houses[$base_bed_name])) {
         $boarding_houses[$base_bed_name] = [
@@ -75,16 +85,13 @@ while ($row = $bh_res->fetch_assoc()) {
             (int)$row['num_decks'],
             count($boarding_houses[$base_bed_name]['statuses'])
         );
+        // keep the first non-empty image found for this bed
+        if (empty($boarding_houses[$base_bed_name]['image']) && !empty($row['image'])) {
+            $boarding_houses[$base_bed_name]['image'] = $row['image'];
+        }
     }
 }
 $get_bh->close();
-
-$hasCoords = ($saved_loc !== null);
-$cur_lat   = $hasCoords ? number_format($saved_loc['lat'], 7, '.', '') : '';
-$cur_lng   = $hasCoords ? number_format($saved_loc['lng'], 7, '.', '') : '';
-$cur_prov  = $hasCoords ? $saved_loc['province']     : '';
-$cur_mun   = $hasCoords ? $saved_loc['municipality'] : '';
-$cur_brgy  = $hasCoords ? $saved_loc['barangay']     : '';
 
 // AMENITIES FROM DATABASE
 $get_amen = $conn->prepare("
@@ -121,6 +128,10 @@ $get_amen->close();
         max-width: none !important;
         max-height: none !important;
     }
+    /* Keep the geosearch bar above map tiles and readable */
+    .bh-map .leaflet-top, .bh-map .leaflet-bottom { z-index: 400; }
+    .bh-map .geosearch form input.glass { color: #1e293b; }
+    #bh_map_modal::backdrop { background: rgba(15, 23, 42, .6); }
 </style>
 
 <!-- Modal Wrapper -->
@@ -154,6 +165,9 @@ $get_amen->close();
     </div>
     <?php endif; ?>
 
+    <!-- Client-side error (validation) -->
+    <div id="clientError" class="hidden mx-6 mt-4 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium px-4 py-3 rounded-xl"></div>
+
     <!-- Form -->
     <form action="../functions.php" method="POST" enctype="multipart/form-data" class="p-6 overflow-y-auto space-y-8" id="mainForm">
         <input type="hidden" name="landlord_id" value="<?php echo htmlspecialchars($landlord_id); ?>">
@@ -178,7 +192,7 @@ $get_amen->close();
                     <label class="block text-xs font-semibold text-slate-600">Price / Month *</label>
                     <div class="relative flex items-center">
                         <span class="absolute left-3.5 text-slate-400 pointer-events-none font-semibold text-sm">₱</span>
-                        <input type="text"
+                        <input type="text" inputmode="decimal"
                                class="w-full pl-8 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all numbers_only"
                                name="price" value="<?php echo htmlspecialchars($price); ?>"
                                placeholder="Enter Price / Month" required />
@@ -239,7 +253,8 @@ $get_amen->close();
             <div class="space-y-1.5 pt-2">
                 <label class="block text-xs font-semibold text-slate-600">Other Informations *</label>
                 <div class="border border-slate-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500 transition-all">
-                    <textarea id="myEditor" name="other_info"><?php echo $other_info; ?></textarea>
+                    <!-- Escaped so stored HTML (even a stray </textarea>) can never break the page; TinyMCE decodes it -->
+                    <textarea id="myEditor" name="other_info"><?php echo htmlspecialchars((string)$other_info); ?></textarea>
                 </div>
             </div>
         </div>
@@ -323,7 +338,7 @@ $get_amen->close();
                                     name="num_deck[]" required>
                                 <option value="1" <?= (int)$boarding_house['num_decks'] === 1 ? 'selected' : '' ?>>1</option>
                                 <option value="2" <?= (int)$boarding_house['num_decks'] === 2 ? 'selected' : '' ?>>2</option>
-                                <option value="3" <?= (int)$boarding_house['num_decks'] === 3 ? 'selected' : '' ?>>3</option>
+                                <option value="3" <?= (int)$boarding_house['num_decks'] >= 3 ? 'selected' : '' ?>>3</option>
                             </select>
                         </div>
                     </div>
@@ -351,7 +366,7 @@ $get_amen->close();
                     <div class="deck-status-wrapper space-y-2">
                         <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Status per Deck</p>
                         <?php
-                            $numDecks      = (int)$boarding_house['num_decks'];
+                            $numDecks      = min(3, max(1, (int)$boarding_house['num_decks']));
                             $savedStatuses = $boarding_house['statuses'];
                             for ($d = 0; $d < $numDecks; $d++):
                                 $deckLabel     = ($numDecks > 1) ? "Deck " . ($d + 1) : "Status";
@@ -454,7 +469,7 @@ $get_amen->close();
         </div>
 
         <!-- ACTION BUTTONS -->
-        <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3 sticky bottom-0 bg-white py-3 -mx-6 px-6">
+        <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3 sticky -bottom-6 bg-white py-3 -mx-6 px-6 -mb-6 z-10">
             <a href="my_property.php?property_id=<?php echo urlencode($landlord_id); ?>"
                class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-xl transition-colors">
                Cancel
@@ -468,15 +483,17 @@ $get_amen->close();
   </div>
 </div>
 
-<!-- MAP MODAL -->
-<dialog id="bh_map_modal" class="modal">
-  <div class="modal-box w-11/12 max-w-4xl p-5 bg-white">
+<!-- MAP MODAL (pure Tailwind: no daisyUI needed; m-auto is required because preflight zeroes dialog margins) -->
+<dialog id="bh_map_modal" class="m-auto w-11/12 max-w-4xl p-0 rounded-2xl bg-white shadow-2xl">
+  <div class="p-5 bg-white rounded-2xl">
     <div class="flex items-center justify-between mb-2">
       <div>
         <h3 class="font-bold text-slate-800">Pin Room Location</h3>
         <p class="text-xs text-slate-500">Search a place, or click the map. You can also drag the pin.</p>
       </div>
-      <button type="button" class="btn btn-sm btn-circle btn-ghost" onclick="document.getElementById('bh_map_modal').close()">✕</button>
+      <button type="button"
+              class="w-8 h-8 rounded-full bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition-colors"
+              onclick="document.getElementById('bh_map_modal').close()">✕</button>
     </div>
 
     <div id="bh_map_wrap" class="bh-map">
@@ -504,10 +521,11 @@ $get_amen->close();
 
     <div class="flex items-center justify-between mt-3 gap-3">
       <p class="text-xs text-slate-500" id="bh_sel_status">No location selected yet.</p>
-      <button type="button" class="btn btn-success btn-sm text-white" onclick="document.getElementById('bh_map_modal').close()">Done</button>
+      <button type="button"
+              class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition-colors"
+              onclick="document.getElementById('bh_map_modal').close()">Done</button>
     </div>
   </div>
-  <form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -515,7 +533,7 @@ $get_amen->close();
 
 <script>
 // ============================================
-// TINYMCE
+// TINYMCE (v6 option names and upload handler)
 // ============================================
 tinymce.init({
     selector: '#myEditor',
@@ -525,32 +543,42 @@ tinymce.init({
         'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
         'anchor', 'searchreplace', 'visualblocks', 'visualchars', 'code',
         'fullscreen', 'insertdatetime', 'media', 'table', 'help', 'wordcount',
-        'emoticons', 'template', 'codesample', 'directionality', 'nonbreaking',
-        'pagebreak', 'quickbars', 'save'
+        'emoticons', 'codesample', 'directionality', 'nonbreaking',
+        'pagebreak', 'quickbars'
     ],
-    toolbar1: 'undo redo | save | bold italic underline strikethrough | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist | outdent indent',
-    toolbar2: 'formatselect fontselect fontsizeselect | link image media | table | codesample code | charmap emoticons | insertdatetime | searchreplace | visualblocks visualchars | ltr rtl | pagebreak nonbreaking | fullscreen preview | removeformat | help',
-    font_formats:
+    toolbar: [
+        'undo redo | bold italic underline strikethrough | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist | outdent indent',
+        'blocks fontfamily fontsize | link image media | table | codesample code | charmap emoticons | insertdatetime | searchreplace | visualblocks visualchars | ltr rtl | pagebreak nonbreaking | fullscreen preview | removeformat | help'
+    ],
+    font_family_formats:
         'Arial=arial,helvetica,sans-serif;' +
         'Courier New=courier new,courier;' +
         'Georgia=georgia,palatino;' +
         'Helvetica=helvetica;' +
         'Times New Roman=times new roman,times;' +
         'Verdana=verdana,geneva;',
-    fontsize_formats: '8pt 9pt 10pt 11pt 12pt 14pt 16pt 18pt 20pt 24pt 28pt 32pt 36pt 48pt 72pt',
+    font_size_formats: '8pt 9pt 10pt 11pt 12pt 14pt 16pt 18pt 20pt 24pt 28pt 32pt 36pt 48pt 72pt',
     block_formats: 'Paragraph=p; Heading 1=h1; Heading 2=h2; Heading 3=h3; Heading 4=h4; Blockquote=blockquote; Code=pre',
     image_advtab: true,
     image_caption: true,
     automatic_uploads: true,
     file_picker_types: 'image media',
-    images_upload_url: '../upload_image.php',
-    images_upload_handler: function (blobInfo, success, failure) {
-        var formData = new FormData();
-        formData.append('file', blobInfo.blob(), blobInfo.filename());
-        fetch('../upload_image.php', { method: 'POST', body: formData })
-            .then(r => r.json())
-            .then(result => result.location ? success(result.location) : failure('Upload failed'))
-            .catch(error => failure('Upload error: ' + error));
+    // TinyMCE 6: handler must RETURN a Promise that resolves with the image URL
+    images_upload_handler: function (blobInfo) {
+        return new Promise(function (resolve, reject) {
+            var formData = new FormData();
+            formData.append('file', blobInfo.blob(), blobInfo.filename());
+            fetch('../upload_image.php', { method: 'POST', body: formData })
+                .then(function (r) {
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    return r.json();
+                })
+                .then(function (result) {
+                    if (result && result.location) resolve(result.location);
+                    else reject('Upload failed');
+                })
+                .catch(function (error) { reject('Upload error: ' + error.message); });
+        });
     },
     table_default_attributes: { border: '1' },
     table_default_styles: { 'border-collapse': 'collapse', 'width': '100%' },
@@ -559,9 +587,6 @@ tinymce.init({
     paste_data_images: true,
     browser_spellcheck: true,
     wordcount_countcharacters: true,
-    autosave_ask_before_unload: true,
-    autosave_interval: '30s',
-    autosave_restore_when_empty: true,
     resize: 'both',
     statusbar: true,
     content_style: `
@@ -630,9 +655,9 @@ function bhPlaceMarker(lat, lng, title, sub) {
 
 // zoom=16 gives barangay-level places. zoom=18 often returns sitio/purok (neighbourhood) instead.
 async function bhReverse(lat, lng) {
-    const url = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&zoom=16'
+    const url = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&zoom=16&accept-language=en'
               + '&lat=' + encodeURIComponent(lat) + '&lon=' + encodeURIComponent(lng);
-    const r = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+    const r = await fetch(url);
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const j = await r.json();
     const a = j.address || {};
@@ -763,14 +788,57 @@ window.addEventListener('resize', function () {
 // ============================================
 document.addEventListener('DOMContentLoaded', function () {
 
-    const form = document.getElementById('mainForm');
-    if (form) {
-        form.addEventListener('submit', function () {
-            if (typeof tinymce !== 'undefined') tinymce.triggerSave();
+    // Close map dialog when clicking the dark backdrop
+    const mapDialog = document.getElementById('bh_map_modal');
+    if (mapDialog) {
+        mapDialog.addEventListener('click', function (e) {
+            if (e.target === mapDialog) mapDialog.close();
         });
     }
 
-    // COVER PREVIEW
+    // PRICE: digits and one decimal point only
+    document.querySelectorAll('.numbers_only').forEach(function (inp) {
+        inp.addEventListener('input', function () {
+            let v = inp.value.replace(/[^0-9.]/g, '');
+            const firstDot = v.indexOf('.');
+            if (firstDot !== -1) {
+                v = v.slice(0, firstDot + 1) + v.slice(firstDot + 1).replace(/\./g, '');
+            }
+            if (v !== inp.value) inp.value = v;
+        });
+    });
+
+    // FORM SUBMIT: sync TinyMCE + validate the editor (a hidden textarea cannot use "required")
+    const form = document.getElementById('mainForm');
+    const clientError = document.getElementById('clientError');
+    function showError(msg) {
+        clientError.textContent = msg;
+        clientError.classList.remove('hidden');
+        clientError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            clientError.classList.add('hidden');
+            let text = '';
+            if (typeof tinymce !== 'undefined' && tinymce.get('myEditor')) {
+                tinymce.triggerSave();
+                text = tinymce.get('myEditor').getContent({ format: 'text' }).trim();
+                const hasMedia = /<(img|iframe|video|embed)\b/i.test(tinymce.get('myEditor').getContent());
+                if (!text && !hasMedia) {
+                    e.preventDefault();
+                    showError('Please fill in "Other Informations".');
+                    return;
+                }
+            }
+            // Make sure a new bed always has an image chosen
+            if (!document.querySelectorAll('#beds-container .bed-item').length) {
+                e.preventDefault();
+                showError('Please add at least one bed.');
+            }
+        });
+    }
+
+    // COVER PREVIEW (+ drag and drop)
     const coverInput       = document.getElementById('cover');
     const previewContainer = document.getElementById('cover-preview-container');
     const previewImg       = document.getElementById('cover-preview-img');
@@ -779,42 +847,81 @@ document.addEventListener('DOMContentLoaded', function () {
     const coverLabel       = document.getElementById('cover-label');
     const coverPlaceholder = document.getElementById('cover-placeholder');
 
+    function showCoverPreview(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+            previewImg.src          = ev.target.result;
+            previewName.textContent = file.name;
+            previewSize.textContent = (file.size / 1024).toFixed(1) + ' KB';
+            previewContainer.classList.remove('hidden');
+            coverLabel.classList.add('border-emerald-400', 'bg-emerald-50/30');
+            coverPlaceholder.innerHTML = `
+                <p class="text-xs text-emerald-600 font-semibold">Photo selected!</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">Click to change</p>`;
+        };
+        reader.readAsDataURL(file);
+    }
+
     if (coverInput) {
         coverInput.addEventListener('change', function (e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function (ev) {
-                previewImg.src          = ev.target.result;
-                previewName.textContent = file.name;
-                previewSize.textContent = (file.size / 1024).toFixed(1) + ' KB';
-                previewContainer.classList.remove('hidden');
-                coverLabel.classList.add('border-emerald-400', 'bg-emerald-50/30');
-                coverPlaceholder.innerHTML = `
-                    <p class="text-xs text-emerald-600 font-semibold">Photo selected!</p>
-                    <p class="text-[10px] text-slate-400 mt-0.5">Click to change</p>`;
-            };
-            reader.readAsDataURL(file);
+            showCoverPreview(e.target.files[0]);
+        });
+    }
+    if (coverLabel && coverInput) {
+        ['dragenter', 'dragover'].forEach(function (ev) {
+            coverLabel.addEventListener(ev, function (e) {
+                e.preventDefault();
+                coverLabel.classList.add('border-emerald-400');
+            });
+        });
+        coverLabel.addEventListener('dragleave', function () {
+            coverLabel.classList.remove('border-emerald-400');
+        });
+        coverLabel.addEventListener('drop', function (e) {
+            e.preventDefault();
+            const f = e.dataTransfer.files && e.dataTransfer.files[0];
+            if (!f || !/^image\/(jpeg|png|jpg)$/i.test(f.type)) {
+                coverLabel.classList.remove('border-emerald-400');
+                return;
+            }
+            const dt = new DataTransfer();
+            dt.items.add(f);
+            coverInput.files = dt.files;
+            showCoverPreview(f);
         });
     }
 
     // BEDS: deck count, remove, add
     const bedsContainer = document.getElementById('beds-container');
 
+    // Keep data-bed-index and the status[...] field names in sync with the bed order
+    function reindexBeds() {
+        bedsContainer.querySelectorAll('.bed-item').forEach(function (item, i) {
+            item.setAttribute('data-bed-index', i);
+            item.querySelectorAll('select[name^="status["]').forEach(function (s) {
+                s.name = 'status[' + i + '][]';
+            });
+        });
+    }
+
     function updateDeckStatusUI(bedItem, numDecks) {
         const bedIndex = bedItem.getAttribute('data-bed-index');
         const wrapper  = bedItem.querySelector('.deck-status-wrapper');
+        // Preserve statuses already chosen; only new decks default to Available
+        const previous = Array.from(wrapper.querySelectorAll('select')).map(function (s) { return s.value; });
         wrapper.innerHTML = '<p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Status per Deck</p>';
         for (let d = 0; d < numDecks; d++) {
             const deckLabel = numDecks > 1 ? `Deck ${d + 1}` : 'Status';
+            const cur = previous[d] || 'Available';
             const row = document.createElement('div');
             row.className = 'flex items-center gap-3 bg-white border border-slate-200 rounded-lg px-3 py-2';
             row.innerHTML = `
                 <label class="text-xs text-slate-500 w-16 shrink-0">${deckLabel}</label>
                 <select class="w-full text-xs text-slate-700 bg-transparent border-none focus:outline-none focus:ring-0" name="status[${bedIndex}][]" required>
-                    <option value="Available" selected>Available</option>
-                    <option value="Occupied">Occupied</option>
-                    <option value="Out of Order">Out of Order</option>
+                    <option value="Available"${cur === 'Available' ? ' selected' : ''}>Available</option>
+                    <option value="Occupied"${cur === 'Occupied' ? ' selected' : ''}>Occupied</option>
+                    <option value="Out of Order"${cur === 'Out of Order' ? ' selected' : ''}>Out of Order</option>
                 </select>`;
             wrapper.appendChild(row);
         }
@@ -832,13 +939,11 @@ document.addEventListener('DOMContentLoaded', function () {
         bedsContainer.addEventListener('click', function (e) {
             const removeBtn = e.target.closest('.remove-bed-btn');
             if (removeBtn) {
+                if (!confirm('Remove this bed? It will be deleted when you click Update.')) return;
                 removeBtn.closest('.bed-item').remove();
-                bedsContainer.querySelectorAll('.bed-item').forEach((item, i) => {
-                    const label = `Bed ${i + 1}`;
-                    item.querySelector('.bed-title').textContent = label;
-                    item.querySelector('.bed-input-name').value  = label;
-                    item.setAttribute('data-bed-index', i);
-                });
+                // Existing bed names are NOT renamed (the server matches beds by name);
+                // only the array indexes are repaired so statuses stay paired with the right bed.
+                reindexBeds();
             }
         });
     }
@@ -847,7 +952,12 @@ document.addEventListener('DOMContentLoaded', function () {
     if (addBedBtn && bedsContainer) {
         addBedBtn.addEventListener('click', function () {
             const newIndex = bedsContainer.querySelectorAll('.bed-item').length;
-            const bedLabel = `Bed ${newIndex + 1}`;
+            let max = 0;
+            bedsContainer.querySelectorAll('.bed-input-name').forEach(function (inp) {
+                const m = inp.value.match(/(\d+)\s*$/);
+                if (m) max = Math.max(max, parseInt(m[1], 10));
+            });
+            const bedLabel = 'Bed ' + (Math.max(max, newIndex) + 1);
 
             const newBedDiv = document.createElement('div');
             newBedDiv.className = 'bed-item bg-slate-50/50 border border-slate-200/80 rounded-xl p-4 space-y-3 relative';

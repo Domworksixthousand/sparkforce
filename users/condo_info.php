@@ -9,29 +9,55 @@ if (isset($_GET['id']) && isset($_GET['property_id'])) {
     exit;
 }
 
-// 1. RENTSPACE DETAILS
+$json_flags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
+
+// 1. RENTSPACE DETAILS (including saved location)
 $get_rent = $conn->prepare("
-    SELECT name, price, image_cover, other_info, rate
-    FROM rentspace 
+    SELECT name, price, image_cover, other_info, rate,
+           longitude, latitude, barangay, province, municipality
+    FROM rentspace
     WHERE rent_id = ?
 ");
 $get_rent->bind_param("s", $rent_id);
 $get_rent->execute();
 $rent_res = $get_rent->get_result();
 
-$name        = "";
-$price       = 0;
-$image_cover = "";
-$other_info  = "";
-$rate        = "";
+$name         = "";
+$price        = 0;
+$image_cover  = "";
+$other_info   = "";
+$rate         = "";
+$longitude    = "";
+$latitude     = "";
+$barangay     = "";
+$municipality = "";
+$province     = "";
 
 if ($rent_row = $rent_res->fetch_assoc()) {
-    $name        = $rent_row['name'];
-    $price       = $rent_row['price'];
-    $image_cover = $rent_row['image_cover'];
-    $other_info  = $rent_row['other_info'];
-    $rate        = $rent_row['rate'];
+    $name         = $rent_row['name'] ?? '';
+    $price        = $rent_row['price'] ?? 0;
+    $image_cover  = $rent_row['image_cover'] ?? '';
+    $other_info   = $rent_row['other_info'] ?? '';
+    $rate         = $rent_row['rate'] ?? '';
+    $longitude    = $rent_row['longitude'] ?? '';
+    $latitude     = $rent_row['latitude'] ?? '';
+    $barangay     = $rent_row['barangay'] ?? '';
+    $municipality = $rent_row['municipality'] ?? '';
+    $province     = $rent_row['province'] ?? '';
 }
+$get_rent->close();
+
+// LOCATION VALUES USED BY THE LOCATION TAB
+$hasLocation = (
+    is_numeric($latitude) && is_numeric($longitude) &&
+    abs((float)$latitude) <= 90 && abs((float)$longitude) <= 180 &&
+    !((float)$latitude == 0.0 && (float)$longitude == 0.0)
+);
+$map_lat  = $hasLocation ? (float)$latitude  : null;
+$map_lng  = $hasLocation ? (float)$longitude : null;
+$loc_brgy = (string)$barangay;
+$loc_mun  = (string)$municipality;
+$loc_prov = (string)$province;
 
 // 2. CONDO UNITS & STATUS COUNTS
 $condo_units     = [];
@@ -42,15 +68,15 @@ $get_condo->bind_param("s", $rent_id);
 $get_condo->execute();
 $result_execute = $get_condo->get_result();
 
-if ($result_execute->num_rows > 0) {
-    while ($row_apar = $result_execute->fetch_assoc()) {
-        $condo_units[] = $row_apar;
+while ($row_condo = $result_execute->fetch_assoc()) {
+    $condo_units[] = $row_condo;
 
-        if (isset($row_apar['status']) && strtolower($row_apar['status']) === 'available') {
-            $availableCondos++;
-        }
+    if (strtolower($row_condo['status'] ?? '') === 'available') {
+        $availableCondos++;
     }
 }
+$get_condo->close();
+
 $totalCondos = count($condo_units);
 
 // 3. GALLERY
@@ -60,11 +86,10 @@ $get_gallery->bind_param("s", $rent_id);
 $get_gallery->execute();
 $result_gallery = $get_gallery->get_result();
 
-if ($result_gallery->num_rows > 0) {
-    while ($row_gallery = $result_gallery->fetch_assoc()) {
-        $apartment_images[] = $row_gallery['image'];
-    }
+while ($row_gallery = $result_gallery->fetch_assoc()) {
+    $apartment_images[] = $row_gallery['image'];
 }
+$get_gallery->close();
 
 // 4. AMENITIES
 $get_amen = $conn->prepare("
@@ -85,10 +110,10 @@ while ($row = $amen_res->fetch_assoc()) {
         "rent_amen_id" => $row['rent_amen_id']
     ];
 }
+$get_amen->close();
 
 // 5. REVIEWS / RATINGS
-// Based on the reviews table only (landlord_id). LEFT JOIN accounts so a review
-// is never hidden just because the account row can't be matched.
+// LEFT JOIN accounts so a review is never hidden just because the account row can't be matched.
 $get_reviews = $conn->prepare("
     SELECT r.rating, r.comment, r.date_sent, r.time_sent, a.firstname, a.lastname
     FROM `reviews` AS r
@@ -104,6 +129,7 @@ $reviews = [];
 while ($row = $reviews_res->fetch_assoc()) {
     $reviews[] = $row;
 }
+$get_reviews->close();
 
 // Helper function for status badges
 function apartmentStatusBadge($status) {
@@ -121,20 +147,34 @@ function apartmentStatusBadge($status) {
 }
 ?>
 
+<!-- Leaflet (map) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+    /* Tailwind preflight (img{max-width:100%}) breaks Leaflet tiles and markers. Undo it for the map only. */
+    .condo-info-map .leaflet-container img,
+    .condo-info-map img.leaflet-tile,
+    .condo-info-map img.leaflet-marker-icon,
+    .condo-info-map img.leaflet-marker-shadow {
+        max-width: none !important;
+        max-height: none !important;
+    }
+</style>
+
 <dialog id="my_modal_3" class="modal" open>
   <div class="modal-box w-11/12 max-w-4xl p-0 overflow-hidden">
 
     <!-- Close button -->
-    <a 
-        href="my_property.php?property_id=<?php echo urlencode($landlord_id); ?>" 
+    <a
+        href="my_property.php?property_id=<?php echo urlencode($landlord_id); ?>"
         class="btn btn-sm btn-circle bg-white/90 hover:bg-white border-none shadow-md absolute right-3 top-3 z-20">
         ✕
     </a>
 
     <!-- HERO -->
     <div class="relative w-full h-56 sm:h-64">
-      <img 
-        src="../assets/uploads/<?php echo htmlspecialchars($image_cover); ?>" 
+      <img
+        src="../assets/uploads/<?php echo htmlspecialchars($image_cover); ?>"
         alt="<?php echo htmlspecialchars($name); ?>"
         class="w-full h-full object-cover"
         onerror="this.src='../assets/uploads/default.jpg';" />
@@ -161,6 +201,7 @@ function apartmentStatusBadge($status) {
       <a role="tab" class="tab room-tab" data-tab="units">Units (<?php echo $totalCondos; ?>)</a>
       <a role="tab" class="tab room-tab" data-tab="gallery">Gallery (<?php echo count($apartment_images); ?>)</a>
       <a role="tab" class="tab room-tab" data-tab="amenities">Amenities (<?php echo count($saved_amenities); ?>)</a>
+      <a role="tab" class="tab room-tab" data-tab="location">Location</a>
       <a role="tab" class="tab room-tab" data-tab="reviews">Reviews (<?php echo count($reviews); ?>)</a>
     </div>
 
@@ -198,19 +239,19 @@ function apartmentStatusBadge($status) {
                 <!-- Unit Details from DB columns -->
                 <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-base-200 text-xs text-gray-600">
                   <div>
-                    <span class="font-semibold text-gray-700">Area:</span> 
+                    <span class="font-semibold text-gray-700">Area:</span>
                     <?php echo htmlspecialchars($condo['square_area'] ?? 'N/A'); ?> sqm
                   </div>
                   <div>
-                    <span class="font-semibold text-gray-700">Bathrooms:</span> 
+                    <span class="font-semibold text-gray-700">Bathrooms:</span>
                     <?php echo htmlspecialchars($condo['bathrooms'] ?? 'N/A'); ?>
                   </div>
                   <div>
-                    <span class="font-semibold text-gray-700">Condition:</span> 
+                    <span class="font-semibold text-gray-700">Condition:</span>
                     <?php echo htmlspecialchars($condo['cond_condition'] ?? 'N/A'); ?>
                   </div>
                   <div>
-                    <span class="font-semibold text-gray-700">Flooring:</span> 
+                    <span class="font-semibold text-gray-700">Flooring:</span>
                     <?php echo htmlspecialchars($condo['flooring'] ?? 'N/A'); ?>
                   </div>
                 </div>
@@ -228,9 +269,9 @@ function apartmentStatusBadge($status) {
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <?php foreach ($apartment_images as $img): ?>
               <div class="h-32 bg-base-200 rounded-lg overflow-hidden border border-base-200">
-                <img 
-                  src="../assets/uploads/<?php echo htmlspecialchars($img); ?>" 
-                  alt="Gallery Image" 
+                <img
+                  src="../assets/uploads/<?php echo htmlspecialchars($img); ?>"
+                  alt="Gallery Image"
                   class="w-full h-full object-cover">
               </div>
             <?php endforeach; ?>
@@ -253,6 +294,44 @@ function apartmentStatusBadge($status) {
           </div>
         <?php else: ?>
           <p class="text-sm text-gray-500 italic">No amenities listed for this condo.</p>
+        <?php endif; ?>
+      </div>
+
+      <!-- LOCATION -->
+      <div class="tab-panel hidden" data-panel="location">
+        <?php if ($hasLocation): ?>
+          <div class="space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+              <div class="rounded-lg bg-base-200/60 border border-base-200 p-2">
+                <p class="text-[10px] uppercase tracking-wider text-gray-400">Barangay</p>
+                <p id="condo_addr_brgy" class="font-semibold text-gray-700 truncate"><?php echo htmlspecialchars($loc_brgy !== '' ? $loc_brgy : 'Looking up...'); ?></p>
+              </div>
+              <div class="rounded-lg bg-base-200/60 border border-base-200 p-2">
+                <p class="text-[10px] uppercase tracking-wider text-gray-400">Municipality</p>
+                <p id="condo_addr_mun" class="font-semibold text-gray-700 truncate"><?php echo htmlspecialchars($loc_mun !== '' ? $loc_mun : 'Looking up...'); ?></p>
+              </div>
+              <div class="rounded-lg bg-base-200/60 border border-base-200 p-2">
+                <p class="text-[10px] uppercase tracking-wider text-gray-400">Province</p>
+                <p id="condo_addr_prov" class="font-semibold text-gray-700 truncate"><?php echo htmlspecialchars($loc_prov !== '' ? $loc_prov : 'Looking up...'); ?></p>
+              </div>
+            </div>
+
+            <p id="condo_addr_status" class="text-xs text-gray-500">
+              Coordinates: <?php echo number_format($map_lat, 6); ?>, <?php echo number_format($map_lng, 6); ?>
+            </p>
+
+            <div id="condo_info_map" class="condo-info-map rounded-xl border border-base-200 w-full" style="height:320px;"></div>
+
+            <div class="flex justify-end">
+              <a target="_blank" rel="noopener"
+                 href="https://www.openstreetmap.org/?mlat=<?php echo number_format($map_lat, 6, '.', ''); ?>&amp;mlon=<?php echo number_format($map_lng, 6, '.', ''); ?>#map=17/<?php echo number_format($map_lat, 6, '.', ''); ?>/<?php echo number_format($map_lng, 6, '.', ''); ?>"
+                 class="btn btn-xs btn-outline">
+                Open in OpenStreetMap
+              </a>
+            </div>
+          </div>
+        <?php else: ?>
+          <p class="text-sm text-gray-500 italic">No location has been pinned for this condo yet.</p>
         <?php endif; ?>
       </div>
 
@@ -300,3 +379,130 @@ function apartmentStatusBadge($status) {
     <button>close</button>
   </form>
 </dialog>
+
+<script>
+(function () {
+    const hasLocation = <?php echo $hasLocation ? 'true' : 'false'; ?>;
+    const lat = <?php echo $hasLocation ? json_encode($map_lat, $json_flags) : 'null'; ?>;
+    const lng = <?php echo $hasLocation ? json_encode($map_lng, $json_flags) : 'null'; ?>;
+    const fallback = {
+        barangay:     <?php echo json_encode($loc_brgy, $json_flags); ?>,
+        municipality: <?php echo json_encode($loc_mun, $json_flags); ?>,
+        province:     <?php echo json_encode($loc_prov, $json_flags); ?>
+    };
+
+    // Same ZIP fallback used on the add pages
+    const BH_ZIP_TO_MUN = {
+        "4707": "Irosin", "4700": "Sorsogon City", "4701": "Bacon", "4702": "Casiguran",
+        "4703": "Castilla", "4704": "Donsol", "4705": "Gubat", "4706": "Juban",
+        "4708": "Magallanes", "4709": "Matnog", "4710": "Pilar", "4711": "Prieto Diaz",
+        "4712": "Santa Magdalena", "4713": "Bulusan", "4714": "Barcelona", "4715": "Bulan"
+    };
+
+    let infoMap = null;
+    let addressLoaded = false;
+
+    function el(id) { return document.getElementById(id); }
+
+    // Reverse geocode the saved coordinates (OpenStreetMap Nominatim)
+    async function lookupAddress(lat, lng) {
+        const url = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&zoom=18'
+                  + '&lat=' + encodeURIComponent(lat) + '&lon=' + encodeURIComponent(lng);
+        const r = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const j = await r.json();
+        const a = j.address || {};
+
+        let municipality = a.city || a.town || a.municipality || a.county || a.district || '';
+        if (!municipality && a.postcode && BH_ZIP_TO_MUN[a.postcode]) {
+            municipality = BH_ZIP_TO_MUN[a.postcode];
+        }
+        if (!municipality && j.display_name) {
+            const parts = j.display_name.split(',').map(s => s.trim());
+            if (parts.length >= 3) municipality = parts[1];
+        }
+
+        return {
+            barangay:     a.neighbourhood || a.suburb || a.village || a.quarter || a.hamlet || '',
+            municipality: municipality,
+            province:     a.province || a.state || a.region || ''
+        };
+    }
+
+    function showAddress(info, isFallback) {
+        el('condo_addr_brgy').textContent = info.barangay     || '—';
+        el('condo_addr_mun').textContent  = info.municipality || '—';
+        el('condo_addr_prov').textContent = info.province     || '—';
+        el('condo_addr_status').textContent = 'Coordinates: ' + lat.toFixed(6) + ', ' + lng.toFixed(6)
+            + (isFallback ? ' (saved address)' : '');
+    }
+
+    function buildPopup(info) {
+        const wrap = document.createElement('div');
+        const title = document.createElement('b');
+        title.textContent = info.barangay || 'Pinned location';
+        const sub = document.createElement('div');
+        sub.textContent = [info.municipality, info.province].filter(Boolean).join(', ') || 'No address found';
+        const coords = document.createElement('div');
+        coords.textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
+        wrap.append(title, sub, coords);
+        return wrap;
+    }
+
+    async function initInfoMap() {
+        if (!hasLocation || typeof L === 'undefined') return;
+
+        if (!infoMap) {
+            infoMap = L.map('condo_info_map').setView([lat, lng], 17);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(infoMap);
+        }
+
+        setTimeout(function () { infoMap.invalidateSize(); }, 50);
+
+        if (addressLoaded) return;
+        addressLoaded = true;
+
+        try {
+            const info = await lookupAddress(lat, lng);
+            const hasAny = info.barangay || info.municipality || info.province;
+            const finalInfo = hasAny ? info : fallback;
+
+            showAddress(finalInfo, !hasAny);
+
+            infoMap.eachLayer(function (layer) {
+                if (layer instanceof L.Marker) infoMap.removeLayer(layer);
+            });
+            L.marker([lat, lng]).addTo(infoMap).bindPopup(buildPopup(finalInfo)).openPopup();
+        } catch (err) {
+            console.warn('Reverse geocode failed:', err);
+            showAddress(fallback, true);
+            infoMap.eachLayer(function (layer) {
+                if (layer instanceof L.Marker) infoMap.removeLayer(layer);
+            });
+            L.marker([lat, lng]).addTo(infoMap).bindPopup(buildPopup(fallback)).openPopup();
+            addressLoaded = false; // allow retry next time the tab is opened
+        }
+    }
+
+    // Tab switching (Overview / Units / Gallery / Amenities / Location / Reviews)
+    document.querySelectorAll('.room-tab').forEach(function (tab) {
+        tab.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = this.dataset.tab;
+
+            document.querySelectorAll('.room-tab').forEach(function (t) {
+                t.classList.toggle('tab-active', t === tab);
+            });
+            document.querySelectorAll('.tab-panel').forEach(function (p) {
+                p.classList.toggle('hidden', p.dataset.panel !== target);
+            });
+
+            if (target === 'location') initInfoMap();
+        });
+    });
+})();
+</script>

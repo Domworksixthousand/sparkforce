@@ -7,10 +7,45 @@ if (isset($_GET['property_id'])) {
     header("Location: index.php");
     exit;
 }
+
+// CURRENT PROPERTY LOCATION (landlord table, shared by all units of this property)
+$loc_lat = $loc_lng = $loc_prov = $loc_mun = $loc_brgy = '';
+$lq = $conn->prepare("SELECT latitude, longitude, province, municipality, barangay FROM landlord WHERE landlord_id = ?");
+$lq->bind_param("s", $landlord_id);
+$lq->execute();
+if ($loc_row = $lq->get_result()->fetch_assoc()) {
+    $loc_lat  = $loc_row['latitude']     ?? '';
+    $loc_lng  = $loc_row['longitude']    ?? '';
+    $loc_prov = $loc_row['province']     ?? '';
+    $loc_mun  = $loc_row['municipality'] ?? '';
+    $loc_brgy = $loc_row['barangay']     ?? '';
+}
+$lq->close();
+
+// If the form was sent back with an error, keep the newly pinned location
+if (!empty($_SESSION['latitude'])) {
+    $loc_lat  = $_SESSION['latitude'];
+    $loc_lng  = $_SESSION['longitude']     ?? $loc_lng;
+    $loc_prov = $_SESSION['province1']     ?? $loc_prov;
+    $loc_mun  = $_SESSION['municipality1'] ?? $loc_mun;
+    $loc_brgy = $_SESSION['barangay1']     ?? $loc_brgy;
+}
 ?>
 
 
 <script src="https://cdn.tiny.cloud/1/ssew95wvyspsqckuynqjy38ov5ktrks0qbp94mxchgh1ucty/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-geosearch@3.11.0/dist/geosearch.css" />
+<style>
+    /* Tailwind preflight (img{max-width:100%;height:auto}) breaks Leaflet tiles and markers. Undo it for the map only. */
+    .bh-map .leaflet-container img,
+    .bh-map img.leaflet-tile,
+    .bh-map img.leaflet-marker-icon,
+    .bh-map img.leaflet-marker-shadow {
+        max-width: none !important;
+        max-height: none !important;
+    }
+</style>
 
 <!-- Professional Modal Wrapper & Backdrop -->
 <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto animate-fade-in">
@@ -153,6 +188,45 @@ if (isset($_GET['property_id'])) {
                     <textarea
                         id="myEditor"
                         name="cs_other_info"><?php echo htmlspecialchars($_SESSION['cs_other_info'] ?? ''); ?></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- PROPERTY LOCATION -->
+        <!-- ============================================ -->
+        <div class="space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400">Property Location</h3>
+                <button type="button" onclick="bhOpenMap()"
+                        class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8c0 3.613-3.869 7.429-5.393 8.795a1 1 0 0 1-1.214 0C9.87 15.429 6 11.613 6 8a6 6 0 0 1 12 0"/><circle cx="12" cy="8" r="2"/></svg>
+                    Locate
+                </button>
+            </div>
+            <p class="text-[11px] text-slate-400">Pin the property on the map. This location applies to the whole property (all units).</p>
+
+            <input type="hidden" id="lat" name="latitude" value="<?php echo $_SESSION['latitude'] ?? htmlspecialchars((string)$loc_lat); ?>">
+            <input type="hidden" id="lng" name="longitude" value="<?php echo $_SESSION['longitude'] ?? htmlspecialchars((string)$loc_lng); ?>">
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-semibold text-slate-600">Province</label>
+                    <input type="text" id="province1" name="province1" readonly placeholder="Pin on map"
+                           value="<?php echo $_SESSION['province1'] ?? htmlspecialchars((string)$loc_prov); ?>"
+                           class="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm text-slate-800" />
+                </div>
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-semibold text-slate-600">Municipality</label>
+                    <input type="text" id="municipality1" name="municipality1" readonly placeholder="Pin on map"
+                           value="<?php echo $_SESSION['municipality1'] ?? htmlspecialchars((string)$loc_mun); ?>"
+                           class="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm text-slate-800" />
+                </div>
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-semibold text-slate-600">Barangay</label>
+                    <input type="text" id="barangay1" name="barangay1" readonly placeholder="Pin on map"
+                           value="<?php echo $_SESSION['barangay1'] ?? htmlspecialchars((string)$loc_brgy); ?>"
+                           class="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm text-slate-800" />
                 </div>
             </div>
         </div>
@@ -309,6 +383,7 @@ if (isset($_GET['property_id'])) {
             while ($row = $result->fetch_assoc()) {
                 $amenities[] = $row;
             }
+            $get_amen->close();
 
             // local variable lang, huwag i-overwrite ang session
             $selectedList = !empty($_SESSION['amenity']) ? $_SESSION['amenity'] : [""];
@@ -369,6 +444,52 @@ if (isset($_GET['property_id'])) {
     </form>
   </div>
 </div>
+
+<!-- MAP MODAL -->
+<dialog id="bh_map_modal" class="modal">
+  <div class="modal-box w-11/12 max-w-4xl p-5 bg-white">
+    <div class="flex items-center justify-between mb-2">
+      <div>
+        <h3 class="font-bold text-slate-800">Pin Property Location</h3>
+        <p class="text-xs text-slate-500">Search a place, or click the map to select a point. You can also drag the pin.</p>
+      </div>
+      <button type="button" class="btn btn-sm btn-circle btn-ghost" onclick="document.getElementById('bh_map_modal').close()">✕</button>
+    </div>
+
+    <div id="bh_map_wrap" class="bh-map">
+      <div id="bh_map" style="height:440px;width:100%;" class="rounded-xl border border-slate-200"></div>
+    </div>
+
+    <!-- Selected location (updates on every pick) -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3 text-xs">
+      <div class="rounded-lg bg-slate-50 border border-slate-200 p-2">
+        <p class="text-[10px] uppercase tracking-wider text-slate-400">Barangay</p>
+        <p id="bh_sel_brgy" class="font-semibold text-slate-700 truncate">—</p>
+      </div>
+      <div class="rounded-lg bg-slate-50 border border-slate-200 p-2">
+        <p class="text-[10px] uppercase tracking-wider text-slate-400">Municipality</p>
+        <p id="bh_sel_mun" class="font-semibold text-slate-700 truncate">—</p>
+      </div>
+      <div class="rounded-lg bg-slate-50 border border-slate-200 p-2">
+        <p class="text-[10px] uppercase tracking-wider text-slate-400">Province</p>
+        <p id="bh_sel_prov" class="font-semibold text-slate-700 truncate">—</p>
+      </div>
+      <div class="rounded-lg bg-slate-50 border border-slate-200 p-2">
+        <p class="text-[10px] uppercase tracking-wider text-slate-400">Coordinates</p>
+        <p id="bh_sel_coord" class="font-semibold text-slate-700 truncate">—</p>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between mt-3 gap-3">
+      <p class="text-xs text-slate-500" id="bh_sel_status">No location selected yet.</p>
+      <button type="button" class="btn btn-success btn-sm text-white" onclick="document.getElementById('bh_map_modal').close()">Done</button>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-geosearch@3.11.0/dist/bundle.min.js"></script>
 
 <script>
 tinymce.init({
@@ -492,6 +613,203 @@ tinymce.init({
     }
 });
 
+// ============================================
+// MAP (self-contained)
+// ============================================
+const BH_DEFAULT_CENTER = [12.7036, 124.0390]; // Irosin, Sorsogon
+
+// Fallback: Philippine ZIP -> municipality (used when OSM has no city/town)
+const BH_ZIP_TO_MUN = {
+    "4707": "Irosin", "4700": "Sorsogon City", "4701": "Bacon", "4702": "Casiguran",
+    "4703": "Castilla", "4704": "Donsol", "4705": "Gubat", "4706": "Juban",
+    "4708": "Magallanes", "4709": "Matnog", "4710": "Pilar", "4711": "Prieto Diaz",
+    "4712": "Santa Magdalena", "4713": "Bulusan", "4714": "Barcelona", "4715": "Bulan"
+};
+
+let bhMap = null;
+let bhMarker = null;
+let bhReqId = 0; // ignores old address lookups when the user picks again quickly
+
+function bhEl(id) { return document.getElementById(id); }
+
+// Update the "Selected location" panel inside the modal
+function bhRenderSel(v) {
+    bhEl('bh_sel_brgy').textContent  = v.barangay     || '—';
+    bhEl('bh_sel_mun').textContent   = v.municipality || '—';
+    bhEl('bh_sel_prov').textContent  = v.province     || '—';
+    bhEl('bh_sel_coord').textContent = (v.lat != null && v.lng != null)
+        ? v.lat.toFixed(6) + ', ' + v.lng.toFixed(6) : '—';
+    bhEl('bh_sel_status').textContent = v.status || '';
+}
+
+// Popup content built with textContent (no HTML injection)
+function bhPopupEl(title, sub) {
+    const d = document.createElement('div');
+    const b = document.createElement('b');
+    b.textContent = title;
+    const s = document.createElement('div');
+    s.textContent = sub;
+    d.append(b, s);
+    return d;
+}
+
+// Show / move the marker at the selected point
+function bhPlaceMarker(lat, lng, title, sub) {
+    if (!bhMarker) {
+        bhMarker = L.marker([lat, lng], { draggable: true }).addTo(bhMap);
+        bhMarker.on('dragend', function () {
+            const p = bhMarker.getLatLng();
+            bhPick(p.lat, p.lng);
+        });
+    } else {
+        bhMarker.setLatLng([lat, lng]);
+    }
+    bhMarker.unbindPopup().bindPopup(bhPopupEl(title, sub)).openPopup();
+}
+
+// Reverse geocode (OpenStreetMap Nominatim)
+async function bhReverse(lat, lng) {
+    const url = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&zoom=18'
+              + '&lat=' + encodeURIComponent(lat) + '&lon=' + encodeURIComponent(lng);
+    const r = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+    const a = j.address || {};
+
+    let municipality = a.city || a.town || a.municipality || a.county || a.district || '';
+    if (!municipality && a.postcode && BH_ZIP_TO_MUN[a.postcode]) {
+        municipality = BH_ZIP_TO_MUN[a.postcode];
+    }
+    if (!municipality && j.display_name) {
+        const parts = j.display_name.split(',').map(s => s.trim());
+        if (parts.length >= 3) municipality = parts[1];
+    }
+
+    return {
+        barangay:     a.neighbourhood || a.suburb || a.village || a.quarter || a.hamlet || '',
+        municipality: municipality,
+        province:     a.province || a.state || a.region || ''
+    };
+}
+
+// Called on every map click, search result, or marker drag
+function bhPick(lat, lng) {
+    bhEl('lat').value = lat.toFixed(7);
+    bhEl('lng').value = lng.toFixed(7);
+
+    const reqId = ++bhReqId;
+    bhPlaceMarker(lat, lng, 'Selected point', 'Looking up address...');
+    bhRenderSel({ lat: lat, lng: lng, status: 'Looking up address...' });
+
+    bhReverse(lat, lng).then(function (info) {
+        if (reqId !== bhReqId) return; // a newer pick already happened
+
+        bhEl('barangay1').value     = info.barangay;
+        bhEl('municipality1').value = info.municipality;
+        bhEl('province1').value     = info.province;
+
+        const hasAddr = info.barangay || info.municipality || info.province;
+        const msg = hasAddr
+            ? 'Location set. Click Done to close.'
+            : 'No address found for this point. Coordinates are still saved.';
+
+        bhRenderSel({
+            lat: lat, lng: lng,
+            barangay: info.barangay, municipality: info.municipality, province: info.province,
+            status: msg
+        });
+        bhPlaceMarker(lat, lng,
+            info.barangay || 'Selected point',
+            [info.municipality, info.province].filter(Boolean).join(', ') || 'No address found');
+    }).catch(function (err) {
+        if (reqId !== bhReqId) return;
+        console.warn('Reverse geocode failed:', err);
+        // Clear the old address so a wrong barangay is never saved with the new pin
+        bhEl('barangay1').value     = '';
+        bhEl('municipality1').value = '';
+        bhEl('province1').value     = '';
+        bhRenderSel({ lat: lat, lng: lng, status: 'Address lookup failed. Coordinates are still saved.' });
+    });
+}
+
+function bhOpenMap() {
+    if (typeof L === 'undefined') {
+        alert('Map failed to load. Check your internet connection and refresh the page.');
+        return;
+    }
+    bhEl('bh_map_modal').showModal();
+    // Create/resize only AFTER the dialog is visible
+    setTimeout(bhInitMap, 60);
+}
+
+function bhInitMap() {
+    const savedLat = parseFloat(bhEl('lat').value);
+    const savedLng = parseFloat(bhEl('lng').value);
+    const hasSaved = !isNaN(savedLat) && !isNaN(savedLng) && !(savedLat === 0 && savedLng === 0);
+    const start = hasSaved ? [savedLat, savedLng] : BH_DEFAULT_CENTER;
+    const zoom  = hasSaved ? 17 : 14;
+
+    if (!bhMap) {
+        bhMap = L.map('bh_map').setView(start, zoom);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(bhMap);
+
+        // Click anywhere on the map to select a point
+        bhMap.on('click', function (e) {
+            bhPick(e.latlng.lat, e.latlng.lng);
+        });
+
+        // Search box (leaflet-geosearch), biased to the Philippines
+        if (window.GeoSearch) {
+            const provider = new GeoSearch.OpenStreetMapProvider({
+                params: { countrycodes: 'ph', 'accept-language': 'en' }
+            });
+            bhMap.addControl(new GeoSearch.GeoSearchControl({
+                provider: provider,
+                style: 'bar',
+                showMarker: false,
+                showPopup: false,
+                autoClose: true,
+                keepResult: true,
+                searchLabel: 'Search place or address...'
+            }));
+
+            bhMap.on('geosearch/showlocation', function (e) {
+                const lat = e.location.y, lng = e.location.x;
+                bhMap.setView([lat, lng], 17);
+                bhPick(lat, lng);
+            });
+        }
+    } else {
+        bhMap.setView(start, zoom);
+    }
+
+    // Show the saved point (edit / re-open) without changing the saved address
+    if (hasSaved) {
+        const brgy = bhEl('barangay1').value, mun = bhEl('municipality1').value, prov = bhEl('province1').value;
+        bhPlaceMarker(savedLat, savedLng, brgy || 'Saved location',
+            [mun, prov].filter(Boolean).join(', ') || 'Saved coordinates');
+        bhRenderSel({ lat: savedLat, lng: savedLng, barangay: brgy, municipality: mun, province: prov,
+                      status: 'Saved location. Click the map to change it.' });
+    } else {
+        bhRenderSel({ status: 'No location selected yet. Click the map to select.' });
+    }
+
+    // Make sure Leaflet measures the visible container
+    setTimeout(function () { bhMap.invalidateSize(); }, 100);
+    setTimeout(function () { bhMap.invalidateSize(); }, 400);
+}
+
+window.addEventListener('resize', function () {
+    if (bhMap) bhMap.invalidateSize();
+});
+
+// ============================================
+// DOM READY
+// ============================================
 document.addEventListener('DOMContentLoaded', function () {
 
     const form = document.getElementById('mainForm');

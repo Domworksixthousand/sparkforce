@@ -1,16 +1,17 @@
 <?php
 include 'my_property.php';
-if(isset($_GET['id']) && isset($_GET['property_id'])){
-    $rent_id = $_GET['id'] ?? '';
+if (isset($_GET['id']) && isset($_GET['property_id'])) {
+    $rent_id     = $_GET['id'] ?? '';
     $landlord_id = $_GET['property_id'] ?? '';
-}else{
+} else {
     echo "<script>location.href='index.php';</script>";
     exit;
 }
 
-//RENTSPACE DETAILS
+// RENTSPACE DETAILS (including saved location)
 $get_rent = $conn->prepare("
-    SELECT name, price, image_cover, other_info, type, rate
+    SELECT name, price, image_cover, other_info, type, rate,
+           longitude, latitude, barangay, province, municipality
     FROM rentspace
     WHERE rent_id = ?
 ");
@@ -23,19 +24,42 @@ $price = "";
 $image_cover = "";
 $other_info = "";
 $rate = "";
+$longitude = "";
+$latitude = "";
+$barangay = "";
+$municipality = "";
+$province = "";
 
 if ($rent_row = $rent_res->fetch_assoc()) {
-    $name        = $rent_row['name'];
-    $price       = $rent_row['price'];
-    $image_cover = $rent_row['image_cover'];
-    $other_info  = $rent_row['other_info'];
-    $rate        = $rent_row['rate'];
+    $name         = $rent_row['name'] ?? '';
+    $price        = $rent_row['price'] ?? '';
+    $image_cover  = $rent_row['image_cover'] ?? '';
+    $other_info   = $rent_row['other_info'] ?? '';
+    $rate         = $rent_row['rate'] ?? '';
+    $longitude    = $rent_row['longitude'] ?? '';
+    $latitude     = $rent_row['latitude'] ?? '';
+    $barangay     = $rent_row['barangay'] ?? '';
+    $municipality = $rent_row['municipality'] ?? '';
+    $province     = $rent_row['province'] ?? '';
 }
+$get_rent->close();
+
+// LOCATION VALUES USED BY THE LOCATION TAB
+$hasLocation = (
+    $latitude !== '' && $latitude !== null &&
+    $longitude !== '' && $longitude !== null &&
+    !((float)$latitude == 0.0 && (float)$longitude == 0.0)
+);
+$map_lat  = $hasLocation ? (float)$latitude  : null;
+$map_lng  = $hasLocation ? (float)$longitude : null;
+$loc_brgy = (string)$barangay;
+$loc_mun  = (string)$municipality;
+$loc_prov = (string)$province;
 
 // BOARDING HOUSES (latitude and longitude are saved on each bed row)
 $stat = "Out of Order";
 $get_bh = $conn->prepare("
-    SELECT boarding_id, status, num_decks, image, bed_number, latitude, longitude
+    SELECT boarding_id, status, num_decks, image, bed_number
     FROM boarding_house
     WHERE rent_id = ? AND status != ?
     ORDER BY bed_number
@@ -48,30 +72,7 @@ $boarding_houses = [];
 while ($row = $bh_res->fetch_assoc()) {
     $boarding_houses[$row['boarding_id']] = $row;
 }
-
-// COORDINATES: first valid pair saved in boarding_house (0,0 is skipped)
-$map_lat = null;
-$map_lng = null;
-foreach ($boarding_houses as $bh) {
-    if (is_numeric($bh['latitude'] ?? null) && is_numeric($bh['longitude'] ?? null)
-        && !((float)$bh['latitude'] == 0.0 && (float)$bh['longitude'] == 0.0)) {
-        $map_lat = (float)$bh['latitude'];
-        $map_lng = (float)$bh['longitude'];
-        break;
-    }
-}
-
-// FALLBACK ADDRESS from landlord table (only used if the map lookup fails)
-$loc_prov = $loc_mun = $loc_brgy = '';
-$get_loc = $conn->prepare("SELECT province, municipality, barangay FROM landlord WHERE landlord_id = ?");
-$get_loc->bind_param("s", $landlord_id);
-$get_loc->execute();
-if ($loc_row = $get_loc->get_result()->fetch_assoc()) {
-    $loc_prov = $loc_row['province']     ?? '';
-    $loc_mun  = $loc_row['municipality'] ?? '';
-    $loc_brgy = $loc_row['barangay']     ?? '';
-}
-$get_loc->close();
+$get_bh->close();
 
 // AMENITIES FROM DATABASE
 $get_amen = $conn->prepare("
@@ -92,6 +93,7 @@ while ($row = $amen_res->fetch_assoc()) {
         "rent_amen_id" => $row['rent_amen_id']
     ];
 }
+$get_amen->close();
 
 // REVIEWS / RATINGS
 // LEFT JOIN accounts so a review is never hidden if the account can't be matched.
@@ -110,6 +112,7 @@ $reviews = [];
 while ($row = $reviews_res->fetch_assoc()) {
     $reviews[] = $row;
 }
+$get_reviews->close();
 
 // Helper: badge color per bed status
 function bedStatusBadge($status) {
@@ -124,7 +127,6 @@ function bedStatusBadge($status) {
 
 $totalBeds     = count($boarding_houses);
 $availableBeds = count(array_filter($boarding_houses, fn($b) => $b['status'] === 'Available'));
-$hasLocation   = ($map_lat !== null && $map_lng !== null);
 ?>
 
 <!-- Leaflet (map) -->
@@ -248,15 +250,15 @@ $hasLocation   = ($map_lat !== null && $map_lng !== null);
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
               <div class="rounded-lg bg-base-200/60 border border-base-200 p-2">
                 <p class="text-[10px] uppercase tracking-wider text-gray-400">Barangay</p>
-                <p id="bh_addr_brgy" class="font-semibold text-gray-700 truncate"><?php echo htmlspecialchars($loc_brgy ?: 'Looking up...'); ?></p>
+                <p id="bh_addr_brgy" class="font-semibold text-gray-700 truncate"><?php echo htmlspecialchars($loc_brgy !== '' ? $loc_brgy : 'Looking up...'); ?></p>
               </div>
               <div class="rounded-lg bg-base-200/60 border border-base-200 p-2">
                 <p class="text-[10px] uppercase tracking-wider text-gray-400">Municipality</p>
-                <p id="bh_addr_mun" class="font-semibold text-gray-700 truncate"><?php echo htmlspecialchars($loc_mun ?: 'Looking up...'); ?></p>
+                <p id="bh_addr_mun" class="font-semibold text-gray-700 truncate"><?php echo htmlspecialchars($loc_mun !== '' ? $loc_mun : 'Looking up...'); ?></p>
               </div>
               <div class="rounded-lg bg-base-200/60 border border-base-200 p-2">
                 <p class="text-[10px] uppercase tracking-wider text-gray-400">Province</p>
-                <p id="bh_addr_prov" class="font-semibold text-gray-700 truncate"><?php echo htmlspecialchars($loc_prov ?: 'Looking up...'); ?></p>
+                <p id="bh_addr_prov" class="font-semibold text-gray-700 truncate"><?php echo htmlspecialchars($loc_prov !== '' ? $loc_prov : 'Looking up...'); ?></p>
               </div>
             </div>
 

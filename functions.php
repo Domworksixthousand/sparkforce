@@ -2378,8 +2378,8 @@ if (isset($_POST['save_boarding'])) {
     }
 
     // 5. INSERT INTO RENTSPACE (Ginagamit na dito ang $final_cover)
-    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`,`rate`) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)");
-    $insert->bind_param("sssssisss", $rent_id, $room_name, $landlord_id, $user_id_login, $type, $price, $final_cover, $other_info, $rate);
+    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`,`rate`,`longitude`,`latitude`,`barangay`,`province`,`municipality`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $insert->bind_param("sssssissssssss", $rent_id, $room_name, $landlord_id, $user_id_login, $type, $price, $final_cover, $other_info, $rate, $longitude, $latitude, $barangay1, $province1, $municipality1);
     $insert->execute();
 
     // INSERT AMENITIES
@@ -2393,7 +2393,7 @@ if (isset($_POST['save_boarding'])) {
 
     // 6. INSERT BEDS (MULTIPLE DECKS CREATION)
     if (!empty($beds)) {
-        $insert_beds = $conn->prepare("INSERT INTO `boarding_house` (`boarding_id`, `bed_number`, `status`, `num_decks`, `image`, `rent_id`,`longitude`,`latitude`,`barangay`,`province`,`municipality`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $insert_beds = $conn->prepare("INSERT INTO `boarding_house` (`boarding_id`, `bed_number`, `status`, `num_decks`, `image`, `rent_id`) VALUES (?, ?, ?, ?, ?, ?)");
 
         foreach ($beds as $bed) {
             $deck_count = (int)$bed['num_deck'];
@@ -2406,7 +2406,7 @@ if (isset($_POST['save_boarding'])) {
                     ? $bed['bed_number'] . " - Deck " . $d 
                     : $bed['bed_number'];
 
-                $insert_beds->bind_param("sssisssssss", $boarding_id, $deck_bed_number, $status, $d, $bed['bed_image'], $rent_id, $longitude, $latitude, $barangay1, $province1, $municipality1);
+                $insert_beds->bind_param("sssiss", $boarding_id, $deck_bed_number, $status, $d, $bed['bed_image'], $rent_id);
                 $insert_beds->execute();
             }
         }
@@ -2533,8 +2533,8 @@ if (isset($_POST['edit_boarding'])) {
     }
 
     // 4. UPDATE RENTSPACE BASIC INFO
-    $update_rentspace = $conn->prepare("UPDATE rentspace SET `name` = ?, `price` = ?, `other_info` = ?,`rate` = ? WHERE `rent_id` = ?");
-    $update_rentspace->bind_param("sssss", $room_name, $price, $other_info,$rate,$rent_id);
+    $update_rentspace = $conn->prepare("UPDATE rentspace SET `name` = ?, `price` = ?, `other_info` = ?,`rate` = ?,`longitude`=?,`latitude`=?,`barangay`=?,`province`=?,`municipality`=? WHERE `rent_id` = ?");
+    $update_rentspace->bind_param("ssssssssss", $room_name, $price, $other_info,$rate,$longitude,$latitude,$barangay1,$province1,$municipality1,$rent_id);
     $update_rentspace->execute();
 
     // 5. UPDATE COVER PHOTO
@@ -2568,7 +2568,7 @@ if (isset($_POST['edit_boarding'])) {
         $delete->execute();
 
         // Re-insert with individual status per deck
-        $insert_beds = $conn->prepare("INSERT INTO `boarding_house` (`boarding_id`, `bed_number`, `status`, `num_decks`, `image`, `rent_id`, `latitude`, `longitude`,`barangay`,`municipality`,`province`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)");
+        $insert_beds = $conn->prepare("INSERT INTO `boarding_house` (`boarding_id`, `bed_number`, `status`, `num_decks`, `image`, `rent_id`) VALUES (?, ?, ?, ?, ?, ?)");
 
         foreach ($beds as $bed) {
             $boarding_id = $rent_id . '_' . uniqid();
@@ -2578,7 +2578,7 @@ if (isset($_POST['edit_boarding'])) {
             $bed_image   = $bed['bed_image'];
 
 
-            $insert_beds->bind_param("sssisssssss", $boarding_id, $bed_number, $status, $num_deck, $bed_image, $rent_id,$latitude,$longitude,$barangay1,$municipality1,$province1);
+            $insert_beds->bind_param("sssiss", $boarding_id, $bed_number, $status, $num_deck, $bed_image, $rent_id);
             $insert_beds->execute();
         }
     }
@@ -2684,6 +2684,11 @@ if (isset($_POST['save_apartment'])) {
     $apartment_type = $_POST['type'] ?? '';
     $apartment_rate = $_POST['apartment_rate'] ?? '';
     $raw_amenities  = $_POST['amenity'] ?? [];
+    $municipality = $_POST['municipality1'] ?? '';
+    $barangay = $_POST['barangay1'] ?? '';
+    $province = $_POST['province1'] ?? '';
+    $longitude = $_POST['longitude'] ?? '';
+    $latitude = $_POST['latitude'] ?? '';
 
     // (tinanggal na ang debug echo — sinisira nito ang header() redirect)
 
@@ -2704,6 +2709,11 @@ if (isset($_POST['save_apartment'])) {
     $_SESSION['apartment_other_info'] = $other_info;
     $_SESSION['type']                 = $apartment_type;
     $_SESSION['amenity']              = $raw_amenities;   // 'amenity' ang binabasa ng form
+    $_SESSION['latitude']              = $latitude;
+    $_SESSION['longitude']              = $longitude;
+    $_SESSION['province1']              = $province;
+    $_SESSION['barangay1']              = $barangay;
+    $_SESSION['municipality1']              = $municipality;
 
     // --- VALIDATE AMENITIES (pagkatapos ma-save ang session) ---
     $selected_amenities = [];
@@ -2772,8 +2782,8 @@ if (isset($_POST['save_apartment'])) {
     }
 
 
-    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`,`rate`) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)");
-    $insert->bind_param("sssssssss", $rent_id, $room_name, $landlord_id, $user_id_login, $type, $price, $cover_photo, $other_info,$apartment_rate);
+    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`,`rate`,`longitude`,`latitude`,`barangay`,`municipality`,`province`) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?,?,?)");
+    $insert->bind_param("ssssssssssssss", $rent_id, $room_name, $landlord_id, $user_id_login, $type, $price, $cover_photo, $other_info,$apartment_rate,$longitude,$latitude,$barangay,$municipality,$province);
     $insert->execute();
 
     if (!empty($selected_amenities)) {
@@ -2806,7 +2816,12 @@ if (isset($_POST['save_apartment'])) {
         $_SESSION['gallery'],
         $_SESSION['type'],
         $_SESSION['amenity'],
-        $_SESSION['apartment_rate']
+        $_SESSION['apartment_rate'],
+        $_SESSION['longitude'],
+        $_SESSION['latitude'],
+        $_SESSION['province'],
+        $_SESSION['barangay'],
+        $_SESSION['municipality']
     );
 
     $_SESSION['success'] = "Successfully Inserted";
@@ -2827,6 +2842,11 @@ if (isset($_POST['edit_apartment'])) {
     $amenities         = $_POST['amenity'] ?? [];
     $status            = $_POST['status'] ?? '';
     $apartment_rate    = $_POST['apartment_rate'] ?? '';
+    $longitude    = $_POST['longitude'] ?? '';
+    $latitude    = $_POST['latitude'] ?? '';
+    $province    = $_POST['province1'] ?? '';
+    $municipality    = $_POST['municipality1'] ?? '';
+    $barangay    = $_POST['barangay1'] ?? '';
 
     // (tinanggal na ang debug echo — sinisira nito ang header() redirect)
 
@@ -2881,16 +2901,21 @@ if (isset($_POST['edit_apartment'])) {
     // ------------------------------------------------------------
     $update_rent = $conn->prepare("
         UPDATE rentspace
-        SET name = ?, price = ?, image_cover = ?, other_info = ?,rate = ?
+        SET name = ?, price = ?, image_cover = ?, other_info = ?,rate = ?,longitude=?,latitude=?,barangay=?,municipality=?,province=?
         WHERE rent_id = ?
     ");
     $update_rent->bind_param(
-        "ssssss",
+        "sssssssssss",
         $apartment_name,
         $apartment_price,
         $image_cover,
         $apartment_other,
         $apartment_rate,
+        $longitude,
+        $latitude,
+        $barangay,
+        $municipality,
+        $province,
         $rent_id
     );
     $update_rent->execute();
@@ -3131,6 +3156,12 @@ if (isset($_POST['save_condo'])) {
     $other_info     = trim($_POST['cs_other_info'] ?? '');
     $raw_amenities  = $_POST['amenity'] ?? [];
 
+    $longitude       = $_POST['longitude'] ?? '';
+    $latitude       = $_POST['latitude'] ?? '';
+    $barangay       = $_POST['barangay1'] ?? '';
+    $municipality       = $_POST['municipality1'] ?? '';
+    $province       = $_POST['province1'] ?? '';
+
     $status       = "Available";
     $rent_id      = $condo_name . rand(1000, 9999);
     $type         = "Condominium";
@@ -3166,6 +3197,12 @@ if (isset($_POST['save_condo'])) {
     $_SESSION['cs_other_info'] = $other_info;
     $_SESSION['cs_rate']       = $condo_rate;
     $_SESSION['amenity']     = $raw_amenities ?? [];
+
+    $_SESSION['longitude']       = $longitude;
+    $_SESSION['latitude']       = $latitude;
+    $_SESSION['barangay1']       = $barangay;
+    $_SESSION['province1']       = $province;
+    $_SESSION['municipality1']       = $municipality;
 
     // --- COVER PHOTO ---
     if (isset($_FILES['cs_cover']) && $_FILES['cs_cover']['error'] === UPLOAD_ERR_OK) {
@@ -3225,8 +3262,8 @@ if (isset($_POST['save_condo'])) {
     }
 
     // --- INSERT MAIN TABLE ---
-    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`, `rate`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $insert->bind_param("sssssssss", $rent_id, $condo_name, $landlord_id, $user_id_login, $type, $condo_price, $cover_photo, $other_info, $condo_rate);
+    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`, `rate`,`longitude`,`latitude`,`province`,`municipality`,`barangay`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?,?)");
+    $insert->bind_param("ssssssssssssss", $rent_id, $condo_name, $landlord_id, $user_id_login, $type, $condo_price, $cover_photo, $other_info, $condo_rate,$longitude,$latitude,$province,$municipality,$barangay);
     $insert->execute();
 
     // --- INSERT AMENITIES ---
@@ -3266,7 +3303,12 @@ if (isset($_POST['save_condo'])) {
         $_SESSION['cs_cover'],
         $_SESSION['gallery'],
         $_SESSION['amenity'],
-        $_SESSION['cs_rate']
+        $_SESSION['cs_rate'],
+         $_SESSION['longitude'],
+    $_SESSION['latitude'],
+    $_SESSION['barangay1'],
+    $_SESSION['province1'],
+    $_SESSION['municipality1']
     );
 
     $_SESSION['success'] = "Condominium Successfully Inserted";
@@ -3291,6 +3333,12 @@ if (isset($_POST['edit_condo'])) {
     $flooring              = $_POST['flooring'] ?? '';
     $status                = $_POST['status'] ?? '';
     $rent_id                = $_POST['id'] ?? '';
+
+    $longitude    = $_POST['longitude'] ?? '';
+    $latitude    = $_POST['latitude'] ?? '';
+    $province    = $_POST['province1'] ?? '';
+    $municipality    = $_POST['municipality1'] ?? '';
+    $barangay    = $_POST['barangay1'] ?? '';
     
     $amenities             = $_POST['amenity'] ?? [];
 
@@ -3349,10 +3397,10 @@ if (isset($_POST['edit_condo'])) {
 
     $stmt_rent = $conn->prepare("
         UPDATE rentspace 
-        SET name = ?, price = ?, image_cover = ?, other_info = ?,rate = ?
+        SET name = ?, price = ?, image_cover = ?, other_info = ?,rate = ?,longitude = ?,latitude=?,barangay=?,municipality=?,province=?
         WHERE rent_id = ?
     ");
-    $stmt_rent->bind_param("ssssss", $condo_name, $condo_price, $cover_filename, $apartment_other_info,$condo_rate,$rent_id);
+    $stmt_rent->bind_param("sssssssssss", $condo_name, $condo_price, $cover_filename, $apartment_other_info,$condo_rate,$rent_id,$longitude,$latitude,$barangay,$municipality,$province);
     $stmt_rent->execute();
 
 

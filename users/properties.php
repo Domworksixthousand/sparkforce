@@ -157,7 +157,7 @@
 
                         // Kasama na ang average rating at bilang ng reviews kada property (landlord)
                         $query = "
-                            SELECT r.*, l.province, l.municipality, l.barangay, l.property_name, l.latitude, l.longitude, r.rate, acc.user_id, l.user_id, acc.status,
+                            SELECT r.*, r.province, r.municipality, r.barangay, l.property_name, r.latitude, r.longitude, r.rate, acc.user_id, l.user_id, acc.status,
                                    rv.avg_rating, rv.review_count
                             FROM rentspace r
                             LEFT JOIN landlord l ON l.landlord_id = r.landlord_id
@@ -257,6 +257,7 @@
 
                                 if($type === "Boarding House / Bedspace"){
                                     $locate = "boarding_details.php";
+                        
                                 }elseif($type === "Apartment"){
                                     $locate = "apartment_details.php";
                                 }elseif($type === "Condominium"){

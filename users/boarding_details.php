@@ -5,9 +5,10 @@ if(isset($_GET['id'])){
     $rent_id = $_GET['id'];
 }
 
-// RENTSPACE DETAILS
+// RENTSPACE DETAILS (includes saved location)
 $get_rent = $conn->prepare("
-    SELECT name, price, image_cover, other_info, landlord_id, user_id,type
+    SELECT name, price, image_cover, other_info, landlord_id, user_id, type,
+           longitude, latitude, province, barangay, municipality
     FROM rentspace 
     WHERE rent_id = ?
 ");
@@ -22,16 +23,37 @@ $other_info = "";
 $landlord_id = "";
 $user_id = "";
 $type = "";
+$longitude = "";
+$latitude = "";
+$province = "";
+$municipality = "";
+$barangay = "";
 
 if ($rent_row = $rent_res->fetch_assoc()) {
-    $name        = $rent_row['name'];
-    $price       = $rent_row['price'];
-    $image_cover = $rent_row['image_cover'];
-    $other_info  = $rent_row['other_info'];
-    $landlord_id = $rent_row['landlord_id'];
-    $user_id     = $rent_row['user_id'];
-    $type        = $rent_row['type'];
+    $name         = $rent_row['name'] ?? '';
+    $price        = $rent_row['price'] ?? '';
+    $image_cover  = $rent_row['image_cover'] ?? '';
+    $other_info   = $rent_row['other_info'] ?? '';
+    $landlord_id  = $rent_row['landlord_id'] ?? '';
+    $user_id      = $rent_row['user_id'] ?? '';
+    $type         = $rent_row['type'] ?? '';
+    $longitude    = $rent_row['longitude'] ?? '';
+    $latitude     = $rent_row['latitude'] ?? '';
+    $province     = $rent_row['province'] ?? '';
+    $municipality = $rent_row['municipality'] ?? '';
+    $barangay     = $rent_row['barangay'] ?? '';
+    $rate     = $rent_row['rate'] ?? '';
 }
+$get_rent->close();
+
+// MAP COORDINATES (valid only if numeric, in range, and not 0,0)
+$lat_val = (is_numeric($latitude) && $latitude !== '') ? (float)$latitude : null;
+$lng_val = (is_numeric($longitude) && $longitude !== '') ? (float)$longitude : null;
+$has_coords = (
+    $lat_val !== null && $lng_val !== null
+    && abs($lat_val) <= 90 && abs($lng_val) <= 180
+    && !($lat_val == 0.0 && $lng_val == 0.0)
+);
 
 // BOARDING HOUSES / BEDS
 $stat = "Out of Order";
@@ -48,6 +70,7 @@ $boarding_houses = [];
 while ($row = $bh_res->fetch_assoc()) {
     $boarding_houses[$row['boarding_id']] = $row;
 }
+$get_bh->close();
 
 // AMENITIES
 $get_amen = $conn->prepare("
@@ -68,6 +91,7 @@ while ($row = $amen_res->fetch_assoc()) {
         "rent_amen_id" => $row['rent_amen_id']
     ];
 }
+$get_amen->close();
 
 // Helper: Badge color per bed status
 function bedStatusBadge($status) {
@@ -101,24 +125,11 @@ $get_landlord_info->bind_param("s", $landlord_id);
 $get_landlord_info->execute();
 $result_landlord = $get_landlord_info->get_result();
 
-$province = $municipality = $barangay = $longitude = $latitude = $property_name = "";
-if($result_landlord->num_rows > 0){
-    if($row_landlord = mysqli_fetch_assoc($result_landlord)){
-        $province      = $row_landlord['province'];
-        $municipality  = $row_landlord['municipality'];
-        $barangay      = $row_landlord['barangay'];
-        $longitude     = $row_landlord['longitude'];
-        $latitude      = $row_landlord['latitude'];
-        $property_name = $row_landlord['property_name'];
-    }
+$property_name = "";
+if ($row_landlord = $result_landlord->fetch_assoc()) {
+    $property_name = $row_landlord['property_name'] ?? '';
 }
-
-// MAP COORDINATES (valid lang kung numeric at hindi 0,0)
-$lat_val    = is_numeric($latitude)  ? (float)$latitude  : null;
-$lng_val    = is_numeric($longitude) ? (float)$longitude : null;
-$has_coords = ($lat_val !== null && $lng_val !== null
-               && abs($lat_val) <= 90 && abs($lng_val) <= 180
-               && !($lat_val == 0 && $lng_val == 0));
+$get_landlord_info->close();
 
 // ACCOUNT DETAILS
 $account = $conn->prepare("SELECT * FROM `accounts` WHERE `user_id` = ?");
@@ -126,13 +137,13 @@ $account->bind_param("s", $user_id);
 $account->execute();
 $result_account = $account->get_result();
 
-$contact_number = $email = "";
-if($result_account->num_rows > 0){
-    if($row_account = mysqli_fetch_assoc($result_account)){
-        $contact_number = $row_account['contact_number'];
-        $email          = $row_account['email'];
-    }
+$contact_number = "";
+$email = "";
+if ($row_account = $result_account->fetch_assoc()) {
+    $contact_number = $row_account['contact_number'] ?? '';
+    $email          = $row_account['email'] ?? '';
 }
+$account->close();
 
 // ============================================================
 // RATINGS & REVIEWS
@@ -143,6 +154,7 @@ $get_avg->execute();
 $avg_row      = $get_avg->get_result()->fetch_assoc();
 $avg_rating   = (float)($avg_row['avg_rating'] ?? 0);
 $review_count = (int)($avg_row['review_count'] ?? 0);
+$get_avg->close();
 
 // star distribution
 $star_counts = [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0];
@@ -154,6 +166,7 @@ while ($d = $dist_res->fetch_assoc()) {
     $r = (int)$d['rating'];
     if (isset($star_counts[$r])) $star_counts[$r] = (int)$d['c'];
 }
+$get_dist->close();
 
 $get_reviews = $conn->prepare("
     SELECT acc.firstname, acc.middlename, acc.lastname, acc.suffix, acc.username,
@@ -194,6 +207,7 @@ while ($rv = $reviews_res->fetch_assoc()) {
         'comment'  => $rv['comment'] ?? '',
     ];
 }
+$get_reviews->close();
 
 // Can this user write a review? (not the owner, and hasn't reviewed yet)
 $is_owner     = ($user_id_login === $user_id);
@@ -203,24 +217,22 @@ if (!empty($user_id_login)) {
     $chk->bind_param("ss", $landlord_id, $user_id_login);
     $chk->execute();
     $has_reviewed = $chk->get_result()->num_rows > 0;
+    $chk->close();
 }
 
-//favorites
+// favorites
 $favorites = $conn->prepare("SELECT * FROM `favorites` WHERE `rent_id` = ?");
 $favorites->bind_param("s", $rent_id);
 $favorites->execute();
 $result_fav = $favorites->get_result();
-if($result_fav->num_rows>0){
-  $switch = "on";
-}else{
-  $switch = "off";
-}
+$switch = ($result_fav->num_rows > 0) ? "on" : "off";
+$favorites->close();
 
-$hidden = $is_owner ? 'hidden' : '';
+$hidden        = $is_owner ? 'hidden' : '';
 $totalBeds     = count($boarding_houses);
 $availableBeds = count(array_filter($boarding_houses, fn($b) => $b['status'] === 'Available'));
 
-//auto save viewed
+// auto save viewed
 $check = $conn->prepare(
     "SELECT COUNT(*) AS already_viewed
      FROM `rent_views`
@@ -231,6 +243,7 @@ $check = $conn->prepare(
 $check->bind_param("sss", $rent_id, $user_id_login, $datetoday);
 $check->execute();
 $already_viewed = $check->get_result()->fetch_assoc()['already_viewed'] ?? 0;
+$check->close();
 
 if ($already_viewed == 0) {
     $insert_viewed = $conn->prepare(
@@ -239,6 +252,7 @@ if ($already_viewed == 0) {
     );
     $insert_viewed->bind_param("sssss", $landlord_id, $user_id_login, $datetoday, $timetoday1, $rent_id);
     $insert_viewed->execute();
+    $insert_viewed->close();
 }
 ?>
 
@@ -270,6 +284,15 @@ if ($already_viewed == 0) {
         .star-input label:hover,
         .star-input label:hover ~ label,
         .star-input input:checked ~ label { color:#facc15; }
+
+        /* Leaflet tiles/markers: undo Tailwind preflight img{max-width:100%} */
+        #map img.leaflet-tile,
+        #map img.leaflet-marker-icon,
+        #map img.leaflet-marker-shadow {
+            max-width: none !important;
+            max-height: none !important;
+        }
+        #map .leaflet-container { width: 100%; height: 100%; }
     </style>
 </head>
 <body class="bg-base-200 min-h-screen text-base-content antialiased">
@@ -363,7 +386,7 @@ if ($already_viewed == 0) {
 
             <p class="text-sm text-base-content/70 mt-2 flex items-center gap-1">
               <i class="fa-solid fa-location-dot text-error"></i> 
-              <?= htmlspecialchars("$barangay, $municipality, $province"); ?>
+              <?= htmlspecialchars(implode(', ', array_filter([$barangay, $municipality, $province]))); ?>
             </p>
 
             <div class="divider my-3"></div>
@@ -414,9 +437,9 @@ if ($already_viewed == 0) {
             <h2 class="text-lg font-bold mb-3 flex items-center gap-2">
               <i class="fa-solid fa-circle-info text-success"></i> About This Space
             </h2>
-            <p class="text-base-content/80 text-sm leading-relaxed whitespace-pre-line">
+            <div class="text-base-content/80 text-sm leading-relaxed">
               <?= $other_info ? $other_info : 'No additional details provided.'; ?>
-            </p>
+            </div>
           </div>
 
           <!-- Amenities List -->
@@ -620,11 +643,11 @@ if ($already_viewed == 0) {
               <i class="fa-solid fa-map-location-dot text-success"></i> Location Map
             </h2>
             <p class="text-xs text-base-content/60 mb-3">
-              <?= htmlspecialchars("$barangay, $municipality, $province"); ?>
+              <?= htmlspecialchars(implode(', ', array_filter([$barangay, $municipality, $province]))); ?>
             </p>
             
-            <!-- Map Wrapper (may inline height para hindi mag-collapse sa 0) -->
-            <div id="map" class="w-full h-72 rounded-xl border border-base-300 z-10 isolate bg-base-200"
+            <!-- Map container: explicit height so Leaflet has room to render -->
+            <div id="map" class="w-full rounded-xl border border-base-300 bg-base-200 relative z-0"
                  style="height:288px; min-height:288px;"></div>
           </div>
         </div>
@@ -728,6 +751,7 @@ if ($already_viewed == 0) {
             </li>
             <?php
         }
+        $get_rentspace->close();
         ?>
       </ul>
     </div>
@@ -805,7 +829,7 @@ function openBedModal(btn) {
   else if (status === 'Reserved') statusEl.classList.add('badge-primary', 'text-white');
   else statusEl.classList.add('badge-ghost');
 
-  // Kapag hindi Available (Reserved / Occupied), hindi puwedeng i-click ang Interested
+  // Only Available beds can be reserved
   const canReserve = (status === 'Available');
   reserveBtn.setAttribute('aria-disabled', canReserve ? 'false' : 'true');
   reserveBtn.classList.toggle('opacity-40', !canReserve);
@@ -816,7 +840,7 @@ function openBedModal(btn) {
   document.getElementById('bed_modal').showModal();
 }
 
-// May fallback kung hindi ma-load ang CoolAlert
+// Fallback if CoolAlert fails to load
 function showAlert(ok, message) {
   const lib = window.CoolAlert || window.coolAlert || window.Coolalert || null;
 
@@ -886,7 +910,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const lat = <?= $has_coords ? json_encode($lat_val) : 'null'; ?>;
   const lng = <?= $has_coords ? json_encode($lng_val) : 'null'; ?>;
   const propertyName = <?= json_encode($property_name); ?>;
-  const addressText  = <?= json_encode("$barangay, $municipality, $province"); ?>;
+  const addressText  = <?= json_encode(implode(', ', array_filter([$barangay, $municipality, $province]))); ?>;
 
   if (lat === null || lng === null) {
     showMapMessage('No map location was set for this property.');

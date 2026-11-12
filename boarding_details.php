@@ -1,16 +1,14 @@
 <?php 
 
 include 'config.php'; 
-
-$rent_id = $_GET['id'] ?? '';
-if ($rent_id === '') {
-    header("Location: index.php");
-    exit;
+if(isset($_GET['id'])){
+    $rent_id = $_GET['id'];
 }
 
-// RENTSPACE DETAILS
+// RENTSPACE DETAILS (includes saved location)
 $get_rent = $conn->prepare("
-    SELECT name, price, image_cover, other_info, landlord_id, user_id, type, rate
+    SELECT name, price, image_cover, other_info, landlord_id, user_id, type,
+           longitude, latitude, province, barangay, municipality
     FROM rentspace 
     WHERE rent_id = ?
 ");
@@ -18,18 +16,44 @@ $get_rent->bind_param("s", $rent_id);
 $get_rent->execute();
 $rent_res = $get_rent->get_result();
 
-$name = $price = $image_cover = $other_info = $landlord_id = $user_id = $type = $rate = "";
+$name = "";
+$price = "";
+$image_cover = "";
+$other_info = "";
+$landlord_id = "";
+$user_id = "";
+$type = "";
+$longitude = "";
+$latitude = "";
+$province = "";
+$municipality = "";
+$barangay = "";
 
 if ($rent_row = $rent_res->fetch_assoc()) {
-    $name        = $rent_row['name'];
-    $price       = $rent_row['price'];
-    $image_cover = $rent_row['image_cover'];
-    $other_info  = $rent_row['other_info'];
-    $landlord_id = $rent_row['landlord_id'];
-    $user_id     = $rent_row['user_id'];
-    $type        = $rent_row['type'];
-    $rate        = $rent_row['rate'];
+    $name         = $rent_row['name'] ?? '';
+    $price        = $rent_row['price'] ?? '';
+    $image_cover  = $rent_row['image_cover'] ?? '';
+    $other_info   = $rent_row['other_info'] ?? '';
+    $landlord_id  = $rent_row['landlord_id'] ?? '';
+    $user_id      = $rent_row['user_id'] ?? '';
+    $type         = $rent_row['type'] ?? '';
+    $longitude    = $rent_row['longitude'] ?? '';
+    $latitude     = $rent_row['latitude'] ?? '';
+    $province     = $rent_row['province'] ?? '';
+    $municipality = $rent_row['municipality'] ?? '';
+    $barangay     = $rent_row['barangay'] ?? '';
+     $rate     = $rent_row['rate'] ?? '';
 }
+$get_rent->close();
+
+// MAP COORDINATES (valid only if numeric, in range, and not 0,0)
+$lat_val = (is_numeric($latitude) && $latitude !== '') ? (float)$latitude : null;
+$lng_val = (is_numeric($longitude) && $longitude !== '') ? (float)$longitude : null;
+$has_coords = (
+    $lat_val !== null && $lng_val !== null
+    && abs($lat_val) <= 90 && abs($lng_val) <= 180
+    && !($lat_val == 0.0 && $lng_val == 0.0)
+);
 
 // BOARDING HOUSES / BEDS
 $stat = "Out of Order";
@@ -46,14 +70,12 @@ $boarding_houses = [];
 while ($row = $bh_res->fetch_assoc()) {
     $boarding_houses[$row['boarding_id']] = $row;
 }
-
-$totalBeds     = count($boarding_houses);
-$availableBeds = count(array_filter($boarding_houses, fn($b) => $b['status'] === 'Available'));
+$get_bh->close();
 
 // AMENITIES
 $get_amen = $conn->prepare("
     SELECT a.amen_id, a.amenity, ra.rent_amen_id
-    FROM rentspace_amenities AS ra
+    FROM rentspace_amenities AS ra  
     INNER JOIN amenities AS a ON a.amen_id = ra.amen_id
     WHERE ra.rent_id = ?
 ");
@@ -69,6 +91,7 @@ while ($row = $amen_res->fetch_assoc()) {
         "rent_amen_id" => $row['rent_amen_id']
     ];
 }
+$get_amen->close();
 
 // Helper: Badge color per bed status
 function bedStatusBadge($status) {
@@ -102,36 +125,25 @@ $get_landlord_info->bind_param("s", $landlord_id);
 $get_landlord_info->execute();
 $result_landlord = $get_landlord_info->get_result();
 
-$province = $municipality = $barangay = $longitude = $latitude = $property_name = "";
-if ($result_landlord->num_rows > 0) {
-    if ($row_landlord = mysqli_fetch_assoc($result_landlord)) {
-        $province      = $row_landlord['province'];
-        $municipality  = $row_landlord['municipality'];
-        $barangay      = $row_landlord['barangay'];
-        $longitude     = $row_landlord['longitude'];
-        $latitude      = $row_landlord['latitude'];
-        $property_name = $row_landlord['property_name'];
-    }
+$property_name = "";
+if ($row_landlord = $result_landlord->fetch_assoc()) {
+    $property_name = $row_landlord['property_name'] ?? '';
 }
+$get_landlord_info->close();
 
-// MAP COORDINATES (valid only if numeric and not 0,0)
-$lat_val    = is_numeric($latitude)  ? (float)$latitude  : null;
-$lng_val    = is_numeric($longitude) ? (float)$longitude : null;
-$has_coords = ($lat_val !== null && $lng_val !== null
-               && abs($lat_val) <= 90 && abs($lng_val) <= 180
-               && !($lat_val == 0 && $lng_val == 0));
-
-// ACCOUNT DETAILS (contact of the property owner)
-$account = $conn->prepare("SELECT contact_number, email FROM `accounts` WHERE `user_id` = ?");
+// ACCOUNT DETAILS
+$account = $conn->prepare("SELECT * FROM `accounts` WHERE `user_id` = ?");
 $account->bind_param("s", $user_id);
 $account->execute();
 $result_account = $account->get_result();
 
-$contact_number = $email = "";
+$contact_number = "";
+$email = "";
 if ($row_account = $result_account->fetch_assoc()) {
-    $contact_number = $row_account['contact_number'];
-    $email          = $row_account['email'];
+    $contact_number = $row_account['contact_number'] ?? '';
+    $email          = $row_account['email'] ?? '';
 }
+$account->close();
 
 // ============================================================
 // RATINGS & REVIEWS
@@ -142,6 +154,7 @@ $get_avg->execute();
 $avg_row      = $get_avg->get_result()->fetch_assoc();
 $avg_rating   = (float)($avg_row['avg_rating'] ?? 0);
 $review_count = (int)($avg_row['review_count'] ?? 0);
+$get_avg->close();
 
 // star distribution
 $star_counts = [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0];
@@ -153,9 +166,8 @@ while ($d = $dist_res->fetch_assoc()) {
     $r = (int)$d['rating'];
     if (isset($star_counts[$r])) $star_counts[$r] = (int)$d['c'];
 }
+$get_dist->close();
 
-// List of reviews (latest first). LEFT JOIN so a review never disappears
-// just because its account can't be matched.
 $get_reviews = $conn->prepare("
     SELECT acc.firstname, acc.middlename, acc.lastname, acc.suffix, acc.username,
            rv.rating, rv.comment, rv.date_sent, rv.time_sent, rv.review_id
@@ -195,8 +207,54 @@ while ($rv = $reviews_res->fetch_assoc()) {
         'comment'  => $rv['comment'] ?? '',
     ];
 }
-?>
+$get_reviews->close();
 
+// Can this user write a review? (not the owner, and hasn't reviewed yet)
+$is_owner     = ($user_id_login === $user_id);
+$has_reviewed = false;
+if (!empty($user_id_login)) {
+    $chk = $conn->prepare("SELECT 1 FROM `reviews` WHERE `landlord_id` = ? AND `user_id` = ?");
+    $chk->bind_param("ss", $landlord_id, $user_id_login);
+    $chk->execute();
+    $has_reviewed = $chk->get_result()->num_rows > 0;
+    $chk->close();
+}
+
+// favorites
+$favorites = $conn->prepare("SELECT * FROM `favorites` WHERE `rent_id` = ?");
+$favorites->bind_param("s", $rent_id);
+$favorites->execute();
+$result_fav = $favorites->get_result();
+$switch = ($result_fav->num_rows > 0) ? "on" : "off";
+$favorites->close();
+
+$hidden        = $is_owner ? 'hidden' : '';
+$totalBeds     = count($boarding_houses);
+$availableBeds = count(array_filter($boarding_houses, fn($b) => $b['status'] === 'Available'));
+
+// auto save viewed
+$check = $conn->prepare(
+    "SELECT COUNT(*) AS already_viewed
+     FROM `rent_views`
+     WHERE `rent_id` = ?
+       AND `user_id` = ?
+       AND `date_viewed` = ?"
+);
+$check->bind_param("sss", $rent_id, $user_id_login, $datetoday);
+$check->execute();
+$already_viewed = $check->get_result()->fetch_assoc()['already_viewed'] ?? 0;
+$check->close();
+
+if ($already_viewed == 0) {
+    $insert_viewed = $conn->prepare(
+        "INSERT INTO `rent_views` (`landlord_id`, `user_id`, `date_viewed`, `time_viewed`, `rent_id`)
+         VALUES (?, ?, ?, ?, ?)"
+    );
+    $insert_viewed->bind_param("sssss", $landlord_id, $user_id_login, $datetoday, $timetoday1, $rent_id);
+    $insert_viewed->execute();
+    $insert_viewed->close();
+}
+?>
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>

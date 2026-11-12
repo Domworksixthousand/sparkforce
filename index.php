@@ -392,7 +392,7 @@
           $total_pages = ceil($total_rentals / $limit);
 
           $get_rental = $conn->prepare("
-              SELECT r.*, l.province, l.municipality, l.barangay, l.property_name, r.rate,
+              SELECT r.*, r.province, r.municipality, r.barangay, l.property_name, r.rate,
                      acc.user_id, l.user_id, acc.status,
                      (SELECT AVG(rv.rating) FROM reviews rv WHERE rv.landlord_id = r.landlord_id) AS avg_rating,
                      (SELECT COUNT(*)       FROM reviews rv WHERE rv.landlord_id = r.landlord_id) AS review_count
