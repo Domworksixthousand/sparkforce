@@ -81,7 +81,6 @@ if (!empty($_SESSION['latitud'])) {
     <!-- Modal Form Body -->
     <form action="../functions.php" method="POST" enctype="multipart/form-data" class="p-6 overflow-y-auto space-y-8" id="mainForm">
         <input type="hidden" name="landlord_id" value="<?php echo htmlspecialchars($landlord_id); ?>">
-
         <!-- ROOM INFORMATION -->
         <div class="space-y-4">
             <div class="border-b border-slate-100 pb-2">
@@ -202,26 +201,26 @@ if (!empty($_SESSION['latitud'])) {
             </div>
             <p class="text-[11px] text-slate-400">Pin the property on the map. This location applies to the whole property (all rooms).</p>
 
-            <input type="hidden" id="lat" name="latitude" value="<?php echo htmlspecialchars($loc_lat); ?>">
-            <input type="hidden" id="lng" name="longitude" value="<?php echo htmlspecialchars($loc_lng); ?>">
+            <input type="hidden" id="lat" name="latitude" value="<?php echo $_SESSION['latitude'] ?? htmlspecialchars($loc_lat); ?>">
+            <input type="hidden" id="lng" name="longitude" value="<?php echo $_SESSION['longitude'] ?? htmlspecialchars($loc_lng); ?>">
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="space-y-1.5">
                     <label class="block text-xs font-semibold text-slate-600">Province</label>
                     <input type="text" id="province1" name="province1" readonly placeholder="Pin on map"
-                           value="<?php echo htmlspecialchars($loc_prov); ?>"
+                           value="<?php echo htmlspecialchars($_SESSION['province1'] ?? $loc_prov); ?>"
                            class="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm text-slate-800" />
                 </div>
                 <div class="space-y-1.5">
                     <label class="block text-xs font-semibold text-slate-600">Municipality</label>
                     <input type="text" id="municipality1" name="municipality1" readonly placeholder="Pin on map"
-                           value="<?php echo htmlspecialchars($loc_mun); ?>"
+                           value="<?php echo htmlspecialchars($_SESSION['municipality1'] ?? $loc_mun); ?>"
                            class="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm text-slate-800" />
                 </div>
                 <div class="space-y-1.5">
                     <label class="block text-xs font-semibold text-slate-600">Barangay</label>
                     <input type="text" id="barangay1" name="barangay1" readonly placeholder="Pin on map"
-                           value="<?php echo htmlspecialchars($loc_brgy); ?>"
+                           value="<?php echo htmlspecialchars($_SESSION['barangay1'] ?? $loc_brgy); ?>"
                            class="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm text-slate-800" />
                 </div>
             </div>

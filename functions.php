@@ -2261,6 +2261,17 @@ if (isset($_POST['save_boarding'])) {
     $other_info  = trim($_POST['other_info'] ?? '');
     $old_cover   = trim($_POST['old_cover'] ?? '');
     $rate        = trim($_POST['board_rate'] ?? '');
+    $longitude = $_POST['longitude'] ?? '';
+    $latitude = $_POST['latitude'] ?? '';
+    $province1 = $_POST['province1'] ?? '';
+    $barangay1 = $_POST['barangay1'] ?? '';
+    $municipality1 = $_POST['municipality1'] ?? '';
+
+    $_SESSION['longitude']  = $longitude;
+    $_SESSION['latitude']   = $latitude;
+    $_SESSION['province1']   = $province1;
+    $_SESSION['barangay1']   = $barangay1;
+    $_SESSION['municipality1']   = $municipality1;
 
     // AMENITIES: raw input, saved to session right away (key must be 'amenity', the form reads this)
     $boarding_raw_amenities = $_POST['amenity'] ?? [];
@@ -2336,6 +2347,8 @@ if (isset($_POST['save_boarding'])) {
     $_SESSION['price']      = $price;
     $_SESSION['other_info'] = $other_info;
     $_SESSION['fileName']   = $final_cover;
+ 
+    $_SESSION['name']       = $room_name;
 
     // --- VALIDATE AMENITIES (after session is saved, so the form is re-filled on error) ---
     $selected_amenities = [];
@@ -2380,7 +2393,7 @@ if (isset($_POST['save_boarding'])) {
 
     // 6. INSERT BEDS (MULTIPLE DECKS CREATION)
     if (!empty($beds)) {
-        $insert_beds = $conn->prepare("INSERT INTO `boarding_house` (`boarding_id`, `bed_number`, `status`, `num_decks`, `image`, `rent_id`) VALUES (?, ?, ?, ?, ?, ?)");
+        $insert_beds = $conn->prepare("INSERT INTO `boarding_house` (`boarding_id`, `bed_number`, `status`, `num_decks`, `image`, `rent_id`,`longitude`,`latitude`,`barangay`,`province`,`municipality`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
         foreach ($beds as $bed) {
             $deck_count = (int)$bed['num_deck'];
@@ -2393,7 +2406,7 @@ if (isset($_POST['save_boarding'])) {
                     ? $bed['bed_number'] . " - Deck " . $d 
                     : $bed['bed_number'];
 
-                $insert_beds->bind_param("sssiss", $boarding_id, $deck_bed_number, $status, $d, $bed['bed_image'], $rent_id);
+                $insert_beds->bind_param("sssisssssss", $boarding_id, $deck_bed_number, $status, $d, $bed['bed_image'], $rent_id, $longitude, $latitude, $barangay1, $province1, $municipality1);
                 $insert_beds->execute();
             }
         }
@@ -2407,7 +2420,12 @@ if (isset($_POST['save_boarding'])) {
         $_SESSION['other_info'],
         $_SESSION['fileName'],
         $_SESSION['beds'],
-        $_SESSION['amenity']
+        $_SESSION['amenity'],
+        $_SESSION['longitude'],
+        $_SESSION['latitude'],
+        $_SESSION['priovince1'],
+        $_SESSION['barangay1'],
+        $_SESSION['municipality1']
     );
 
     $_SESSION['success'] = "Successfully Inserted";
@@ -2423,6 +2441,11 @@ if (isset($_POST['edit_boarding'])) {
     $other_info  = $_POST['other_info'];
     $old_cover   = $_POST['old_cover'] ?? '';
     $rate   = $_POST['rate'] ?? '';
+    $province1   = $_POST['province1'] ?? '';
+    $municipality1   = $_POST['municipality1'] ?? '';
+    $barangay1   = $_POST['barangay1'] ?? '';
+    $latitude   = $_POST['latitude'] ?? '';
+    $longitude   = $_POST['longitude'] ?? '';
 
     $uploadDir = 'assets/uploads/';
     if (!is_dir($uploadDir)) {
@@ -2545,7 +2568,7 @@ if (isset($_POST['edit_boarding'])) {
         $delete->execute();
 
         // Re-insert with individual status per deck
-        $insert_beds = $conn->prepare("INSERT INTO `boarding_house` (`boarding_id`, `bed_number`, `status`, `num_decks`, `image`, `rent_id`) VALUES (?, ?, ?, ?, ?, ?)");
+        $insert_beds = $conn->prepare("INSERT INTO `boarding_house` (`boarding_id`, `bed_number`, `status`, `num_decks`, `image`, `rent_id`, `latitude`, `longitude`,`barangay`,`municipality`,`province`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)");
 
         foreach ($beds as $bed) {
             $boarding_id = $rent_id . '_' . uniqid();
@@ -2554,7 +2577,8 @@ if (isset($_POST['edit_boarding'])) {
             $num_deck    = $bed['num_deck'];
             $bed_image   = $bed['bed_image'];
 
-            $insert_beds->bind_param("sssiss", $boarding_id, $bed_number, $status, $num_deck, $bed_image, $rent_id);
+
+            $insert_beds->bind_param("sssisssssss", $boarding_id, $bed_number, $status, $num_deck, $bed_image, $rent_id,$latitude,$longitude,$barangay1,$municipality1,$province1);
             $insert_beds->execute();
         }
     }

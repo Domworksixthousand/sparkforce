@@ -10,8 +10,8 @@ if(isset($_GET['id']) && isset($_GET['property_id'])){
 
 //RENTSPACE DETAILS
 $get_rent = $conn->prepare("
-    SELECT name, price, image_cover, other_info,type,rate
-    FROM rentspace 
+    SELECT name, price, image_cover, other_info, type, rate
+    FROM rentspace
     WHERE rent_id = ?
 ");
 $get_rent->bind_param("s", $rent_id);
@@ -32,14 +32,15 @@ if ($rent_row = $rent_res->fetch_assoc()) {
     $rate        = $rent_row['rate'];
 }
 
-// BOARDING HOUSES
+// BOARDING HOUSES (latitude and longitude are saved on each bed row)
 $stat = "Out of Order";
 $get_bh = $conn->prepare("
-    SELECT boarding_id, status, num_decks, image, bed_number 
-    FROM boarding_house 
-    WHERE rent_id = ? AND status != ? ORDER BY bed_number
+    SELECT boarding_id, status, num_decks, image, bed_number, latitude, longitude
+    FROM boarding_house
+    WHERE rent_id = ? AND status != ?
+    ORDER BY bed_number
 ");
-$get_bh->bind_param("ss", $rent_id,$stat);
+$get_bh->bind_param("ss", $rent_id, $stat);
 $get_bh->execute();
 $bh_res = $get_bh->get_result();
 
@@ -47,6 +48,30 @@ $boarding_houses = [];
 while ($row = $bh_res->fetch_assoc()) {
     $boarding_houses[$row['boarding_id']] = $row;
 }
+
+// COORDINATES: first valid pair saved in boarding_house (0,0 is skipped)
+$map_lat = null;
+$map_lng = null;
+foreach ($boarding_houses as $bh) {
+    if (is_numeric($bh['latitude'] ?? null) && is_numeric($bh['longitude'] ?? null)
+        && !((float)$bh['latitude'] == 0.0 && (float)$bh['longitude'] == 0.0)) {
+        $map_lat = (float)$bh['latitude'];
+        $map_lng = (float)$bh['longitude'];
+        break;
+    }
+}
+
+// FALLBACK ADDRESS from landlord table (only used if the map lookup fails)
+$loc_prov = $loc_mun = $loc_brgy = '';
+$get_loc = $conn->prepare("SELECT province, municipality, barangay FROM landlord WHERE landlord_id = ?");
+$get_loc->bind_param("s", $landlord_id);
+$get_loc->execute();
+if ($loc_row = $get_loc->get_result()->fetch_assoc()) {
+    $loc_prov = $loc_row['province']     ?? '';
+    $loc_mun  = $loc_row['municipality'] ?? '';
+    $loc_brgy = $loc_row['barangay']     ?? '';
+}
+$get_loc->close();
 
 // AMENITIES FROM DATABASE
 $get_amen = $conn->prepare("
@@ -69,8 +94,7 @@ while ($row = $amen_res->fetch_assoc()) {
 }
 
 // REVIEWS / RATINGS
-// Based on the reviews table only (landlord_id). LEFT JOIN accounts so a review
-// is never hidden just because the account / interested row can't be matched.
+// LEFT JOIN accounts so a review is never hidden if the account can't be matched.
 $get_reviews = $conn->prepare("
     SELECT r.rating, r.comment, r.date_sent, r.time_sent, a.firstname, a.lastname
     FROM `reviews` AS r
@@ -100,23 +124,36 @@ function bedStatusBadge($status) {
 
 $totalBeds     = count($boarding_houses);
 $availableBeds = count(array_filter($boarding_houses, fn($b) => $b['status'] === 'Available'));
+$hasLocation   = ($map_lat !== null && $map_lng !== null);
 ?>
+
+<!-- Leaflet (map) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+    /* Tailwind preflight (img{max-width:100%}) breaks Leaflet tiles and markers. Undo it for the map only. */
+    .bh-info-map .leaflet-container img,
+    .bh-info-map img.leaflet-tile,
+    .bh-info-map img.leaflet-marker-icon,
+    .bh-info-map img.leaflet-marker-shadow {
+        max-width: none !important;
+        max-height: none !important;
+    }
+</style>
 
 <dialog id="my_modal_3" class="modal">
   <div class="modal-box w-11/12 max-w-4xl p-0 overflow-hidden">
 
     <!-- Close button -->
-      <a 
-        href="my_property.php?property_id=<?php echo urlencode($landlord_id); ?>" 
-          class="btn btn-sm btn-circle bg-white/90 hover:bg-white border-none shadow-md absolute right-3 top-3 z-20">
+    <a href="my_property.php?property_id=<?php echo urlencode($landlord_id); ?>"
+       class="btn btn-sm btn-circle bg-white/90 hover:bg-white border-none shadow-md absolute right-3 top-3 z-20">
         ✕
     </a>
 
-
     <!-- HERO -->
     <div class="relative w-full h-56 sm:h-64">
-      <img 
-        src="../assets/uploads/<?php echo htmlspecialchars($image_cover); ?>" 
+      <img
+        src="../assets/uploads/<?php echo htmlspecialchars($image_cover); ?>"
         alt="<?php echo htmlspecialchars($name); ?>"
         class="w-full h-full object-cover">
       <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
@@ -141,6 +178,7 @@ $availableBeds = count(array_filter($boarding_houses, fn($b) => $b['status'] ===
       <a role="tab" class="tab tab-active room-tab" data-tab="overview">Overview</a>
       <a role="tab" class="tab room-tab" data-tab="beds">Beds (<?php echo $totalBeds; ?>)</a>
       <a role="tab" class="tab room-tab" data-tab="amenities">Amenities (<?php echo count($saved_amenities); ?>)</a>
+      <a role="tab" class="tab room-tab" data-tab="location">Location</a>
       <a role="tab" class="tab room-tab" data-tab="reviews">Reviews (<?php echo count($reviews); ?>)</a>
     </div>
 
@@ -163,8 +201,8 @@ $availableBeds = count(array_filter($boarding_houses, fn($b) => $b['status'] ===
               <div class="card bg-base-100 border border-base-200 shadow-sm hover:shadow-md transition-shadow">
                 <figure class="h-32 bg-base-200">
                   <?php if (!empty($bh['image'])): ?>
-                    <img 
-                      src="../assets/uploads/<?php echo htmlspecialchars($bh['image']); ?>" 
+                    <img
+                      src="../assets/uploads/<?php echo htmlspecialchars($bh['image']); ?>"
                       alt="<?php echo htmlspecialchars($bh['bed_number']); ?>"
                       class="w-full h-full object-cover">
                   <?php else: ?>
@@ -203,12 +241,49 @@ $availableBeds = count(array_filter($boarding_houses, fn($b) => $b['status'] ===
         <?php endif; ?>
       </div>
 
+      <!-- LOCATION -->
+      <div class="tab-panel hidden" data-panel="location">
+        <?php if ($hasLocation): ?>
+          <div class="space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+              <div class="rounded-lg bg-base-200/60 border border-base-200 p-2">
+                <p class="text-[10px] uppercase tracking-wider text-gray-400">Barangay</p>
+                <p id="bh_addr_brgy" class="font-semibold text-gray-700 truncate"><?php echo htmlspecialchars($loc_brgy ?: 'Looking up...'); ?></p>
+              </div>
+              <div class="rounded-lg bg-base-200/60 border border-base-200 p-2">
+                <p class="text-[10px] uppercase tracking-wider text-gray-400">Municipality</p>
+                <p id="bh_addr_mun" class="font-semibold text-gray-700 truncate"><?php echo htmlspecialchars($loc_mun ?: 'Looking up...'); ?></p>
+              </div>
+              <div class="rounded-lg bg-base-200/60 border border-base-200 p-2">
+                <p class="text-[10px] uppercase tracking-wider text-gray-400">Province</p>
+                <p id="bh_addr_prov" class="font-semibold text-gray-700 truncate"><?php echo htmlspecialchars($loc_prov ?: 'Looking up...'); ?></p>
+              </div>
+            </div>
+
+            <p id="bh_addr_status" class="text-xs text-gray-500">
+              Coordinates: <?php echo number_format($map_lat, 6); ?>, <?php echo number_format($map_lng, 6); ?>
+            </p>
+
+            <div id="bh_info_map" class="bh-info-map rounded-xl border border-base-200 w-full" style="height:320px;"></div>
+
+            <div class="flex justify-end">
+              <a target="_blank" rel="noopener"
+                 href="https://www.openstreetmap.org/?mlat=<?php echo $map_lat; ?>&amp;mlon=<?php echo $map_lng; ?>#map=17/<?php echo $map_lat; ?>/<?php echo $map_lng; ?>"
+                 class="btn btn-xs btn-outline">
+                Open in OpenStreetMap
+              </a>
+            </div>
+          </div>
+        <?php else: ?>
+          <p class="text-sm text-gray-500 italic">No location has been pinned for this room yet.</p>
+        <?php endif; ?>
+      </div>
+
       <!-- REVIEWS -->
       <div class="tab-panel hidden" data-panel="reviews">
         <?php if (!empty($reviews)): ?>
           <?php foreach ($reviews as $rv): ?>
             <?php
-              // Reviewer name (falls back to "Anonymous" if the account can't be found)
               $reviewer = trim(($rv['firstname'] ?? '') . ' ' . ($rv['lastname'] ?? ''));
               if ($reviewer === '') $reviewer = 'Anonymous';
 
@@ -247,3 +322,128 @@ $availableBeds = count(array_filter($boarding_houses, fn($b) => $b['status'] ===
     <button>close</button>
   </form>
 </dialog>
+
+<script>
+(function () {
+    const hasLocation = <?php echo $hasLocation ? 'true' : 'false'; ?>;
+    const lat = <?php echo $hasLocation ? json_encode($map_lat) : 'null'; ?>;
+    const lng = <?php echo $hasLocation ? json_encode($map_lng) : 'null'; ?>;
+    const fallback = {
+        barangay:     <?php echo json_encode($loc_brgy); ?>,
+        municipality: <?php echo json_encode($loc_mun); ?>,
+        province:     <?php echo json_encode($loc_prov); ?>
+    };
+
+    // Same ZIP fallback used on the add page
+    const BH_ZIP_TO_MUN = {
+        "4707": "Irosin", "4700": "Sorsogon City", "4701": "Bacon", "4702": "Casiguran",
+        "4703": "Castilla", "4704": "Donsol", "4705": "Gubat", "4706": "Juban",
+        "4708": "Magallanes", "4709": "Matnog", "4710": "Pilar", "4711": "Prieto Diaz",
+        "4712": "Santa Magdalena", "4713": "Bulusan", "4714": "Barcelona", "4715": "Bulan"
+    };
+
+    let infoMap = null;
+    let addressLoaded = false;
+
+    function el(id) { return document.getElementById(id); }
+
+    // Reverse geocode the saved coordinates (OpenStreetMap Nominatim)
+    async function lookupAddress(lat, lng) {
+        const url = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&zoom=18'
+                  + '&lat=' + encodeURIComponent(lat) + '&lon=' + encodeURIComponent(lng);
+        const r = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const j = await r.json();
+        const a = j.address || {};
+
+        let municipality = a.city || a.town || a.municipality || a.county || a.district || '';
+        if (!municipality && a.postcode && BH_ZIP_TO_MUN[a.postcode]) {
+            municipality = BH_ZIP_TO_MUN[a.postcode];
+        }
+        if (!municipality && j.display_name) {
+            const parts = j.display_name.split(',').map(s => s.trim());
+            if (parts.length >= 3) municipality = parts[1];
+        }
+
+        return {
+            barangay:     a.neighbourhood || a.suburb || a.village || a.quarter || a.hamlet || '',
+            municipality: municipality,
+            province:     a.province || a.state || a.region || ''
+        };
+    }
+
+    function showAddress(info, isFallback) {
+        el('bh_addr_brgy').textContent = info.barangay     || '—';
+        el('bh_addr_mun').textContent  = info.municipality || '—';
+        el('bh_addr_prov').textContent = info.province     || '—';
+        el('bh_addr_status').textContent = isFallback
+            ? 'Coordinates: ' + lat.toFixed(6) + ', ' + lng.toFixed(6) + ' (saved address)'
+            : 'Coordinates: ' + lat.toFixed(6) + ', ' + lng.toFixed(6);
+    }
+
+    function buildPopup(info) {
+        const wrap = document.createElement('div');
+        const title = document.createElement('b');
+        title.textContent = info.barangay || 'Pinned location';
+        const sub = document.createElement('div');
+        sub.textContent = [info.municipality, info.province].filter(Boolean).join(', ') || 'No address found';
+        const coords = document.createElement('div');
+        coords.textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
+        wrap.append(title, sub, coords);
+        return wrap;
+    }
+
+    async function initInfoMap() {
+        if (!hasLocation || typeof L === 'undefined') return;
+
+        if (!infoMap) {
+            infoMap = L.map('bh_info_map').setView([lat, lng], 17);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(infoMap);
+        }
+
+        setTimeout(function () { infoMap.invalidateSize(); }, 50);
+
+        if (addressLoaded) return;
+        addressLoaded = true;
+
+        try {
+            const info = await lookupAddress(lat, lng);
+            const hasAny = info.barangay || info.municipality || info.province;
+            const finalInfo = hasAny ? info : fallback;
+
+            showAddress(finalInfo, !hasAny);
+
+            infoMap.eachLayer(function (layer) {
+                if (layer instanceof L.Marker) infoMap.removeLayer(layer);
+            });
+            L.marker([lat, lng]).addTo(infoMap).bindPopup(buildPopup(finalInfo)).openPopup();
+        } catch (err) {
+            console.warn('Reverse geocode failed:', err);
+            showAddress(fallback, true);
+            L.marker([lat, lng]).addTo(infoMap).bindPopup(buildPopup(fallback)).openPopup();
+            addressLoaded = false; // allow retry next time the tab is opened
+        }
+    }
+
+    // Tab switching (Overview / Beds / Amenities / Location / Reviews)
+    document.querySelectorAll('.room-tab').forEach(function (tab) {
+        tab.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = this.dataset.tab;
+
+            document.querySelectorAll('.room-tab').forEach(function (t) {
+                t.classList.toggle('tab-active', t === tab);
+            });
+            document.querySelectorAll('.tab-panel').forEach(function (p) {
+                p.classList.toggle('hidden', p.dataset.panel !== target);
+            });
+
+            if (target === 'location') initInfoMap();
+        });
+    });
+})();
+</script>
