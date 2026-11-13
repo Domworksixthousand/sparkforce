@@ -3478,6 +3478,12 @@ if (isset($_POST['save_house'])) {
     $other_info     = trim($_POST['apartment_other_info'] ?? '');
     $raw_amenities  = $_POST['amenity'] ?? [];
 
+    $longitude    = $_POST['longitude'] ?? '';
+    $latitude    = $_POST['latitude'] ?? '';
+    $province    = $_POST['province1'] ?? '';
+    $municipality    = $_POST['municipality1'] ?? '';
+    $barangay    = $_POST['barangay1'] ?? '';
+
     $uploadDir = 'assets/uploads/';
     if (!is_dir($uploadDir)) {
         mkdir($uploadDir, 0755, true);
@@ -3582,8 +3588,8 @@ if (isset($_POST['save_house'])) {
     }
 
     // --- INSERT MAIN RENTSPACE TABLE ---
-    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`,`rate`) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)");
-    $insert->bind_param("sssssssss", $rent_id, $house_name, $landlord_id, $user_id_login, $type, $house_price, $cover_photo, $other_info,$house_rate);
+    $insert = $conn->prepare("INSERT INTO `rentspace` (`rent_id`, `name`, `landlord_id`, `user_id`, `type`, `price`, `image_cover`, `other_info`,`rate`,`longitude`,`latitude`,`barangay`,`municipality`,`province`) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?,?,?)");
+    $insert->bind_param("ssssssssssssss", $rent_id, $house_name, $landlord_id, $user_id_login, $type, $house_price, $cover_photo, $other_info,$house_rate,$longitude,$latitude,$barangay,$municipality,$province);
     $insert->execute();
     $status = "Available";
     // --- INSERT HOUSE TABLE ---
@@ -3647,6 +3653,14 @@ if (isset($_POST['edit_house'])) {
     $status        = $_POST['status'] ?? '';
     $other_info     = trim($_POST['apartment_other_info'] ?? '');
     $raw_amenities  = $_POST['amenity'] ?? [];
+
+
+        $longitude    = $_POST['longitude'] ?? '';
+    $latitude    = $_POST['latitude'] ?? '';
+    $province    = $_POST['province1'] ?? '';
+    $municipality    = $_POST['municipality1'] ?? '';
+    $barangay    = $_POST['barangay1'] ?? '';
+
     $uploadDir = 'assets/uploads/';
     if (!is_dir($uploadDir)) {
         mkdir($uploadDir, 0755, true);
@@ -3698,8 +3712,8 @@ if (isset($_POST['edit_house'])) {
     }
 
     // --- UPDATE MAIN RENTSPACE TABLE ---
-    $update_rentspace = $conn->prepare("UPDATE `rentspace` SET `name` = ?, `price` = ?, `image_cover` = ?, `other_info` = ?,rate=? WHERE `rent_id` = ? AND `landlord_id` = ?");
-    $update_rentspace->bind_param("sssssss", $house_name, $house_price, $cover_photo, $other_info,$house_rate, $rent_id, $landlord_id);
+    $update_rentspace = $conn->prepare("UPDATE `rentspace` SET `name` = ?, `price` = ?, `image_cover` = ?, `other_info` = ?,rate=?,longitude=?,latitude=?,barangay=?,municipality=?,province=? WHERE `rent_id` = ? AND `landlord_id` = ?");
+    $update_rentspace->bind_param("ssssssssssss", $house_name, $house_price, $cover_photo, $other_info,$house_rate,$longitude,$latitude,$barangay,$municipality,$province,$rent_id, $landlord_id);
     $update_rentspace->execute();
 
     // --- UPDATE HOUSE SPECIFICATIONS TABLE ---

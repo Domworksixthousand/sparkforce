@@ -1,19 +1,20 @@
-<?php 
+<?php
 include '../config.php';
 
-$rent_id       = $_GET['id'] ?? null;
+$rent_id = $_GET['id'] ?? null;
 
 $name = $price = $image_cover = $other_info = $landlord_id = $user_id = $type = $rate = "";
-$condo_units = [];
-$availableCondos = 0;
+$longitude = $latitude = $province = $municipality = $barangay = "";
 $apartment_images = [];
 $saved_amenities = [];
+$house_id = $area = $house_type = $bedroom = $bathrooms = $flooring = $parking = "";
 
 if ($rent_id) {
-    // 1. RENTSPACE DETAILS
+    // 1. RENTSPACE DETAILS (includes saved location)
     $get_rent = $conn->prepare("
-        SELECT name, price, image_cover, other_info, landlord_id, user_id, type, rate
-        FROM rentspace 
+        SELECT name, price, image_cover, other_info, landlord_id, user_id, type, rate,
+               longitude, latitude, province, barangay, municipality
+        FROM rentspace
         WHERE rent_id = ?
     ");
     $get_rent->bind_param("s", $rent_id);
@@ -21,29 +22,27 @@ if ($rent_id) {
     $rent_res = $get_rent->get_result();
 
     if ($rent_row = $rent_res->fetch_assoc()) {
-        $name        = $rent_row['name'];
-        $price       = $rent_row['price'];
-        $image_cover = $rent_row['image_cover'];
-        $other_info  = $rent_row['other_info'];
-        $landlord_id = $rent_row['landlord_id'];
-        $user_id     = $rent_row['user_id'];
-        $type        = $rent_row['type'];
-        $rate        = $rent_row['rate'];
+        $name         = $rent_row['name'] ?? '';
+        $price        = $rent_row['price'] ?? '';
+        $image_cover  = $rent_row['image_cover'] ?? '';
+        $other_info   = $rent_row['other_info'] ?? '';
+        $landlord_id  = $rent_row['landlord_id'] ?? '';
+        $user_id      = $rent_row['user_id'] ?? '';
+        $type         = $rent_row['type'] ?? '';
+        $rate         = $rent_row['rate'] ?? '';
+        $longitude    = $rent_row['longitude'] ?? '';
+        $latitude     = $rent_row['latitude'] ?? '';
+        $province     = $rent_row['province'] ?? '';
+        $municipality = $rent_row['municipality'] ?? '';
+        $barangay     = $rent_row['barangay'] ?? '';
     }
+    $get_rent->close();
 
     // 2. HOUSE DETAILS
     $get_house = $conn->prepare("SELECT * FROM `house` WHERE `rent_id` = ?");
     $get_house->bind_param("s", $rent_id);
     $get_house->execute();
     $result_execute_house = $get_house->get_result();
-
-    $house_id  = "";
-    $area      = "";
-    $house_type= "";
-    $bedroom   = "";
-    $bathrooms = "";
-    $flooring  = "";
-    $parking   = "";
 
     if ($result_execute_house->num_rows > 0) {
         if ($row_h = $result_execute_house->fetch_assoc()) {
@@ -56,18 +55,17 @@ if ($rent_id) {
             $parking    = $row_h['parking'] ?? '';
         }
     }
+    $get_house->close();
 
     // 3. GALLERY
     $get_gallery = $conn->prepare("SELECT * FROM `gallery2` WHERE `rent_id` = ?");
     $get_gallery->bind_param("s", $rent_id);
     $get_gallery->execute();
     $result_gallery = $get_gallery->get_result();
-
-    if ($result_gallery->num_rows > 0) {
-        while ($row_gallery = $result_gallery->fetch_assoc()) {
-            $apartment_images[] = $row_gallery['image'];
-        }
+    while ($row_gallery = $result_gallery->fetch_assoc()) {
+        $apartment_images[] = $row_gallery['image'];
     }
+    $get_gallery->close();
 
     // 4. AMENITIES
     $get_amen = $conn->prepare("
@@ -79,7 +77,6 @@ if ($rent_id) {
     $get_amen->bind_param("s", $rent_id);
     $get_amen->execute();
     $amen_res = $get_amen->get_result();
-
     while ($row = $amen_res->fetch_assoc()) {
         $saved_amenities[] = [
             "amen_id"      => $row['amen_id'],
@@ -87,7 +84,19 @@ if ($rent_id) {
             "rent_amen_id" => $row['rent_amen_id']
         ];
     }
+    $get_amen->close();
 }
+
+// MAP COORDINATES (valid only if numeric, in range, and not 0,0)
+$lat_val = (is_numeric($latitude)  && $latitude  !== '') ? (float)$latitude  : null;
+$lng_val = (is_numeric($longitude) && $longitude !== '') ? (float)$longitude : null;
+$has_coords = (
+    $lat_val !== null && $lng_val !== null
+    && abs($lat_val) <= 90 && abs($lng_val) <= 180
+    && !($lat_val == 0.0 && $lng_val == 0.0)
+);
+
+$address_text = implode(', ', array_filter([$barangay, $municipality, $province]));
 
 // Font Awesome stars (full / half / empty)
 function renderFaStars($avg) {
@@ -104,22 +113,17 @@ function renderFaStars($avg) {
     return $html;
 }
 
-// 5. LANDLORD DETAILS
-$province = $municipality = $barangay = $longitude = $latitude = $property_name = "";
+// 5. LANDLORD DETAILS (property name only; location comes from rentspace)
+$property_name = "";
 if ($landlord_id) {
     $get_landlord_info = $conn->prepare("SELECT * FROM `landlord` WHERE `landlord_id` = ?");
     $get_landlord_info->bind_param("s", $landlord_id);
     $get_landlord_info->execute();
     $result_landlord = $get_landlord_info->get_result();
-
     if ($result_landlord->num_rows > 0 && $row_landlord = $result_landlord->fetch_assoc()) {
-        $province      = $row_landlord['province'];
-        $municipality  = $row_landlord['municipality'];
-        $barangay      = $row_landlord['barangay'];
-        $longitude     = $row_landlord['longitude'];
-        $latitude      = $row_landlord['latitude'];
-        $property_name = $row_landlord['property_name'];
+        $property_name = $row_landlord['property_name'] ?? '';
     }
+    $get_landlord_info->close();
 }
 
 // 6. ACCOUNT DETAILS
@@ -129,11 +133,11 @@ if ($user_id) {
     $account->bind_param("s", $user_id);
     $account->execute();
     $result_account = $account->get_result();
-
     if ($result_account->num_rows > 0 && $row_account = $result_account->fetch_assoc()) {
-        $contact_number = $row_account['contact_number'];
-        $email          = $row_account['email'];
+        $contact_number = $row_account['contact_number'] ?? '';
+        $email          = $row_account['email'] ?? '';
     }
+    $account->close();
 }
 
 // 6.5 RATINGS (display only, data from database)
@@ -149,6 +153,7 @@ if ($landlord_id) {
     $avg_row      = $get_avg->get_result()->fetch_assoc();
     $avg_rating   = (float)($avg_row['avg_rating'] ?? 0);
     $review_count = (int)($avg_row['review_count'] ?? 0);
+    $get_avg->close();
 
     // star distribution
     $get_dist = $conn->prepare("SELECT rating, COUNT(*) AS c FROM `reviews` WHERE `landlord_id` = ? GROUP BY rating");
@@ -159,6 +164,7 @@ if ($landlord_id) {
         $r = (int)$d['rating'];
         if (isset($star_counts[$r])) $star_counts[$r] = (int)$d['c'];
     }
+    $get_dist->close();
 
     // latest reviews
     $get_reviews = $conn->prepare("
@@ -199,6 +205,7 @@ if ($landlord_id) {
             'comment'  => $rv['comment'] ?? '',
         ];
     }
+    $get_reviews->close();
 }
 
 // 7. FAVORITES / INTERESTED
@@ -211,6 +218,7 @@ if ($rent_id) {
     if ($result_fav->num_rows > 0) {
         $switch = "on";
     }
+    $favorites->close();
 }
 $is_owner = (isset($user_id_login) && $user_id_login === $user_id);
 $hidden   = $is_owner ? 'hidden' : '';
@@ -225,6 +233,7 @@ if ($rent_id && isset($user_id_login) && $user_id_login) {
     $check->bind_param("sss", $rent_id, $user_id_login, $datetoday);
     $check->execute();
     $already_viewed = $check->get_result()->fetch_assoc()['already_viewed'] ?? 0;
+    $check->close();
 
     if ($already_viewed == 0) {
         $insert_viewed = $conn->prepare(
@@ -233,6 +242,7 @@ if ($rent_id && isset($user_id_login) && $user_id_login) {
         );
         $insert_viewed->bind_param("sssss", $landlord_id, $user_id_login, $datetoday, $timetoday1, $rent_id);
         $insert_viewed->execute();
+        $insert_viewed->close();
     }
 }
 
@@ -252,8 +262,8 @@ $is_fav = ($switch == 'on');
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google-site-verification" content="u9XxwAs-OvAizH_6uuclWJ-izjdAxNuADcmPGo0UdQE" />
     <title><?= htmlspecialchars(($property_name ? $property_name . ' - ' : '') . $name); ?></title>
-    <link rel="shortcut icon" href="../assets/images/logo-icon.png" type="image/x-icon"> 
-    
+    <link rel="shortcut icon" href="../assets/images/logo-icon.png" type="image/x-icon">
+
     <link rel="stylesheet" href="../assets/styles/daisy_ui.css">
     <link rel="stylesheet" href="../assets/styles/index.css">
     <script src="../assets/scripts/tailwind.js"></script>
@@ -263,6 +273,15 @@ $is_fav = ($switch == 'on');
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        /* Leaflet tiles/markers: undo Tailwind preflight img{max-width:100%} */
+        #map img.leaflet-tile,
+        #map img.leaflet-marker-icon,
+        #map img.leaflet-marker-shadow {
+            max-width: none !important;
+            max-height: none !important;
+        }
+    </style>
 </head>
 <body class="bg-base-200 min-h-screen text-base-content antialiased">
 
@@ -270,9 +289,9 @@ $is_fav = ($switch == 'on');
 
 <div class="drawer lg:drawer-open">
   <input id="my-drawer-3" type="checkbox" class="drawer-toggle" />
-  
+
   <div class="drawer-content flex flex-col">
-    
+
     <header class="flex items-center py-3 px-2 bg-base-100 shadow-sm lg:hidden sticky top-0 z-30">
       <div class="flex-none">
         <label for="my-drawer-3" class="btn btn-square btn-ghost">
@@ -295,8 +314,8 @@ $is_fav = ($switch == 'on');
 
           <div class="lg:col-span-2">
             <div class="relative h-64 sm:h-80 md:h-[360px] w-full rounded-xl overflow-hidden bg-base-300 group shadow-inner">
-              <img src="../assets/uploads/<?= htmlspecialchars($image_cover); ?>" 
-                   alt="<?= htmlspecialchars($name); ?>" 
+              <img src="../assets/uploads/<?= htmlspecialchars($image_cover); ?>"
+                   alt="<?= htmlspecialchars($name); ?>"
                    class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                    onerror="this.src='../assets/images/placeholder.jpg';" />
 
@@ -380,8 +399,8 @@ $is_fav = ($switch == 'on');
               </a>
 
               <p class="text-sm text-base-content/70 mt-2 flex items-center gap-1.5">
-                <i class="fa-solid fa-location-dot text-error"></i> 
-                <?= htmlspecialchars(trim("$barangay, $municipality, $province", ", ")); ?>
+                <i class="fa-solid fa-location-dot text-error"></i>
+                <?= htmlspecialchars($address_text); ?>
               </p>
 
               <div class="divider my-3"></div>
@@ -456,20 +475,6 @@ $is_fav = ($switch == 'on');
                 <i class="fa-solid fa-envelope text-success"></i> <?= htmlspecialchars($email ?: 'N/A'); ?>
               </p>
             </div>
-
-            <!-- Prominent Interest Button 
-            <form action="../functions.php" method="POST" class="w-full">
-              <input type="hidden" name="type" value="<?= htmlspecialchars($type); ?>">
-              <input type="hidden" name="locate" value="house_details.php">
-              <input type="hidden" name="rent_id" value="<?= htmlspecialchars($rent_id); ?>">
-              <input type="hidden" name="current_status" value="<?= htmlspecialchars($switch); ?>">
-              <button type="submit" name="add_interested_apartment" value="1"
-                      class="btn w-full btn-<?= $is_fav ? 'error' : 'success' ?> text-white py-3 flex items-center justify-center gap-2 font-semibold"
-                      <?= $is_owner ? 'disabled opacity-50' : ''; ?>>
-                <i class="fa-solid fa-heart"></i>
-                <?= $is_fav ? 'Remove from Interested' : 'Mark as Interested'; ?>
-              </button>
-            </form>-->
           </div>
 
         </div>
@@ -497,7 +502,7 @@ $is_fav = ($switch == 'on');
               <div class="flex flex-wrap gap-2">
                 <?php foreach ($saved_amenities as $amen): ?>
                   <span class="badge badge-lg gap-2 p-3 bg-base-200 text-base-content font-medium border-base-300">
-                    <i class="fa-solid fa-check text-success text-xs"></i> 
+                    <i class="fa-solid fa-check text-success text-xs"></i>
                     <?= htmlspecialchars($amen['amenity']); ?>
                   </span>
                 <?php endforeach; ?>
@@ -534,21 +539,21 @@ $is_fav = ($switch == 'on');
                     <?php if (!empty($bedroom)): ?>
                       <div class="flex items-center gap-1.5" title="Bedrooms">
                         <i class="fa-solid fa-bed text-success text-[11px]"></i>
-                        <span><?= htmlspecialchars($bedroom); ?> Bedroom<?= $bedroom > 1 ? 's' : ''; ?></span>
+                        <span><?= htmlspecialchars($bedroom); ?></span>
                       </div>
                     <?php endif; ?>
 
                     <?php if (!empty($bathrooms)): ?>
                       <div class="flex items-center gap-1.5" title="Bathrooms">
                         <i class="fa-solid fa-bath text-success text-[11px]"></i>
-                        <span><?= htmlspecialchars($bathrooms); ?> Bath<?= $bathrooms > 1 ? 's' : ''; ?></span>
+                        <span><?= htmlspecialchars($bathrooms); ?></span>
                       </div>
                     <?php endif; ?>
 
                     <?php if (!empty($parking)): ?>
                       <div class="flex items-center gap-1.5" title="Parking">
                         <i class="fa-solid fa-square-parking text-success text-[11px]"></i>
-                        <span><?= htmlspecialchars($parking); ?> Parking</span>
+                        <span><?= htmlspecialchars($parking); ?></span>
                       </div>
                     <?php endif; ?>
 
@@ -584,9 +589,10 @@ $is_fav = ($switch == 'on');
               <i class="fa-solid fa-map-location-dot text-success"></i> Location Map
             </h2>
             <p class="text-xs text-base-content/60 mb-3">
-              <?= htmlspecialchars(trim("$barangay, $municipality, $province", ", ")); ?>
+              <?= htmlspecialchars($address_text !== '' ? $address_text : 'No address saved'); ?>
             </p>
-            <div id="map" class="w-full h-72 rounded-xl border border-base-300 z-10"></div>
+            <div id="map" class="w-full rounded-xl border border-base-300 bg-base-200 relative z-0"
+                 style="height:288px; min-height:288px;"></div>
           </div>
         </div>
 
@@ -685,8 +691,8 @@ $is_fav = ($switch == 'on');
             <?php foreach ($apartment_images as $img): ?>
               <div class="break-inside-avoid rounded-xl overflow-hidden border border-base-200 shadow-2xs hover:shadow-md transition-all group bg-base-200 relative">
                 <a href="../assets/uploads/<?= htmlspecialchars($img); ?>" target="_blank" class="block">
-                  <img src="../assets/uploads/<?= htmlspecialchars($img); ?>" 
-                       alt="Gallery Image" 
+                  <img src="../assets/uploads/<?= htmlspecialchars($img); ?>"
+                       alt="Gallery Image"
                        class="w-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
                        loading="lazy"
                        onerror="this.src='../assets/images/placeholder.jpg';" />
@@ -735,8 +741,8 @@ $is_fav = ($switch == 'on');
           <?php
           if ($landlord_id) {
               $get_rentspace = $conn->prepare("
-                SELECT rent_id, name, price, image_cover 
-                FROM `rentspace` 
+                SELECT rent_id, name, price, image_cover
+                FROM `rentspace`
                 WHERE `landlord_id` = ? AND `type` = ?
               ");
               $get_rentspace->bind_param("ss", $landlord_id, $type);
@@ -755,8 +761,8 @@ $is_fav = ($switch == 'on');
                       <li>
                         <a href="?id=<?= urlencode($other_id); ?>" class="flex items-center gap-3 p-2.5 rounded-xl transition-all <?= $isActive; ?>">
                           <div class="w-11 h-11 rounded-lg overflow-hidden bg-base-300 flex-shrink-0 border border-base-200">
-                            <img src="../assets/uploads/<?= htmlspecialchars($other_img); ?>" 
-                                 alt="<?= htmlspecialchars($other_name); ?>" 
+                            <img src="../assets/uploads/<?= htmlspecialchars($other_img); ?>"
+                                 alt="<?= htmlspecialchars($other_name); ?>"
                                  class="w-full h-full object-cover"
                                  loading="lazy"
                                  onerror="this.src='../assets/images/placeholder.jpg';" />
@@ -775,6 +781,7 @@ $is_fav = ($switch == 'on');
               } else {
                   echo '<li class="p-4 text-center text-xs text-base-content/50 italic bg-base-200/50 rounded-xl mt-2">No other properties found.</li>';
               }
+              $get_rentspace->close();
           }
           ?>
         </ul>
@@ -794,26 +801,51 @@ $is_fav = ($switch == 'on');
 <script src="../assets/scripts/index.js"></script>
 
 <script>
-  $(document).ready(function() {
-    var lat = <?= is_numeric($latitude) ? $latitude : '13.7565'; ?>;
-    var lng = <?= is_numeric($longitude) ? $longitude : '121.0583'; ?>;
-    var propertyName = <?= json_encode($property_name); ?>;
-    var barangayName = <?= json_encode($barangay); ?>;
+document.addEventListener('DOMContentLoaded', function () {
+  const mapEl = document.getElementById('map');
+  if (!mapEl) return;
 
-    var map = L.map('map').setView([lat, lng], 15);
+  function showMapMessage(msg) {
+    mapEl.innerHTML =
+      '<div style="height:100%;display:flex;align-items:center;justify-content:center;' +
+      'text-align:center;padding:16px;font-size:13px;opacity:.6;">' + msg + '</div>';
+  }
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
+  if (typeof L === 'undefined') {
+    showMapMessage('Map failed to load. Please check your internet connection.');
+    return;
+  }
 
-    var popup = document.createElement('div');
-    popup.innerHTML = '<b></b><br><span></span>';
-    popup.querySelector('b').textContent = propertyName;
-    popup.querySelector('span').textContent = barangayName;
+  const hasCoords = <?= $has_coords ? 'true' : 'false'; ?>;
+  const lat = <?= $has_coords ? json_encode($lat_val) : 'null'; ?>;
+  const lng = <?= $has_coords ? json_encode($lng_val) : 'null'; ?>;
+  const propertyName = <?= json_encode($property_name); ?>;
+  const addressText  = <?= json_encode($address_text); ?>;
 
-    L.marker([lat, lng]).addTo(map).bindPopup(popup).openPopup();
-  });
+  if (!hasCoords) {
+    showMapMessage('No map location was set for this house.');
+    return;
+  }
+
+  const map = L.map('map', { scrollWheelZoom: false }).setView([lat, lng], 16);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+
+  const popup = document.createElement('div');
+  const title = document.createElement('strong');
+  title.textContent = propertyName || 'Property';
+  const addr = document.createElement('div');
+  addr.textContent = addressText || 'Pinned location';
+  popup.append(title, addr);
+
+  L.marker([lat, lng]).addTo(map).bindPopup(popup).openPopup();
+
+  setTimeout(function () { map.invalidateSize(); }, 300);
+  window.addEventListener('resize', function () { map.invalidateSize(); });
+});
 </script>
 
 </body>
